@@ -25,67 +25,56 @@ app.get('/form', (req, res) => {
 // 處理表單提交
 app.post('/submit', async (req, res) => {
   try {
-    // 1. 這裡直接從 req.body 拿數據
-    const body = req.body;
+      const body = req.body;
+      const params = new URLSearchParams();
 
-    // 2. Google Form 的 POST 地址
-    const googleFormUrl = 'https://docs.google.com/forms/d/e/1FAIpQLScggjQgYutXQrjQDrutyxL0eLaFMktTMRKsFWPffQGavUFspA/formResponse';
+      // 1. 年齡
+      params.append('entry.842223433', body.age || '');
 
-    // 3. 處理性別邏輯（根據你前端的 name="sex" 和 name="sex_other"）
-    let finalSex = body.sex;
-    if (body.sex === '__other_option__') {
-        finalSex = body.sex_other;
-    }
-
-// 4. 構建參數
-    const params = new URLSearchParams();
-    
-    // --- 基礎信息 ---
-    params.append('entry.842223433', body.age || '');
-    params.append('entry.1422578992', finalSex || '');
-    params.append('entry.1766160152', body.province || '');
-    params.append('entry.402227428', body.city || '');
-    
-    // --- 學校信息 ---
-    // 注意：ID 尾綴是 50349280
-    params.append('entry.50349280', body.school_name || ''); 
-    params.append('entry.1390240202', body.school_address || '');
-
-    // --- 您的經歷 (日期處理是關鍵) ---
-    // 如果日期為空，不 append 該鍵值對，Google 會將其視為未填
-    if (body.date_start && body.date_start.trim() !== "") {
-        params.append('entry.1344969670', body.date_start);
-    }
-    if (body.date_end && body.date_end.trim() !== "") {
-        params.append('entry.129670533', body.date_end);
-    }
-    params.append('entry.578287646', body.experience || '');
-
-    // --- 曝光資訊 ---
-    params.append('entry.1533497153', body.headmaster_name || '');
-    params.append('entry.883193772', body.contact_information || '');
-    params.append('entry.1400127416', body.scandal || '');
-    params.append('entry.2022959936', body.other || '');
-
-
-
-    // 5. 發送請求
-    await axios.post(googleFormUrl, params.toString(), {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
-    });
-
-    res.render('submit');
-
-  }
-  // 修改 server.js 中的 catch 部分
-  catch (error) {
-      if (error.response) {
-          console.error('Google Error Status:', error.response.status);
-          console.error('Google Error Data:', error.response.data);
-      } else {
-          console.error('Error Message:', error.message);
+      // 2. 性別邏輯修復 (核心問題所在)
+      // 判斷是否為預設選項。如果不是 男/女，則走 Google Form 的 "其他" 提交邏輯
+      const standardSex = ["男", "女"];
+      let finalSex = body.sex; 
+      if (body.sex === '__other_option__') {
+          finalSex = body.sex_other;
       }
-      res.status(500).send('提交失敗，原因：' + (error.response ? "數據格式不符" : "網絡錯誤"));
+
+      if (standardSex.includes(finalSex)) {
+          // 如果是標準選項，直接發送
+          params.append('entry.1422578992', finalSex);
+      } else {
+          // 如果是 MtF, FtM 或其他自定義內容，模擬 Google 的 "其他" 選項提交方式
+          params.append('entry.1422578992', '__other_option__');
+          params.append('entry.1422578992.other_option_response', finalSex || '');
+      }
+
+      // 3. 基礎資訊
+      params.append('entry.1766160152', body.province || '');
+      params.append('entry.402227428', body.city || '');
+      params.append('entry.5034928', body.school_name || '');
+      params.append('entry.1390240202', body.school_address || '');
+
+      // 4. 日期邏輯修復 (避免空日期導致 400 錯誤)
+      if (body.date_start) params.append('entry.1344969670', body.date_start);
+      if (body.date_end) params.append('entry.129670533', body.date_end);
+
+      // 5. 其他文本信息
+      params.append('entry.578287646', body.experience || '');
+      params.append('entry.1533497153', body.headmaster_name || '');
+      params.append('entry.883193772', body.contact_information || '');
+      params.append('entry.1400127416', body.scandal || '');
+      params.append('entry.2022959936', body.other || '');
+
+      const googleFormUrl = 'https://docs.google.com/forms/d/e/1FAIpQLScggjQgYutXQrjQDrutyxL0eLaFMktTMRKsFWPffQGavUFspA/formResponse';
+
+      await axios.post(googleFormUrl, params.toString(), {
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      });
+
+      res.render('submit');
+  } catch (error) {
+      console.error('Submission Error:', error.response ? error.response.data : error.message);
+      res.status(500).send('提交失敗，原因：數據格式不符 (請檢查性別或日期是否填寫正確)');
   }
 });
 
