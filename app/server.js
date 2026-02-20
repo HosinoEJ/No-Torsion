@@ -37,24 +37,31 @@ app.post('/submit', async (req, res) => {
         finalSex = body.sex_other;
     }
 
-    // 4. 構建參數 (統一使用 params)
+// 4. 構建參數
     const params = new URLSearchParams();
-    // 基礎信息
+    
+    // --- 基礎信息 ---
     params.append('entry.842223433', body.age || '');
     params.append('entry.1422578992', finalSex || '');
     params.append('entry.1766160152', body.province || '');
     params.append('entry.402227428', body.city || '');
     
-    // 學校信息
+    // --- 學校信息 ---
+    // 注意：ID 尾綴是 50349280
     params.append('entry.50349280', body.school_name || ''); 
     params.append('entry.1390240202', body.school_address || '');
 
-    // 您的經歷 - 日期如果為空，不要 append 該字段，或者確保格式正確
-    if (body.date_start) params.append('entry.1344969670', body.date_start);
-    if (body.date_end) params.append('entry.129670533', body.date_end);
+    // --- 您的經歷 (日期處理是關鍵) ---
+    // 如果日期為空，不 append 該鍵值對，Google 會將其視為未填
+    if (body.date_start && body.date_start.trim() !== "") {
+        params.append('entry.1344969670', body.date_start);
+    }
+    if (body.date_end && body.date_end.trim() !== "") {
+        params.append('entry.129670533', body.date_end);
+    }
     params.append('entry.578287646', body.experience || '');
 
-    // 曝光資訊
+    // --- 曝光資訊 ---
     params.append('entry.1533497153', body.headmaster_name || '');
     params.append('entry.883193772', body.contact_information || '');
     params.append('entry.1400127416', body.scandal || '');
