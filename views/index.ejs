@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>信息採集表單</title>
+    <style>
+        body { font-family: "Microsoft YaHei", sans-serif; background: #f4f7f6; padding: 20px; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        h3 { text-align: center; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        h1 { text-align: center; color: #2c3e50; padding-bottom: 10px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        button:hover { background: #2980b9; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>NO TORSION FORM</h1>
+    <h3>基礎資訊</h3>
+    <form action="/submit" method="POST">
+        <div class="form-group">
+            <label>年齡</label>
+            <input type="number" name="age" required>
+        </div>
+
+        <div class="form-group">
+            <label>性別</label>
+            <select name="sex" required>
+                <option value="男">男</option>
+                <option value="女">女</option>
+                <option value="MtF">MtF</option>
+                <option value="FtM">FtM</option>
+                <option value="__other_option__">其他</option>
+                <input type="text" id="otherText" name="sex_other_option" placeholder="你的性別">
+            </select>
+            
+            
+        </div>
+
+        <div class="form-group">
+            <label for="province-select">省份</label>
+            <select name="province" id="province-select" required>
+                <option value="山東">山東</option>
+                <option value="河南">河南</option>
+                <option value="河北">河北</option>
+                <option value="山西">山西</option>
+                <option value="遼寧">遼寧</option>
+                <option value="吉林">吉林</option>
+                <option value="黑龍江">黑龍江</option>
+                <option value="江蘇">江蘇</option>
+                <option value="浙江">浙江</option>
+                <option value="安徽">安徽</option>
+                <option value="福建">福建</option>
+                <option value="江西">江西</option>
+                <option value="湖北">湖北</option>
+                <option value="湖南">湖南</option>
+                <option value="廣東">廣東</option>
+                <option value="海南">海南</option>
+                <option value="四川">四川</option>
+                <option value="貴州">貴州</option>
+                <option value="雲南">雲南</option>
+                <option value="陝西">陝西</option>
+                <option value="甘肅">甘肅</option>
+                <option value="青海">青海</option>
+                <option value="內蒙古">內蒙古</option>
+                <option value="廣西">廣西</option>
+                <option value="西藏">西藏</option>
+                <option value="寧夏">寧夏</option>
+                <option value="新疆">新疆</option>
+                <option value="北京">北京</option>
+                <option value="天津">天津</option>
+                <option value="上海">上海</option>
+                <option value="重慶">重慶</option>
+                <option value="香港">香港</option>
+                <option value="澳門">澳門</option>
+                <option value="臺灣（ROC）">臺灣</option>
+                <option value="海外">海外</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>區、縣</label>
+            <input type="text" name="city" required>
+        </div>
+
+        <div class="form-group">
+            <label>學校名稱</label>
+            <input type="text" name="school_name" required>
+        </div>
+
+        <div class="form-group">
+            <label>學校地址</label>
+            <input type="text" name="school_address">
+        </div>
+
+        <h3>您的經歷</h3>
+
+        <div class="form-group">
+            <label>您什麼時候被送進去的？</label>
+            <input type="date" name="date_start" required>
+        </div>
+
+        <div class="form-group">
+            <label>您是什麼時候出來的？</label>
+            <input type="date" name="date_end">
+        </div>
+
+        <div class="form-group">
+            <label>請問您在那裏都經歷了什麼？</label>
+            <textarea name="experience" rows="3"></textarea>
+        </div>
+
+
+        <h3>有什麼可以曝光的？</h3>
+
+        <div class="form-group">
+            <label>校長名字</label>
+            <input type="text" name="headmaster_name">
+        </div>
+
+        <div class="form-group">
+            <label>學校的聯繫方式</label>
+            <input type="text" name="contact_information" required>
+        </div>
+
+        <div class="form-group">
+            <label>學校的醜聞</label>
+            <textarea name="scandal" rows="3"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>其他</label>
+            <input type="text" name="other" rows="3">
+        </div>
+
+        <button type="submit">提交信息</button>
+    </form>
+</div>
+</body>
+</html>
