@@ -5,6 +5,7 @@ const app = express();
 
 // 設置 EJS
 app.set('views', path.join(__dirname, '../views'));
+app.use(express.static(path.join(__dirname, '../public')));
 app.set('view engine', 'ejs');
 
 // 解析表單數據（必須）
@@ -14,6 +15,11 @@ app.use(express.json());
 // 首頁：渲染表單
 app.get('/', (req, res) => {
   res.render('index');
+});
+
+// 表單頁：填寫數據
+app.get('/form', (req, res) => {
+  res.render('form');
 });
 
 // 處理表單提交
@@ -52,7 +58,7 @@ app.post('/submit', async (req, res) => {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
     });
 
-    res.send('<h1>提交成功！感謝您的參與。</h1><a href="/">返回首頁</a>');
+    res.render('submit');
 
   } catch (error) {
     // 打印具體錯誤到 Vercel 日誌
