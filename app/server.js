@@ -26,44 +26,40 @@ app.get('/form', (req, res) => {
 app.post('/submit', async (req, res) => {
   try {
       const body = req.body;
-      const params = new URLSearchParams();
+const params = new URLSearchParams();
 
-      // 1. 年齡
-      params.append('entry.842223433', body.age || '');
+    // --- 1. 基礎資訊 (必填項) ---
+    params.append('entry.842223433', body.age || '');
+    params.append('entry.1766160152', body.province || '');
+    params.append('entry.402227428', body.city || '');
+    params.append('entry.5034928', body.school_name || '');
 
-      // 2. 性別邏輯修復 (核心問題所在)
-      // 判斷是否為預設選項。如果不是 男/女，則走 Google Form 的 "其他" 提交邏輯
-      const standardSex = ["男", "女"];
-      let finalSex = body.sex; 
-      if (body.sex === '__other_option__') {
-          finalSex = body.sex_other;
-      }
+    // --- 2. 性別邏輯 (極度安全模式) ---
+    // 先嘗試最簡單的直接發送，如果還是報錯，請在 Google Form 裡把性別改為「簡答題」
+    let finalSex = body.sex;
+    if (body.sex === '__other_option__') {
+        finalSex = body.sex_other;
+    }
+    params.append('entry.1422578992', finalSex || '');
 
-      if (standardSex.includes(finalSex)) {
-          // 如果是標準選項，直接發送
-          params.append('entry.1422578992', finalSex);
-      } else {
-          // 如果是 MtF, FtM 或其他自定義內容，模擬 Google 的 "其他" 選項提交方式
-          params.append('entry.1422578992', '__other_option__');
-          params.append('entry.1422578992.other_option_response', finalSex || '');
-      }
+    // --- 3. 學校地址與經歷 ---
+    params.append('entry.1390240202', body.school_address || '');
+    params.append('entry.578287646', body.experience || ''); // 經歷描述
 
-      // 3. 基礎資訊
-      params.append('entry.1766160152', body.province || '');
-      params.append('entry.402227428', body.city || '');
-      params.append('entry.5034928', body.school_name || '');
-      params.append('entry.1390240202', body.school_address || '');
+    // --- 4. 日期處理 (報錯核心) ---
+    // 只有當日期真的有值時才 append，否則完全忽略這兩個 key
+    if (body.date_start && body.date_start.trim() !== "") {
+        params.append('entry.1344969670', body.date_start);
+    }
+    if (body.date_end && body.date_end.trim() !== "") {
+        params.append('entry.129670533', body.date_end);
+    }
 
-      // 4. 日期邏輯修復 (避免空日期導致 400 錯誤)
-      if (body.date_start) params.append('entry.1344969670', body.date_start);
-      if (body.date_end) params.append('entry.129670533', body.date_end);
-
-      // 5. 其他文本信息
-      params.append('entry.578287646', body.experience || '');
-      params.append('entry.1533497153', body.headmaster_name || '');
-      params.append('entry.883193772', body.contact_information || '');
-      params.append('entry.1400127416', body.scandal || '');
-      params.append('entry.2022959936', body.other || '');
+    // --- 5. 曝光資訊 ---
+    params.append('entry.1533497153', body.headmaster_name || '');
+    params.append('entry.883193772', body.contact_information || '');
+    params.append('entry.1400127416', body.scandal || '');
+    params.append('entry.2022959936', body.other || '');
 
       const googleFormUrl = 'https://docs.google.com/forms/d/e/1FAIpQLScggjQgYutXQrjQDrutyxL0eLaFMktTMRKsFWPffQGavUFspA/formResponse';
 
