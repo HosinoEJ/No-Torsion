@@ -33,7 +33,7 @@
 ## 表單收集
 
 如果你曾是受害者或知情者，請通過我們的網站匿名提交詳細信息。我們會根據您的表單匯總出一個地圖：
- **[填寫表單](notorsion.hosinoneko.me)**
+ **[填寫表單](https://notorsion.hosinoneko.me)**
 
 原表單LINK:[Google From](https://forms.gle/eHwkmNCZtmZhLjzh7)
 
