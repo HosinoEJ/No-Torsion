@@ -26,22 +26,26 @@ app.post('/submit', async (req, res) => {
   // Google Form 的 POST 地址（注意：最後是 formResponse）
   const googleFormUrl = 'https://docs.google.com/forms/d/e/1FAIpQLScggjQgYutXQrjQDrutyxL0eLaFMktTMRKsFWPffQGavUFspA/formResponse';
 
+  // 處理性別邏輯：如果選了其他，則取 sex_other 的值
+  let finalSex = data.sex;
+  if (data.sex === '__other_option__') {
+      finalSex = data.sex_other;
+  }
   // 對應你的 entry ID
   const formData = new URLSearchParams();
-  formData.append('entry.842223433', age);
-  formData.append('entry.1422578992', sex);
-  formData.append('entry.1422578992.other_option_response', sex_other_option)
-  formData.append('entry.1766160152', province);
-  formData.append('entry.402227428', city);
-  formData.append('entry.5034928', school_name);
-  formData.append('entry.1390240202', school_address);
-  formData.append('entry.1344969670', date_start);
-  formData.append('entry.129670533', date_end);
-  formData.append('entry.578287646', experience);
-  formData.append('entry.1533497153', headmaster_name);
-  formData.append('entry.883193772', contact_information);
-  formData.append('entry.1400127416', scandal);
-  formData.append('entry.2022959936', other)
+  params.append('entry.842223433', data.age);
+  params.append('entry.1422578992', finalSex); // 發送最終確定的性別
+  params.append('entry.1766160152', data.province);
+  params.append('entry.402227428', data.city);
+  params.append('entry.5034928', data.school_name);
+  params.append('entry.1390240202', data.school_address);
+  params.append('entry.1344969670', data.date_start);
+  params.append('entry.129670533', data.date_end);
+  params.append('entry.578287646', data.experience);
+  params.append('entry.1533497153', data.headmaster_name);
+  params.append('entry.883193772', data.contact_information);
+  params.append('entry.1400127416', data.scandal);
+  params.append('entry.2022959936', data.other);
 
   try {
     await axios.post(googleFormUrl, formData.toString(), {
