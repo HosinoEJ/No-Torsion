@@ -53,6 +53,8 @@ app.post('/submit', async (req, res) => {
     params.append('entry.1400127416', body.scandal || '');
     params.append('entry.2022959936', body.other || '');
 
+
+
     // 5. 發送請求
     await axios.post(googleFormUrl, params.toString(), {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
@@ -60,10 +62,16 @@ app.post('/submit', async (req, res) => {
 
     res.render('submit');
 
-  } catch (error) {
-    // 打印具體錯誤到 Vercel 日誌
-    console.error('Google Form Submission Error:', error.response ? error.response.data : error.message);
-    res.status(500).send('提交失敗，服務器錯誤。請檢查 Google 表單是否開啟了接受回覆。');
+  }
+  // 修改 server.js 中的 catch 部分
+  catch (error) {
+      if (error.response) {
+          console.error('Google Error Status:', error.response.status);
+          console.error('Google Error Data:', error.response.data);
+      } else {
+          console.error('Error Message:', error.message);
+      }
+      res.status(500).send('提交失敗，原因：' + (error.response ? "數據格式不符" : "網絡錯誤"));
   }
 });
 
