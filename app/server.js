@@ -24,7 +24,7 @@ app.post('/submit', async (req, res) => {
     } = req.body;
 
   // Google Form 的 POST 地址（注意：最後是 formResponse）
-  const googleFormUrl = 'https://docs.google.com/forms/u/0/d/e/1UbMSMO2i58dUpVhSfHJCbVjxzIYQ9TepQY45ml3je5E/formResponse';
+  const googleFormUrl = 'https://docs.google.com/forms/d/e/1FAIpQLScggjQgYutXQrjQDrutyxL0eLaFMktTMRKsFWPffQGavUFspA/viewform?usp=header';
 
   // 對應你的 entry ID
   const formData = new URLSearchParams();
