@@ -85,29 +85,40 @@ app.get('/map', (req,res) => {
 
 app.get('/api/map-data', async (req, res) => {
     try {
-        const response = await axios.get(process.env.GOOGLE_SCRIPT_URL);
-        const rawData = response.data;
+        const googleAppsScriptUrl = process.env.GOOGLE_SCRIPT_URL;
+        const response = await axios.get(googleAppsScriptUrl);
+        
+        let rawData = response.data;
 
-        // 這裡做一個更強健的轉換
-        const cleanData = rawData.filter(item => item.lat && item.lng).map(item => {
-            return {
-                // 使用 ['Key'] 的方式來確保能抓到含空格或特殊符號的欄位
-                name: item['學校名稱'] || "未填寫名稱",
-                addr: item['學校地址'] || "無地址",
-                prov: item['省份'] || "",
-                city: item['區、縣'] || "",
-                lat: parseFloat(item.lat),
-                lng: parseFloat(item.lng),
-                // 這裡對應你 JSON 裡的 "學校的醜聞"
-                scandal: item['學校的醜聞'] || item['其他'] || "無詳細資訊",
-                contact: item['學校的聯繫方式'] || ""
-            };
-        });
+        // --- 防護機制：檢查數據是否為陣列 ---
+        if (!Array.isArray(rawData)) {
+            console.error("收到的數據不是陣列:", rawData);
+            // 如果 GAS 回傳的是字串，嘗試解析它
+            if (typeof rawData === 'string') {
+                try {
+                    rawData = JSON.parse(rawData);
+                } catch (e) {
+                    return res.status(500).json({ error: "數據解析失敗", raw: rawData });
+                }
+            } else {
+                return res.status(500).json({ error: "預期收到陣列但得到其他類型", received: typeof rawData });
+            }
+        }
 
-        res.set('Cache-Control', 'public, max-age=60'); // 縮短快取時間方便測試
+        const cleanData = rawData.filter(item => item && item.lat && item.lng).map(item => ({
+            name: item['學校名稱'] || "未填寫名稱",
+            addr: item['學校地址'] || "無地址",
+            prov: item['省份'] || "",
+            city: item['區、縣'] || "",
+            lat: parseFloat(item.lat),
+            lng: parseFloat(item.lng),
+            scandal: item['學校的醜聞'] || item['其他'] || "無詳細資訊",
+            contact: item['學校的聯繫方式'] || ""
+        }));
+
         res.json(cleanData);
     } catch (error) {
-        console.error("Vercel API Error:", error.message);
+        console.error("API Error:", error.message);
         res.status(500).json({ error: error.message });
     }
 });
