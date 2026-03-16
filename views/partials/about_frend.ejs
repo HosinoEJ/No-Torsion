@@ -1,0 +1,14 @@
+<div style="display: flex; flex-direction: column;">
+    <h1>友情鏈接</h1>
+    <% friends.forEach(friend => { %>
+        <div class="div">
+            <a href="<%= friend.url %>" target="_blank" id="<%= friend.name %>">
+                <img src="<%= friend.avatar %>" style="width: 60px; height: 60px; border-radius: 50%; margin-right: 15px; border: 2px solid <%= friend.color %>;">
+                <div>
+                    <h3 id="<%= friend.name %>"><%= friend.name %></h3>
+                    <p><%= friend.desc %></p>
+                </div>
+            </a>
+        </div>
+    <% }); %>
+</div>

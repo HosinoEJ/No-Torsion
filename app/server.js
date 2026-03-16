@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const axios = require('axios');
 const cors = require('cors');
+const fs = require('fs')
 require('dotenv').config();
 const app = express();
 app.use(cors());
@@ -40,9 +41,18 @@ app.get('/map', (req,res) => {
 })
 
 app.get('/aboutus', (req,res) => {
+    let friendsData = { friends: [] };
+    try {
+        const jsonPath = path.join(__dirname,'..', 'friends.json');
+        const rawData = fs.readFileSync(jsonPath, 'utf8');
+        friendsData = JSON.parse(rawData);
+    } catch (err) {
+        console.error("讀取友鏈出錯：", err);
+    }
     res.render('about',{
         t:req.t,
-        title:`關於我們|${title}`
+        title:`關於我們|${title}`,
+        friends: friendsData.friends
     })
 })
 
