@@ -88,7 +88,8 @@ const params = new URLSearchParams();
     params.append('entry.2022959936', body.other || '');
 
       //const googleFormUrl = 'https://docs.google.com/forms/d/e/1FAIpQLScggjQgYutXQrjQDrutyxL0eLaFMktTMRKsFWPffQGavUFspA/formResponse';
-      const googleFormUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSeS6uGmqiZtEOK0H8EkbpV6zQk8jBn6sW_diYN0SZnIWl3zdg/formResponse'
+      const formId = process.env.FORM_ID || '1FAIpQLScggjQgYutXQrjQDrutyxL0eLaFMktTMRKsFWPffQGavUFspA';
+      const googleFormUrl = `https://docs.google.com/forms/d/e/${formId}/formResponse`
 
       await axios.post(googleFormUrl, params.toString(), {
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
