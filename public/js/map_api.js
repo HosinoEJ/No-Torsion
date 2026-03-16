@@ -1,31 +1,72 @@
-const map = L.map('map').setView([36.06, 120.38], 6); // 預設視角
+function getColor(d) {
+    return d > 1000 ? '#800026' :
+           d > 500  ? '#BD0026' :
+           d > 200  ? '#E31A1C' :
+           d > 100  ? '#FC4E2A' :
+           d > 50   ? '#FD8D3C' :
+           d > 20   ? '#FEB24C' :
+           d > 10   ? '#FED976' :
+                      '#FFEDA0';
+}
+
+
+const categories = []; // 存放省份名
+const selfData = [];   // 存放本人填写数
+const agentData = [];  // 存放代理人填写数
+
+const map = L.map('map').setView([37.5, 109], 4); // 預設視角
+const CNprov = '/cn.json'
 
 // 選用簡潔的底圖風格
 L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
 
+
 const apiUrl = 'https://no-torsion.vercel.app/api/map-data'
+
+
+let provList = Array.from({ length: 40 }, () => Array(2).fill());
 fetch(apiUrl)
     .then(res => res.json())
     .then(data => {
 
-        const totalCount = data.length; // 第一類：總提交數
         const provinceMap = {};
 
         data.forEach(item => {
-            // 第二類：統計各省數量
-            const prov = item.province || "NaN";
+            const prov = (item.province || "").replace(/(省|市|自治区|特别行政区)/g, "");
             provinceMap[prov] = (provinceMap[prov] || 0) + 1;
         });
 
-        // 更新 UI
-        document.getElementById('total-count').innerText = totalCount;
+        
+        
+        fetch(CNprov)
+            .then(response => response.json())
+            .then(dataP => {
+                L.geoJSON(dataP, {
+                    style: function(feature) {
+                        let name = feature.properties.name || feature.properties.province || "";
+                        
+                        const count = provinceMap[name] || 0;
+                        return {
+                            fillColor: getColor(count),
+                            weight: 2,
+                            opacity: 1,
+                            color: 'white',
+                            dashArray: '3',
+                            fillOpacity: 0.7
+                        };
+                    }
+                }).addTo(map);
+                addMarkers(data);
+            })
+            .catch(err => console.error('加载地图数据失败:', err));
 
-        // 將省份物件轉為易讀文字，例如 "山東 (2), 廣東 (1)"
         const distText = Object.entries(provinceMap)
-            .map(([name, count]) => `${name} (${count})`)
+            .map(([name, count]) => `<strong>${name}</strong>: ${count}`)
             .join(', ');
-        document.getElementById('province-dist').innerText = distText;
-
+        document.getElementById('province-dist').innerHTML = distText;
+        
+        document.getElementById('total-count').innerText = data.length;
+        
 
         data.forEach(item => {
             const marker = L.marker([item.lat, item.lng]).addTo(map);
