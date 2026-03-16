@@ -58,6 +58,7 @@ const params = new URLSearchParams();
     params.append('entry.1766160152', body.province || '');
     params.append('entry.402227428', body.city || '');
     params.append('entry.5034928', body.school_name || '');
+    params.append('entry.500021634', body.identity || '受害者本人')
 
     // --- 2. 性別邏輯 (極度安全模式) ---
     // 先嘗試最簡單的直接發送，如果還是報錯，請在 Google Form 裡把性別改為「簡答題」
@@ -86,7 +87,8 @@ const params = new URLSearchParams();
     params.append('entry.1400127416', body.scandal || '');
     params.append('entry.2022959936', body.other || '');
 
-      const googleFormUrl = 'https://docs.google.com/forms/d/e/1FAIpQLScggjQgYutXQrjQDrutyxL0eLaFMktTMRKsFWPffQGavUFspA/formResponse';
+      //const googleFormUrl = 'https://docs.google.com/forms/d/e/1FAIpQLScggjQgYutXQrjQDrutyxL0eLaFMktTMRKsFWPffQGavUFspA/formResponse';
+      const googleFormUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSeS6uGmqiZtEOK0H8EkbpV6zQk8jBn6sW_diYN0SZnIWl3zdg/viewform?usp=publish-editor'
 
       await axios.post(googleFormUrl, params.toString(), {
           headers: { 'Content-Type': 'application/x-www-form-urlencoded' }

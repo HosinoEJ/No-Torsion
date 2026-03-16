@@ -9,6 +9,11 @@
         <h3>基礎資訊</h3>
         
         <div class="form-group">
+            <label class="required">請問您是作爲什麽身份來填寫本表單？</label>
+            <select name="identity" required>
+                <option value="受害者本人">受害者本人</option>
+                <option value="受害者的代理人">受害者的代理人</option>
+            </select>
             <label class="required">年齡</label>
             <input type="number" name="age" min="1" max="100" placeholder="請輸入年齡" required>
         </div>
