@@ -11,7 +11,7 @@ flex-direction: column;
     async function loadData() {
         try {
             // 2. 獲取數據
-            const response = await axios.get('https://notorsion.hosinoneko.me/api/map-data');
+            const response = await axios.get('/api/map-data');
             
             const rawData = response.data;
 

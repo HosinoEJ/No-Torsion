@@ -80,7 +80,8 @@
 
         <div class="form-group">
             <label class="required">學校名稱</label>
-            <input type="text" name="school_name" placeholder="請填寫完整名稱" required>
+            <input type="text" name="school_name" id="school_input" placeholder="請填寫完整名稱" required>
+            <div id="results_list"></div>
         </div>
 
         <div class="form-group">
@@ -132,6 +133,7 @@
     </form>
 </div>
 
+<script src="/js/form_api.js"></script>
 <script>
     // 性別「其他」顯示邏輯
     function toggleOtherSex() {
