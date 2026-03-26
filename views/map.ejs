@@ -9,15 +9,19 @@
     </style>
 </head>
 <body>
-    <h1>机构综合地图</h1>
+    <h1>机构地图</h1>
+    <p><a href="/">返回首页</a></p>
     <h3>統計數據</h3>
     <%- include('partials/map_allnum') %>
+    <h3>标签</h3>
+    <%- include('partials/map_tag') %>
     <h3>地圖</h3>
     <small>注：本地圖或許會有些許偏差</small>
     <div id="map" class="div"></div>
-    <p><a href="/">返回首页</a></p>
     <%- include('partials/map_apimd') %>
+    <h3>所有數據</h3>
     <%- include('partials/map_list') %>
+    <button id="backToTop" onclick="scrollToTop()">↑</button>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="/js/map_api.js"></script>
 </body>

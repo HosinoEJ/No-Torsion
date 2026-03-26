@@ -11,7 +11,7 @@ const debugMod = process.env.DEBUG_MOD || 'false';
 const title = process.env.TITLE;
 
 let apiUrl = '/api/map-data';
-if (debugMod == 'true') apiUrl = 'https://no-torsion.vercel.app/api/map-data'
+if (debugMod == 'true') apiUrl = 'https://nct.hosinoneko.me/api/map-data'
 
 // 設置 EJS
 app.set('views', path.join(__dirname, '../views'));

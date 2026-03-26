@@ -70,17 +70,42 @@ fetch(apiUrl)
         function timeUpdate() {
             const elapsed = Math.floor((Date.now() - lastSyncedTime) / 1000);
             let updButton = (elapsed > 300000) ? '，<button onclick="window.location.reload();">刷新</button>' : ''
-            console.log(updButton)
             document.getElementById('lastSynced').innerHTML = elapsed + ` 秒前${updButton}`;
         }
         setInterval(timeUpdate, 1000);
         
         document.getElementById('avgAge').innerText = jsonResponse.avg_age.toFixed(2);
     
-        document.getElementById('total-count').innerText = data.length;
+
+        let count_num0 = 0;
+        let count_num1 = 0;
+        let count_num2 = 0;
+        data.forEach(item => {
+            if(item.inputType == '受害者本人') count_num0++;
+            if(item.inputType == '受害者的代理人')count_num1++;
+            if(!item.inputType)count_num2++;
+        })
+        document.getElementById('total-count').innerHTML = 
+        `<br>
+        <text><b>数据量</b>${data.length}</text><br>
+        <text><b>总提交量</b>${count_num0+count_num1}</text><br>
+        <text><b>本人提交量</b>${count_num0}</text><br>
+        <text><b>代理提交量</b>${count_num1}</text><br>
+        <text><b>批量导入数据</b>${count_num2}</text>
+        `;
         
+        
+        const queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+        const inputType = urlParams.get('inputType')//找筛选条件
 
         data.forEach(item => {
+            
+            if(item.inputType != inputType && inputType) {
+                if(inputType == "批量数据" && item.inputType) return;
+                else if(inputType !="批量数据") return
+            }
+
             const marker = L.marker([item.lat, item.lng]).addTo(map);
 
             // 1. 鼠標指到圖標：顯示標題 (Tooltip)
@@ -95,10 +120,8 @@ fetch(apiUrl)
                     <b>${item.name}</b><br>
                     <small>${item.prov}</small>
                     <p>${item.HMaster}</p><hr>
-                    <p>${item.experience}</p>
-                    <p>${item.scandal}</p>
-                    <p>${item.else}</p>
                     <address>${item.addr}</address>
+                    <a href="#${item.name}">查看详细信息</a>
                 </div>
             `;
             marker.bindPopup(popupContent);

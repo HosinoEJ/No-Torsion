@@ -1,6 +1,6 @@
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
-<h3>所有數據</h3>
+
 <div class="form-group" style="display: flex;
 flex-direction: column;
     align-items: center;">
@@ -8,16 +8,6 @@ flex-direction: column;
     <div id="results_list"></div>
 </div>
 
-<h3>標簽</h3>
-<div style="display: flex;     flex-direction: row;
-    justify-content: center;">
-    <div class="div">
-        <h3>填寫類型</h3>
-        <a href="/map">全部</a><br>
-        <a href="?inputType=受害者本人">受害者本人</a><br>
-        <a href="?inputType=受害者的代理人">受害者的代理人</a>
-    </div>
-</div>
 
 <div id="data-container" style="
 display: flex;
@@ -40,23 +30,32 @@ flex-direction: column;
 
             // 3. 循環處理
             rawData.forEach(item => {
-                if(item.inputType != inputType && inputType) return;
+                if(item.inputType != inputType && inputType) {
+                    if(inputType == "批量数据" && item.inputType) return;
+                    else if(inputType !="批量数据") return
+                }
 
                 const card = document.createElement('details');
                 card.className = 'div';
+                card.id = `${item.name}`;
                 card.style.width = '100%'
 
-                let scandalHtml = item.scandal ? `<div class="scandal">⚠️ ${item.scandal}</div>` : '';
+                let scandalHtml = item.scandal ? `<div><strong>学校丑闻：</strong> ${item.scandal}</div>` : '';
+                let experienceHtml = item.experience ? `<div><strong>受害者经历：</strong> ${item.experience}</div>` : '';
+                let elseHtml = item.else ? `<div><strong>其他：</strong> ${item.else}</div>` : '';
+                let inputHtml = item.inputType ? item.inputType : '批量数据'
 
                 card.innerHTML = `
-                    <summary><h2>${item.name}</h2><br><small>填寫類型：${item.inputType}</small></summary>
+                    <summary><h2>${item.name}</h2><br><small style="margin-left: auto;"><a href="?inputType=${inputHtml}">${inputHtml}</a></small></summary>
                     <div class="div">
                         <p><strong>負責人：</strong>${item.HMaster}</p>
                         <p><strong>省份：</strong>${item.province}</p>
                         <p><strong>鄉、鎮：</strong>${item.prov}</p>
                         <p><strong>地址：</strong>${item.addr}</p>
                         <hr>
+                        ${experienceHtml}
                         ${scandalHtml}
+                        ${elseHtml}
                         <div class="contact"><strong>聯繫方式：</strong>\n${item.contact}</div>
                     </div>
                 `;
