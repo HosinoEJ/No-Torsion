@@ -1,28 +1,11 @@
 # NO CONVERSION THERAPY
 
-## N·C·T
+## N·C·T project
 
 [![Status](https://img.shields.io/badge/Status-Active-brightgreen)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)]()
 
 **我們致力於記錄、曝光並抵制所有形式的「扭轉治療」機構。** 每一份真實的聲音，都是終結傷害的力量。你的簽名與參與，將幫助更多人避開深淵。
-
----
-
-## 聯署簽名 (Public Signatures)
-
-我們誠邀所有支持「取代扭轉治療」的夥伴在此留下你的聲音。你可以選擇使用網路ID、筆名甚至真名（真名還是算了）。
-
-### 如何參與簽名？
-1. 點擊本倉庫右上角的 `Fork`。
-2. 編輯 `README.md` 文件，在下方 **「簽名列表」** 末尾添加你的信息。
-3. 提交 `Pull Request`。
-
-### 簽名列表
-
-您可以在下面添加你的簽名。
-
-[HosinoNeko](https://github.com/HosinoEJ)
 
 ---
 
@@ -36,7 +19,7 @@
 ## 表單收集
 
 如果你曾是受害者或知情者，請通過我們的網站匿名提交詳細信息。我們會根據您的表單匯總出一個地圖：
- **[填寫表單](https://NCT.hosinoneko.me)**
+ **[填寫表單](https://NCT.hosinoneko.me/form)**
 
 原表單LINK:[Google From](https://forms.gle/eHwkmNCZtmZhLjzh7)
 
@@ -65,7 +48,7 @@ npm install
 TITLE="NO CONVERSION THERAPY"
 ```
 
-*一般就填 NO TORSION就可以了，除非...你幹嘛（*
+*一般就填NO CONVERSION THERAPY就可以了，除非...你幹嘛（*
 
 若想在本地開發
 ```bash
@@ -91,21 +74,39 @@ https://no-torsion.vercel.app/api/map-data
 api會回傳一個get類型的JSON，以下是案例：
 
 ```JSON
-[
-  {
-    "name": "學校名稱",
-    "addr": "學校地址",
-    "province": "省份",
-    "prov": "區、縣",
-    "else": "其他補充内容",
-    "lat": 36.62728,
-    "lng": 118.58882,
-    "experience": "經歷描述",
-    "HMaster": "負責人/校長姓名",
-    "scandal": "已知醜聞",
-    "contact": "學校聯繫方式"
-  }
-]
+{
+    "avg_age": 17,
+    "last_synced": 1774925078387,
+    "statistics": [
+        {
+            "province": "河南",
+            "count": 12
+        },
+        {
+            "province": "湖北",
+            "count": 66
+        },
+        {
+            "province": "福建",
+            "count": 3
+        }
+    ],
+    "data": [
+        {
+            "name": "學校名稱",
+            "addr": "學校地址",
+            "province": "省份",
+            "prov": "區、縣",
+            "else": "其他補充内容",
+            "lat": 36.62728,
+            "lng": 118.58882,
+            "experience": "經歷描述",
+            "HMaster": "負責人/校長姓名",
+            "scandal": "已知醜聞",
+            "contact": "學校聯繫方式"
+        }
+    ]
+}
 ```
 
 其中，lat和lng是經緯度。
