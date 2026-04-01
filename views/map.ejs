@@ -3,15 +3,32 @@
 <head>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <style>
-        body > * {
-            width: 70%;
+        .map-page {
+            --map-content-width: min(70%, 1100px);
+        }
+
+        .map-page > *:not(.page-back-link):not(#backToTop):not(script) {
+            width: var(--map-content-width);
+            box-sizing: border-box;
+        }
+
+        @media (max-width: 650px) {
+            .map-page {
+                --map-content-width: 95%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .map-page {
+                --map-content-width: calc(100% - 1rem);
+            }
         }
     </style>
 </head>
-<body>
-    <%- include('partials/language_switcher') %>
+<body class="map-page">
+    <a href="/" class="page-back-link">← <%= t('navigation.home') %></a>
+    <script src="/js/map_data_store.js"></script>
     <h1><%= t('map.title') %></h1>
-    <p><a href="/"><%= t('navigation.home') %></a></p>
     <h3><%= t('map.sections.stats') %></h3>
     <%- include('partials/map_allnum') %>
     <h3><%= t('map.sections.tags') %></h3>

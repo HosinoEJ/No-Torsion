@@ -1,13 +1,21 @@
 (() => {
-    const languageSwitcher = document.getElementById('languageSwitcher');
+    const languageButtons = document.querySelectorAll('[data-lang-option]');
 
-    if (!languageSwitcher) {
+    if (languageButtons.length === 0) {
         return;
     }
 
-    languageSwitcher.addEventListener('change', () => {
-        const nextUrl = new URL(window.location.href);
-        nextUrl.searchParams.set('lang', languageSwitcher.value);
-        window.location.href = nextUrl.toString();
+    languageButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+            const nextLang = button.dataset.langOption;
+
+            if (!nextLang) {
+                return;
+            }
+
+            const nextUrl = new URL(window.location.href);
+            nextUrl.searchParams.set('lang', nextLang);
+            window.location.href = nextUrl.toString();
+        });
     });
 })();

@@ -6,8 +6,6 @@ const { getAreaOptions } = require('../../config/areaSelector');
 const { getLocalizedFormRules, getLocalizedIdentityOptions, getLocalizedSexOptions } = require('../../config/formConfig');
 const { loadFriends } = require('../services/friendsService');
 const { paths } = require('../../config/fileConfig');
-const { getPortTags } = require('../services/markedService');
-
 // 页面路由只负责渲染模板，不承载表单提交或 API 逻辑。
 function createPageRoutes({ apiUrl, title }) {
   const router = express.Router();
@@ -37,7 +35,8 @@ function createPageRoutes({ apiUrl, title }) {
   router.get('/map', (req, res) => {
     res.render('map', {
       title: req.t('pageTitles.map', { title }),
-      apiUrl
+      apiUrl,
+      QTag: req.query.inputType || ''
     });
   });
 
@@ -71,9 +70,8 @@ function createPageRoutes({ apiUrl, title }) {
       SavedTags:filteredPort,//數據（已篩選）
       QTag,//現在的query
       AllTags,//所有tag的數據
-      t: req.t, 
       apiUrl,
-      title:`博客|${title}`
+      title: req.t('pageTitles.blog', { title })
     })
   })
 
@@ -83,7 +81,7 @@ function createPageRoutes({ apiUrl, title }) {
     const mdPath = path.join(protDir, `${mdName}.md`);
     
     if (!fs.existsSync(mdPath)) {
-      return res.status(404).send('文章不存在');
+      return res.status(404).send(req.t('blog.articleNotFound'));
     }
     
     const content = fs.readFileSync(mdPath, 'utf-8');
@@ -98,7 +96,14 @@ function createPageRoutes({ apiUrl, title }) {
       html: rawHtml
     };
     
-    res.render('blogs', { apiUrl, reports: [report], t: req.t, title:`${title_B}|${title}`});
+    res.render('blogs', {
+      apiUrl,
+      reports: [report],
+      title: req.t('pageTitles.article', {
+        articleTitle: title_B,
+        title
+      })
+    });
   });
 
   return router;

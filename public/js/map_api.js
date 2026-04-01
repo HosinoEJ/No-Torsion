@@ -1,3 +1,4 @@
+(() => {
 function getColor(d) {
     return d > 200 ? '#800026' :
            d > 100  ? '#BD0026' :
@@ -88,6 +89,144 @@ function escapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
+function showMapDataError(message) {
+    const safeMessage = escapeHtml(message || i18n.map.list.loadFailed);
+    const lastSyncedElement = document.getElementById('lastSynced');
+    const avgAgeElement = document.getElementById('avgAge');
+    const mapElement = document.getElementById('map');
+
+    if (lastSyncedElement) {
+        lastSyncedElement.textContent = safeMessage;
+    }
+
+    if (avgAgeElement) {
+        avgAgeElement.textContent = safeMessage;
+    }
+
+    if (mapElement) {
+        mapElement.innerHTML = `<p style="padding: 1rem; text-align: center;">${safeMessage}</p>`;
+    }
+}
+
+function createPieChartOptions() {
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+            padding: {
+                top: 8,
+                right: 8,
+                bottom: 8,
+                left: 8
+            }
+        },
+        radius: '78%',
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: {
+                    boxWidth: 12,
+                    boxHeight: 12,
+                    padding: 12,
+                    usePointStyle: true,
+                    pointStyle: 'rectRounded',
+                    font: {
+                        size: 11
+                    }
+                }
+            }
+        }
+    };
+}
+
+function createProvincePieChartOptions() {
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+            padding: {
+                top: 4,
+                right: 4,
+                bottom: 4,
+                left: 4
+            }
+        },
+        radius: '90%',
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: {
+                    boxWidth: 10,
+                    boxHeight: 10,
+                    padding: 10,
+                    usePointStyle: true,
+                    pointStyle: 'rectRounded',
+                    font: {
+                        size: 10
+                    }
+                }
+            }
+        }
+    };
+}
+
+function createBarChartOptions() {
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        layout: {
+            padding: {
+                top: 8,
+                right: 12,
+                bottom: 8,
+                left: 8
+            }
+        },
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                callbacks: {
+                    label(context) {
+                        return `${context.label}: ${context.parsed.x}`;
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                beginAtZero: true,
+                ticks: {
+                    precision: 0,
+                    color: '#5a6d80'
+                },
+                grid: {
+                    color: 'rgba(112, 136, 163, 0.14)'
+                },
+                border: {
+                    display: false
+                }
+            },
+            y: {
+                ticks: {
+                    color: '#30485f',
+                    font: {
+                        size: 12
+                    }
+                },
+                grid: {
+                    display: false
+                },
+                border: {
+                    display: false
+                }
+            }
+        }
+    };
+}
+
 //const categories = []; // 存放省份名
 //const selfData = [];   // 存放本人填写数
 //const agentData = [];  // 存放代理人填写数
@@ -99,13 +238,8 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     minZoom: 4
 }).addTo(map);
 
-
-const apiUrl = window.API_URL
-
-
 let provList = Array.from({ length: 40 }, () => Array(2).fill());
-fetch(apiUrl)
-    .then(res => res.json())
+window.getSharedMapData()
     .then(jsonResponse => {
         const data = jsonResponse.data;
         const provinceMap = {};
@@ -156,7 +290,8 @@ fetch(apiUrl)
                         '#fff9c4', '#f0f4c3', '#d7ccc8', '#f5f5f5', '#eeeeee'
                     ]
                 }]
-            }
+            },
+            options: createProvincePieChartOptions()
         })
 
         const lastSyncedTime = jsonResponse.last_synced;
@@ -182,7 +317,7 @@ fetch(apiUrl)
             if(!item.inputType)count_num2++;
         })
         new Chart(document.getElementById('updatedForm'), {
-        type: 'pie',
+        type: 'bar',
             data: {
                 labels: [
                     i18n.map.tags.self,
@@ -190,10 +325,16 @@ fetch(apiUrl)
                     i18n.map.tags.bulk
                 ],
                 datasets: [{
+                    label: i18n.map.stats.submittedForms,
                     data: [count_num0, count_num1, count_num2],
-                    backgroundColor: ['#ff6384','#36a2eb','#ffce56']
+                    backgroundColor: ['#ff6384','#36a2eb','#ffce56'],
+                    borderRadius: 999,
+                    borderSkipped: false,
+                    barPercentage: 0.7,
+                    categoryPercentage: 0.72
                 }]
-            }
+            },
+            options: createBarChartOptions()
         });
         
         
@@ -224,4 +365,9 @@ fetch(apiUrl)
             `;
             marker.bindPopup(popupContent);
         });
+    })
+    .catch(error => {
+        console.error('地图数据加载失败:', error);
+        showMapDataError(i18n.map.list.loadFailed);
     });
+})();

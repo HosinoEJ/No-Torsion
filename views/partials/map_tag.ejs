@@ -1,10 +1,21 @@
-<div style="display: flex;     flex-direction: row;
-    justify-content: center;">
-    <div class="div">
-        <h3><%= t('map.tags.title') %></h3>
-        <button type="button" data-query-name="inputType" data-query-value=""><%= t('map.tags.all') %></button>
-        <button type="button" data-query-name="inputType" data-query-value="受害者本人"><%= t('map.tags.self') %></button>
-        <button type="button" data-query-name="inputType" data-query-value="受害者的代理人"><%= t('map.tags.agent') %></button>
-        <button type="button" data-query-name="inputType" data-query-value="批量数据"><%= t('map.tags.bulk') %></button>
-    </div>
+<%
+    const currentInputType = typeof QTag === 'string' ? QTag : '';
+    const tagOptions = [
+        { value: '', label: t('map.tags.all') },
+        { value: '受害者本人', label: t('map.tags.self') },
+        { value: '受害者的代理人', label: t('map.tags.agent') },
+        { value: '批量数据', label: t('map.tags.bulk') }
+    ];
+%>
+<div class="map-filter-bar">
+    <% tagOptions.forEach((option) => { %>
+        <button
+            type="button"
+            class="map-filter-chip <%= option.value === currentInputType ? 'is-active' : '' %>"
+            data-query-name="inputType"
+            data-query-value="<%= option.value %>"
+        >
+            <%= option.label %>
+        </button>
+    <% }) %>
 </div>

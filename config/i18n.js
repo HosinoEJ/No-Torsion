@@ -173,16 +173,31 @@ const messages = {
       form: '填写表单|{title}',
       map: '地图|{title}',
       about: '关于我们|{title}',
-      submitPreview: '提交预览|{title}'
+      submitPreview: '提交预览|{title}',
+      blog: '文库|{title}',
+      article: '{articleTitle}|{title}'
     },
     navigation: {
       home: '返回首页',
-      about: '关于我们'
+      about: '关于我们',
+      allArticles: '所有文章'
     },
     index: {
       tagline: '每一份真实的声音，都是终结扭转与伤害的力量。',
       fillForm: '参与填表',
-      viewMap: '查看扭转机构综合地图'
+      viewMap: '查看扭转机构综合地图',
+      blogLibrary: '文库'
+    },
+    blog: {
+      title: 'NCT.Blogs',
+      subtitle: '也许这里会有一些有用的内容',
+      all: '全部',
+      author: '作者：',
+      creationDate: '创稿日期：',
+      language: '语言：',
+      noTag: '#无标签',
+      empty: '暂时还没有文章喵~',
+      articleNotFound: '文章不存在'
     },
     form: {
       title: 'NO CONVERSION THERAPY FORM',
@@ -290,6 +305,8 @@ const messages = {
         searchButton: '检索',
         noResults: '没有符合检索条件的结果',
         loadFailed: '数据加载失败',
+        translationLoading: '翻译中...',
+        translationUnavailable: '翻译失败',
         fields: {
           scandal: '学校丑闻：',
           experience: '受害者经历：',
@@ -432,16 +449,31 @@ const messages = {
       form: '填寫表單|{title}',
       map: '地圖|{title}',
       about: '關於我們|{title}',
-      submitPreview: '提交預覽|{title}'
+      submitPreview: '提交預覽|{title}',
+      blog: '文庫|{title}',
+      article: '{articleTitle}|{title}'
     },
     navigation: {
       home: '返回首頁',
-      about: '關於我們'
+      about: '關於我們',
+      allArticles: '所有文章'
     },
     index: {
       tagline: '每一份真實的聲音，都是終結扭轉與傷害的力量。',
       fillForm: '參與填表',
-      viewMap: '查看扭轉機構綜合地圖'
+      viewMap: '查看扭轉機構綜合地圖',
+      blogLibrary: '文庫'
+    },
+    blog: {
+      title: 'NCT.Blogs',
+      subtitle: '在這裡，也許會有些有用的',
+      all: '全部',
+      author: '作者：',
+      creationDate: '創稿日期：',
+      language: '語言：',
+      noTag: '#無標籤',
+      empty: '暫時還沒有文章喵~',
+      articleNotFound: '文章不存在'
     },
     form: {
       title: 'NO CONVERSION THERAPY FORM',
@@ -549,6 +581,8 @@ const messages = {
         searchButton: '檢索',
         noResults: '沒有符合檢索條件的結果',
         loadFailed: '數據加載失敗',
+        translationLoading: '翻譯中...',
+        translationUnavailable: '翻譯失敗',
         fields: {
           scandal: '學校醜聞：',
           experience: '受害者經歷：',
@@ -691,16 +725,31 @@ const messages = {
       form: 'Form | {title}',
       map: 'Map | {title}',
       about: 'About | {title}',
-      submitPreview: 'Submission Preview | {title}'
+      submitPreview: 'Submission Preview | {title}',
+      blog: 'Library | {title}',
+      article: '{articleTitle} | {title}'
     },
     navigation: {
       home: 'Back to Home',
-      about: 'About Us'
+      about: 'About Us',
+      allArticles: 'All Articles'
     },
     index: {
       tagline: 'Every truthful voice helps bring conversion practices and abuse to an end.',
       fillForm: 'Fill Out the Form',
-      viewMap: 'View the Conversion Institution Map'
+      viewMap: 'View the Conversion Institution Map',
+      blogLibrary: 'Library'
+    },
+    blog: {
+      title: 'NCT.Blogs',
+      subtitle: 'There may be something useful here.',
+      all: 'All',
+      author: 'Author: ',
+      creationDate: 'Created: ',
+      language: 'Language: ',
+      noTag: '#No Tag',
+      empty: 'No articles yet.',
+      articleNotFound: 'Article not found'
     },
     form: {
       title: 'NO CONVERSION THERAPY FORM',
@@ -808,6 +857,8 @@ const messages = {
         searchButton: 'Search',
         noResults: 'No records matched the search criteria',
         loadFailed: 'Failed to load data',
+        translationLoading: 'Translating...',
+        translationUnavailable: 'Translation unavailable',
         fields: {
           scandal: 'School scandals:',
           experience: 'Survivor experience:',

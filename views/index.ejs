@@ -19,15 +19,18 @@
             <p>
                 <%= t('index.tagline') %>
             </p>
-            <a href="/form" class="btn"><%= t('index.fillForm') %></a>
-            <a href="/map" class="btn"><%= t('index.viewMap') %></a>
-            <a href="/blog" class="btn">文库</a>
+            <div class="hero__actions">
+                <a href="/form" class="btn"><%= t('index.fillForm') %></a>
+                <a href="/map" class="btn"><%= t('index.viewMap') %></a>
+                <a href="/blog" class="btn btn--library"><%= t('index.blogLibrary') %></a>
+            </div>
         </div>
 
         <div class="footer">
             <p><%= t('common.footerBy') %><a href="mailto:notorsion@hosinoneko.me">HosinoNeko</a></p>
             <a href="/aboutus"><%= t('navigation.about') %></a>
         </div>
+        <script src="/js/language_switcher.js"></script>
         <%- include('partials/foot') %>
     </body>
 </html>

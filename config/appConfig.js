@@ -9,7 +9,8 @@ const formId = process.env.FORM_ID || '1FAIpQLScggjQgYutXQrjQDrutyxL0eLaFMktTMRK
 const googleFormUrl = `https://docs.google.com/forms/d/e/${formId}/formResponse`;
 const googleScriptUrl = process.env.GOOGLE_SCRIPT_URL;
 const appPort = Number(process.env.PORT || 3000);
-const apiUrl = debugMod === 'true' ? 'https://nct.hosinoneko.me/api/map-data' : '/api/map-data';
+const publicMapDataUrl = process.env.PUBLIC_MAP_DATA_URL || 'https://nct.hosinoneko.me/api/map-data';
+const apiUrl = debugMod === 'true' || !googleScriptUrl ? publicMapDataUrl : '/api/map-data';
 
 module.exports = {
   appPort,
@@ -19,6 +20,7 @@ module.exports = {
   formId,
   googleFormUrl,
   googleScriptUrl,
+  publicMapDataUrl,
   submitRateLimitMax,
   title
 };

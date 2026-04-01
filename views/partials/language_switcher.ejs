@@ -1,13 +1,15 @@
-<div
-    class="language-switcher"
-    style="position: fixed; top: 1rem; right: 1rem; z-index: 10000; display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem; background: rgba(255, 255, 255, 0.95); border: 1px solid #ddd; border-radius: 999px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);"
->
-    <label for="languageSwitcher" style="margin: 0; font-size: 0.9rem; color: #333;">
-        <%= t('common.language') %>
-    </label>
-    <select id="languageSwitcher" style="border: none; background: transparent; font-size: 0.9rem;">
+<div class="language-switcher" aria-label="<%= t('common.language') %>">
+    <span class="language-switcher__label"><%= t('common.language') %></span>
+    <div class="language-switcher__group" role="group" aria-label="<%= t('common.language') %>">
         <% languageOptions.forEach((option) => { %>
-            <option value="<%= option.code %>" <%= option.code === lang ? 'selected' : '' %>><%= option.label %></option>
+            <button
+                type="button"
+                class="language-switcher__button <%= option.code === lang ? 'is-active' : '' %>"
+                data-lang-option="<%= option.code %>"
+                aria-pressed="<%= option.code === lang ? 'true' : 'false' %>"
+            >
+                <%= option.label %>
+            </button>
         <% }) %>
-    </select>
+    </div>
 </div>
