@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="<%= lang %>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
     <title><%- title %></title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="/css/main.css"/>
@@ -11,6 +12,8 @@
     <link rel="icon" href="/favicon.svg"/>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        window.API_URL = "<%= apiUrl %>"
+        window.API_URL = "<%= apiUrl %>";
+        window.APP_LANG = "<%= lang %>";
+        window.I18N = <%- JSON.stringify(clientMessages) %>;
     </script>
 </head>

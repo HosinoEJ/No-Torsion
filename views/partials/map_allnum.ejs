@@ -1,19 +1,32 @@
-
-<div class="chart-box">
-    </div><div style="display: flex;    flex-direction: row;
-        justify-content: center;
-        flex-wrap: wrap;">
-        <div class="div"><strong>數據最後一次更新：</strong><br><span id="lastSynced">LOADING...</span><br><small>數據每<b>300秒</b>(5分鐘)更新一次，如未看到您的提交，請耐心等待</small></div>
-        <div class="div">
-            <strong>已提交表單：</strong>
-            <canvas id="updatedForm"></canvas>
+<section class="map-stats-grid">
+    <div class="div map-stat-card map-stat-card--wide">
+        <div class="map-stat-card__content">
+            <strong class="map-stat-card__title"><%= t('map.stats.lastSynced') %></strong>
+            <small class="map-stat-card__hint"><%= t('map.stats.updateNotice', { seconds: 300, minutes: 5 }) %></small>
         </div>
-        <div class="div">
-            <strong>各省已知機構數量：</strong>
-            <canvas id="prov"></canvas>
-        </div>
-        <div class="div"><strong>受害者平均年齡：</strong><br><span id="avgAge">LOADING...</span></div>
-
-        
+        <span id="lastSynced" class="map-stat-card__value map-stat-card__value--badge"><%= t('common.loading') %></span>
     </div>
-</div>
+
+    <div class="div map-stat-card map-stat-card--chart map-stat-card--submitted">
+        <strong class="map-stat-card__title"><%= t('map.stats.submittedForms') %></strong>
+        <div class="map-stat-card__chart">
+            <div class="map-stat-card__chart-inner">
+                <canvas id="updatedForm"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="div map-stat-card map-stat-card--chart map-stat-card--province">
+        <strong class="map-stat-card__title"><%= t('map.stats.provinceStats') %></strong>
+        <div class="map-stat-card__chart">
+            <div class="map-stat-card__chart-inner">
+                <canvas id="prov"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="div map-stat-card map-stat-card--compact">
+        <strong class="map-stat-card__title"><%= t('map.stats.averageAge') %></strong>
+        <span id="avgAge" class="map-stat-card__value map-stat-card__value--age"><%= t('common.loading') %></span>
+    </div>
+</section>

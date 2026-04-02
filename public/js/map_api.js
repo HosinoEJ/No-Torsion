@@ -1,3 +1,4 @@
+(() => {
 function getColor(d) {
     return d > 200 ? '#800026' :
            d > 100  ? '#BD0026' :
@@ -9,9 +10,89 @@ function getColor(d) {
                       '#FFEDA0';
 }
 
+const i18n = window.I18N;
+const MAP_DATA_REFRESH_INTERVAL_SECONDS = 300;
+const themeMediaQuery = typeof window.matchMedia === 'function'
+    ? window.matchMedia('(prefers-color-scheme: dark)')
+    : null;
+
+let mapTileLayer = null;
+let provinceLayer = null;
+const chartInstances = [];
+
+function isDarkMode() {
+    return Boolean(themeMediaQuery && themeMediaQuery.matches);
+}
+
+function addThemeChangeListener(listener) {
+    if (!themeMediaQuery) {
+        return;
+    }
+
+    if (typeof themeMediaQuery.addEventListener === 'function') {
+        themeMediaQuery.addEventListener('change', listener);
+        return;
+    }
+
+    if (typeof themeMediaQuery.addListener === 'function') {
+        themeMediaQuery.addListener(listener);
+    }
+}
+
+function getThemeColors() {
+    return isDarkMode()
+        ? {
+            legend: '#d7e3f0',
+            axis: '#a9bdd1',
+            axisStrong: '#d7e3f0',
+            grid: 'rgba(148, 163, 184, 0.22)',
+            mapOutline: '#d6e4f0',
+            error: '#e6eef7'
+        }
+        : {
+            legend: '#30485f',
+            axis: '#5a6d80',
+            axisStrong: '#30485f',
+            grid: 'rgba(112, 136, 163, 0.14)',
+            mapOutline: 'white',
+            error: '#2c3e50'
+        };
+}
+
+function createBaseTileLayer(minZoom) {
+    if (isDarkMode()) {
+        return L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+            subdomains: 'abcd',
+            maxZoom: 20,
+            minZoom
+        });
+    }
+
+    return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap',
+        maxZoom: 20,
+        minZoom
+    });
+}
+
+function mountBaseTileLayer(targetMap, minZoom) {
+    if (mapTileLayer) {
+        targetMap.removeLayer(mapTileLayer);
+    }
+
+    mapTileLayer = createBaseTileLayer(minZoom);
+    mapTileLayer.addTo(targetMap);
+}
 
 function normalizeSearchText(value) {
     return String(value || '').trim().toLowerCase().replace(/\s+/g, '');
+}
+
+function formatMessage(template, values) {
+    return Object.entries(values).reduce((result, [key, value]) => {
+        return result.replaceAll(`{${key}}`, value);
+    }, template);
 }
 
 function getSearchTokens(searchText) {
@@ -38,16 +119,42 @@ function matchesSearch(item, searchText) {
         item.experience,
         item.HMaster,
         item.province,
+        getProvinceDisplay(item.province),
         item.prov,
         item.addr,
         item.scandal,
         item.contact,
         item.else,
-        item.inputType
+        item.inputType,
+        getInputTypeDisplay(item.inputType)
     ];
 
     const searchableText = searchableFields.map((field) => normalizeSearchText(field)).join(' ');
     return searchTokens.every((token) => searchableText.includes(token));
+}
+
+function getInputTypeDisplay(value) {
+    if (!value || value === '批量数据') {
+        return i18n.data.inputTypes.bulk;
+    }
+
+    if (value === '受害者本人') {
+        return i18n.data.inputTypes.self;
+    }
+
+    if (value === '受害者的代理人') {
+        return i18n.data.inputTypes.agent;
+    }
+
+    return value;
+}
+
+function getProvinceDisplay(value) {
+    return i18n.data.provinceNames[value] || value || '';
+}
+
+function getRecordAnchorId(index) {
+    return `record-${index}`;
 }
 
 function escapeHtml(value) {
@@ -59,6 +166,211 @@ function escapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
+function isValidTimestamp(value) {
+    return Number.isFinite(value) && value > 0;
+}
+
+function getElapsedSeconds(lastSyncedTime) {
+    if (!isValidTimestamp(lastSyncedTime)) {
+        return null;
+    }
+
+    return Math.max(0, Math.floor((Date.now() - lastSyncedTime) / 1000));
+}
+
+function renderLastSyncedValue(lastSyncedElement, { elapsedSeconds, refreshInProgress, onRefresh }) {
+    if (!lastSyncedElement) {
+        return;
+    }
+
+    lastSyncedElement.replaceChildren();
+
+    const valueElement = document.createElement('b');
+    valueElement.textContent = elapsedSeconds === null
+        ? i18n.common.loading
+        : formatMessage(i18n.map.stats.secondsAgo, { seconds: elapsedSeconds });
+    lastSyncedElement.appendChild(valueElement);
+
+    if (elapsedSeconds === null || elapsedSeconds <= MAP_DATA_REFRESH_INTERVAL_SECONDS) {
+        return;
+    }
+
+    lastSyncedElement.appendChild(document.createTextNode(', '));
+
+    const refreshButton = document.createElement('button');
+    refreshButton.type = 'button';
+    refreshButton.className = 'map-refresh-button';
+    refreshButton.textContent = refreshInProgress ? i18n.common.loading : i18n.map.stats.refresh;
+    refreshButton.disabled = refreshInProgress;
+    refreshButton.addEventListener('click', onRefresh);
+    lastSyncedElement.appendChild(refreshButton);
+}
+
+function showMapDataError(message) {
+    const safeMessage = escapeHtml(message || i18n.map.list.loadFailed);
+    const lastSyncedElement = document.getElementById('lastSynced');
+    const avgAgeElement = document.getElementById('avgAge');
+    const mapElement = document.getElementById('map');
+    const { error: errorColor } = getThemeColors();
+
+    if (lastSyncedElement) {
+        lastSyncedElement.textContent = safeMessage;
+    }
+
+    if (avgAgeElement) {
+        avgAgeElement.textContent = safeMessage;
+    }
+
+    if (mapElement) {
+        mapElement.innerHTML = `<p style="padding: 1rem; text-align: center; color: ${errorColor};">${safeMessage}</p>`;
+    }
+}
+
+function createPieChartOptions() {
+    const themeColors = getThemeColors();
+
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+            padding: {
+                top: 8,
+                right: 8,
+                bottom: 8,
+                left: 8
+            }
+        },
+        radius: '78%',
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: {
+                    boxWidth: 12,
+                    boxHeight: 12,
+                    padding: 12,
+                    usePointStyle: true,
+                    pointStyle: 'rectRounded',
+                    color: themeColors.legend,
+                    font: {
+                        size: 11
+                    }
+                }
+            }
+        }
+    };
+}
+
+function createProvincePieChartOptions() {
+    const themeColors = getThemeColors();
+
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        layout: {
+            padding: {
+                top: 4,
+                right: 4,
+                bottom: 4,
+                left: 4
+            }
+        },
+        radius: '90%',
+        plugins: {
+            legend: {
+                position: 'top',
+                labels: {
+                    boxWidth: 10,
+                    boxHeight: 10,
+                    padding: 10,
+                    usePointStyle: true,
+                    pointStyle: 'rectRounded',
+                    color: themeColors.legend,
+                    font: {
+                        size: 10
+                    }
+                }
+            }
+        }
+    };
+}
+
+function createBarChartOptions() {
+    const themeColors = getThemeColors();
+
+    return {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        layout: {
+            padding: {
+                top: 8,
+                right: 12,
+                bottom: 8,
+                left: 8
+            }
+        },
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                callbacks: {
+                    label(context) {
+                        return `${context.label}: ${context.parsed.x}`;
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                beginAtZero: true,
+                ticks: {
+                    precision: 0,
+                    color: themeColors.axis
+                },
+                grid: {
+                    color: themeColors.grid
+                },
+                border: {
+                    display: false
+                }
+            },
+            y: {
+                ticks: {
+                    color: themeColors.axisStrong,
+                    font: {
+                        size: 12
+                    }
+                },
+                grid: {
+                    display: false
+                },
+                border: {
+                    display: false
+                }
+            }
+        }
+    };
+}
+
+function syncExistingChartTheme() {
+    const themeColors = getThemeColors();
+
+    chartInstances.forEach((chart) => {
+        if (chart.options?.plugins?.legend?.labels) {
+            chart.options.plugins.legend.labels.color = themeColors.legend;
+        }
+
+        if (chart.config.type === 'bar' && chart.options?.scales) {
+            chart.options.scales.x.ticks.color = themeColors.axis;
+            chart.options.scales.x.grid.color = themeColors.grid;
+            chart.options.scales.y.ticks.color = themeColors.axisStrong;
+        }
+
+        chart.update('none');
+    });
+}
+
 //const categories = []; // 存放省份名
 //const selfData = [];   // 存放本人填写数
 //const agentData = [];  // 存放代理人填写数
@@ -66,17 +378,22 @@ function escapeHtml(value) {
 const map = L.map('map').setView([37.5, 109], 4); // 預設視角
 const CNprov = '/cn.json'
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    minZoom: 4
-}).addTo(map);
+mountBaseTileLayer(map, 4);
 
+addThemeChangeListener(() => {
+    mountBaseTileLayer(map, 4);
 
-const apiUrl = window.API_URL
+    if (provinceLayer) {
+        provinceLayer.setStyle({
+            color: getThemeColors().mapOutline
+        });
+    }
 
+    syncExistingChartTheme();
+});
 
 let provList = Array.from({ length: 40 }, () => Array(2).fill());
-fetch(apiUrl)
-    .then(res => res.json())
+window.getSharedMapData()
     .then(jsonResponse => {
         const data = jsonResponse.data;
         const provinceMap = {};
@@ -91,7 +408,7 @@ fetch(apiUrl)
         fetch(CNprov)
             .then(response => response.json())
             .then(dataP => {
-                L.geoJSON(dataP, {
+                provinceLayer = L.geoJSON(dataP, {
                     style: function(feature) {
                         let name = feature.properties.name || feature.properties.province || "";
                         
@@ -100,7 +417,7 @@ fetch(apiUrl)
                             fillColor: getColor(count),
                             weight: 2,
                             opacity: 1,
-                            color: 'white',
+                            color: getThemeColors().mapOutline,
                             dashArray: '3',
                             fillOpacity: 0.7
                         };
@@ -111,10 +428,10 @@ fetch(apiUrl)
             .catch(err => console.error('加载地图数据失败:', err));
 
         const statistics = jsonResponse.statistics
-        new Chart(document.getElementById('prov'), {
+        const provinceChart = new Chart(document.getElementById('prov'), {
             type: 'pie',
             data: {
-                labels: statistics.map(item => item.province),
+                labels: statistics.map(item => getProvinceDisplay(item.province)),
                 datasets:[{
                     data: statistics.map(item => item.count),
                     backgroundColor: [
@@ -127,18 +444,48 @@ fetch(apiUrl)
                         '#fff9c4', '#f0f4c3', '#d7ccc8', '#f5f5f5', '#eeeeee'
                     ]
                 }]
-            }
-        })
+            },
+            options: createProvincePieChartOptions()
+        });
+        chartInstances.push(provinceChart);
 
-        const lastSyncedTime = jsonResponse.last_synced;
-        function timeUpdate() {
-            const elapsed = Math.floor((Date.now() - lastSyncedTime) / 1000);
-            let updButton = (elapsed > 300000) ? '，<a href="">刷新</a>' : ''
-            document.getElementById('lastSynced').innerHTML = `<b>${elapsed}</b> 秒前${updButton}`;
+        const lastSyncedElement = document.getElementById('lastSynced');
+        let lastSyncedTime = Number(jsonResponse.last_synced);
+        let refreshInProgress = false;
+
+        async function forceRefreshMapData() {
+            if (refreshInProgress) {
+                return;
+            }
+
+            refreshInProgress = true;
+            timeUpdate();
+
+            try {
+                await window.getSharedMapData({ forceRefresh: true });
+                window.location.reload();
+            } catch (error) {
+                console.error('地图数据刷新失败:', error);
+                refreshInProgress = false;
+                timeUpdate();
+            }
         }
+
+        function timeUpdate() {
+            const elapsed = getElapsedSeconds(lastSyncedTime);
+            renderLastSyncedValue(lastSyncedElement, {
+                elapsedSeconds: elapsed,
+                refreshInProgress,
+                onRefresh: forceRefreshMapData
+            });
+        }
+
         setInterval(timeUpdate, 1000);
+        timeUpdate();
         
-        document.getElementById('avgAge').innerHTML = `${jsonResponse.avg_age.toFixed(2)}岁`;
+        document.getElementById('avgAge').textContent = formatMessage(i18n.map.stats.ageValue, {
+            age: jsonResponse.avg_age.toFixed(2)
+        });
     
 
         let count_num0 = 0;
@@ -149,16 +496,27 @@ fetch(apiUrl)
             if(item.inputType == '受害者的代理人')count_num1++;
             if(!item.inputType)count_num2++;
         })
-        new Chart(document.getElementById('updatedForm'), {
-        type: 'pie',
+        const updatedFormChart = new Chart(document.getElementById('updatedForm'), {
+        type: 'bar',
             data: {
-                labels: ['受害者本人', '受害者的代理人', '批量数据'],
+                labels: [
+                    i18n.map.tags.self,
+                    i18n.map.tags.agent,
+                    i18n.map.tags.bulk
+                ],
                 datasets: [{
+                    label: i18n.map.stats.submittedForms,
                     data: [count_num0, count_num1, count_num2],
-                    backgroundColor: ['#ff6384','#36a2eb','#ffce56']
+                    backgroundColor: ['#ff6384','#36a2eb','#ffce56'],
+                    borderRadius: 999,
+                    borderSkipped: false,
+                    barPercentage: 0.7,
+                    categoryPercentage: 0.72
                 }]
-            }
+            },
+            options: createBarChartOptions()
         });
+        chartInstances.push(updatedFormChart);
         
         
         const queryString = window.location.search;
@@ -167,7 +525,7 @@ fetch(apiUrl)
         const inputSearch = (urlParams.get('search') || '').trim();
         const filteredData = data.filter((item) => matchesInputType(item, inputType) && matchesSearch(item, inputSearch));
 
-        filteredData.forEach(item => {
+        filteredData.forEach((item, index) => {
             const marker = L.marker([item.lat, item.lng]).addTo(map);
 
             // 1. 鼠標指到圖標：顯示標題 (Tooltip)
@@ -177,15 +535,35 @@ fetch(apiUrl)
             });
 
             // 2. 點擊：顯示所有詳細資訊 (Popup)
-            const popupContent = `
-                <div class="custom-popup">
-                    <b>${escapeHtml(item.name)}</b><br>
-                    <small>${escapeHtml(item.prov)}</small>
-                    <p>${escapeHtml(item.HMaster)}</p><hr>
-                    <address>${escapeHtml(item.addr)}</address>
-                    <a href="#${item.name}">查看详细信息</a>
-                </div>
-            `;
+            const popupContent = document.createElement('div');
+            const nameElement = document.createElement('b');
+            const regionElement = document.createElement('small');
+            const headmasterElement = document.createElement('p');
+            const dividerElement = document.createElement('hr');
+            const addressElement = document.createElement('address');
+            const detailLink = document.createElement('a');
+
+            popupContent.className = 'custom-popup';
+            nameElement.textContent = item.name || '';
+            regionElement.textContent = item.prov || '';
+            headmasterElement.textContent = item.HMaster || '';
+            addressElement.textContent = item.addr || '';
+            detailLink.href = `#${getRecordAnchorId(index)}`;
+            detailLink.textContent = i18n.map.list.viewDetails;
+
+            popupContent.appendChild(nameElement);
+            popupContent.appendChild(document.createElement('br'));
+            popupContent.appendChild(regionElement);
+            popupContent.appendChild(headmasterElement);
+            popupContent.appendChild(dividerElement);
+            popupContent.appendChild(addressElement);
+            popupContent.appendChild(detailLink);
+
             marker.bindPopup(popupContent);
         });
+    })
+    .catch(error => {
+        console.error('地图数据加载失败:', error);
+        showMapDataError(i18n.map.list.loadFailed);
     });
+})();

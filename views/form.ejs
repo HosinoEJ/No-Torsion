@@ -1,111 +1,111 @@
 <%- include('partials/head') %>
-<body style="flex-direction: row;">
+<body class="form-page">
+<a href="/" class="page-back-link">← <%= t('navigation.home') %></a>
 
 <div class="container">
-    <h1>NO CONVERSION THERAPY FORM</h1>
-    <p style="text-align: center; color: #666;">記錄黑暗，是為了迎接光明</p>
+    <h1><%= t('form.title') %></h1>
+    <p class="form-subtitle"><%= t('form.subtitle') %></p>
 
     <form action="/submit" method="POST" id="mainForm">
-        <h3>基礎資訊</h3>
+        <h3><%= t('form.sections.basic') %></h3>
         
         <div class="form-group">
-            <label class="required">請問您是作爲什麽身份來填寫本表單？</label>
+            <label class="required"><%= t('form.fields.identity') %></label>
             <select name="identity" id="identitySelect" required>
-                <option value="受害者本人">受害者本人</option>
-                <option value="受害者的代理人">受害者的代理人</option>
+                <% identityOptions.forEach((option) => { %>
+                    <option value="<%= option.value %>"><%= option.label %></option>
+                <% }) %>
             </select>
-            <label class="required">年齡</label>
-            <input type="number" name="age" id="ageInput" min="<%= formRules.age.min %>" max="<%= formRules.age.max %>" step="1" placeholder="請輸入年齡" required>
+            <label class="required"><%= t('form.fields.age') %></label>
+            <input type="number" name="age" id="ageInput" min="<%= formRules.age.min %>" max="<%= formRules.age.max %>" step="1" placeholder="<%= t('form.placeholders.age') %>" required>
         </div>
 
         <div class="form-group">
-            <label class="required">性別</label>
+            <label class="required"><%= t('form.fields.sex') %></label>
             <select name="sex" id="sexSelect" required>
-                <option value="" disabled selected>請選擇</option>
-                <option value="男">男</option>
-                <option value="女">女</option>
-                <option value="MtF">MtF</option>
-                <option value="FtM">FtM</option>
-                <option value="__other_option__">其他</option>
+                <option value="" disabled selected><%= t('form.sexOptions.placeholder') %></option>
+                <% sexOptions.forEach((option) => { %>
+                    <option value="<%= option.value %>"><%= option.label %></option>
+                <% }) %>
             </select>
-            <input type="text" id="otherSexInput" name="sex_other" class="other-input" placeholder="請註明您的性別" maxlength="<%= formRules.sexOther.maxLength %>" hidden>
+            <input type="text" id="otherSexInput" name="sex_other" class="other-input" placeholder="<%= t('form.placeholders.otherSex') %>" maxlength="<%= formRules.sexOther.maxLength %>" hidden>
         </div>
 
         <div class="form-group">
-            <label class="required">省份</label>
+            <label class="required"><%= t('form.fields.province') %></label>
             <select name="provinceCode" id="provinceSelect" required>
-                <option value="" selected>選擇省份</option>
+                <option value="" selected><%= t('form.placeholders.province') %></option>
             </select>
         </div>
 
         <div class="form-group">
-            <label class="required">城市 / 區縣</label>
+            <label class="required"><%= t('form.fields.city') %></label>
             <select name="cityCode" id="citySelect" required disabled>
-                <option value="" selected>請先選擇省份</option>
+                <option value="" selected><%= t('form.placeholders.city') %></option>
             </select>
         </div>
 
         <div class="form-group">
-            <label>縣區（可選）</label>
+            <label><%= t('form.fields.county') %></label>
             <select name="countyCode" id="countySelect" disabled>
-                <option value="" selected>可選：請先選擇城市 / 區縣</option>
+                <option value="" selected><%= t('form.placeholders.countyInitial') %></option>
             </select>
         </div>
 
         <div class="form-group">
-            <label class="required">學校名稱</label>
-            <input type="text" name="school_name" id="school_input" placeholder="請填寫完整名稱" maxlength="<%= formRules.schoolName.maxLength %>" required>
+            <label class="required"><%= t('form.fields.schoolName') %></label>
+            <input type="text" name="school_name" id="school_input" placeholder="<%= t('form.placeholders.schoolName') %>" maxlength="<%= formRules.schoolName.maxLength %>" required>
             <div id="results_list"></div>
         </div>
 
         <div class="form-group">
-            <label>學校地址</label>
-            <input type="text" name="school_address" placeholder="若已知，請詳細填寫" id="addr" maxlength="<%= formRules.schoolAddress.maxLength %>">
-            <button id="openMapButton" type="button">點擊可直接在地圖上選點</button>
+            <label><%= t('form.fields.schoolAddress') %></label>
+            <input type="text" name="school_address" placeholder="<%= t('form.placeholders.schoolAddress') %>" id="addr" maxlength="<%= formRules.schoolAddress.maxLength %>">
+            <button id="openMapButton" type="button"><%= t('form.buttons.openMap') %></button>
             <div id="map" style="display: none; width: 100%; height: 20em;"></div>
         </div>
 
-        <h3>您的經歷</h3>
+        <h3><%= t('form.sections.experience') %></h3>
 
         <div class="form-group">
-            <label class="required">入學日期</label>
+            <label class="required"><%= t('form.fields.dateStart') %></label>
             <input type="date" name="date_start" id="date_start" required>
         </div>
 
         <div class="form-group">
-            <label>離開日期</label>
+            <label><%= t('form.fields.dateEnd') %></label>
             <input type="date" name="date_end" id="date_end">
-            <div class="hint">若目前仍在校，可不填</div>
+            <div class="hint"><%= t('form.hints.dateEnd') %></div>
         </div>
 
         <div class="form-group">
-            <label>經歷描述</label>
-            <textarea name="experience" id="experienceInput" rows="4" placeholder="請描述您在該校的日常生活、管理方式等..." maxlength="<%= formRules.experience.maxLength %>"></textarea>
+            <label><%= t('form.fields.experience') %></label>
+            <textarea name="experience" id="experienceInput" rows="4" placeholder="<%= t('form.placeholders.experience') %>" maxlength="<%= formRules.experience.maxLength %>"></textarea>
         </div>
 
-        <h3>曝光資訊</h3>
+        <h3><%= t('form.sections.exposure') %></h3>
 
         <div class="form-group">
-            <label>負責人/校長姓名</label>
-            <input type="text" name="headmaster_name" placeholder="姓名" maxlength="<%= formRules.headmasterName.maxLength %>">
-        </div>
-
-        <div class="form-group">
-            <label class="required">學校聯繫方式</label>
-            <input type="text" rows="3" id="contactInformationInput" name="contact_information" placeholder="電話、郵箱或地址" maxlength="<%= formRules.contactInformation.maxLength %>" required>
+            <label><%= t('form.fields.headmasterName') %></label>
+            <input type="text" name="headmaster_name" placeholder="<%= t('form.placeholders.headmasterName') %>" maxlength="<%= formRules.headmasterName.maxLength %>">
         </div>
 
         <div class="form-group">
-            <label>已知醜聞</label>
-            <textarea name="scandal" rows="3" placeholder="如體罰、非法拘禁、虛假宣傳等內容..." maxlength="<%= formRules.scandal.maxLength %>"></textarea>
+            <label class="required"><%= t('form.fields.contactInformation') %></label>
+            <input type="text" rows="3" id="contactInformationInput" name="contact_information" placeholder="<%= t('form.placeholders.contactInformation') %>" maxlength="<%= formRules.contactInformation.maxLength %>" required>
         </div>
 
         <div class="form-group">
-            <label>其他補充</label>
-            <input type="text" rows="3" name="other" placeholder="任何您想補充的信息" maxlength="<%= formRules.other.maxLength %>">
+            <label><%= t('form.fields.scandal') %></label>
+            <textarea name="scandal" rows="3" placeholder="<%= t('form.placeholders.scandal') %>" maxlength="<%= formRules.scandal.maxLength %>"></textarea>
         </div>
 
-        <button type="submit">確認並提交信息</button>
+        <div class="form-group">
+            <label><%= t('form.fields.other') %></label>
+            <input type="text" rows="3" name="other" placeholder="<%= t('form.placeholders.other') %>" maxlength="<%= formRules.other.maxLength %>">
+        </div>
+
+        <button type="submit"><%= t('form.buttons.submit') %></button>
     </form>
 </div>
 
@@ -117,6 +117,7 @@
 <script src="/js/form_areaSelect.js"></script>
 <script>
     // 性別「其他」顯示邏輯
+    const i18n = window.I18N;
     const formRules = window.FORM_RULES;
     const mainForm = document.getElementById('mainForm');
     const identitySelect = document.getElementById('identitySelect');
@@ -163,35 +164,39 @@
         clearValidity(dateEndInput);
 
         if (sexSelect.value === '__other_option__' && !otherSexInput.value.trim()) {
-            otherSexInput.setCustomValidity('請註明您的性別');
+            otherSexInput.setCustomValidity(i18n.form.validation.specifyOtherSex);
         }
 
         const start = dateStartInput.value;
         const end = dateEndInput.value;
         if (end && start && new Date(end) < new Date(start)) {
-            dateEndInput.setCustomValidity('離開日期不能早於入學日期');
+            dateEndInput.setCustomValidity(i18n.form.validation.endDateBeforeStart);
         }
     }
 
-    bindRequiredMessage(identitySelect, '請選擇填寫身份');
-    bindRequiredMessage(sexSelect, '請選擇性別');
-    bindRequiredMessage(provinceSelect, '請選擇省份');
-    bindRequiredMessage(citySelect, '請選擇城市 / 區縣');
-    bindRequiredMessage(schoolNameInput, '請填寫學校名稱');
-    bindRequiredMessage(dateStartInput, '請填寫入學日期');
-    bindRequiredMessage(contactInformationInput, '請填寫學校聯繫方式');
-    bindRequiredMessage(otherSexInput, '請註明您的性別');
+    bindRequiredMessage(identitySelect, i18n.form.validation.selectIdentity);
+    bindRequiredMessage(sexSelect, i18n.form.validation.selectSex);
+    bindRequiredMessage(provinceSelect, i18n.form.validation.selectProvince);
+    bindRequiredMessage(citySelect, i18n.form.validation.selectCity);
+    bindRequiredMessage(schoolNameInput, i18n.form.validation.fillSchoolName);
+    bindRequiredMessage(dateStartInput, i18n.form.validation.fillDateStart);
+    bindRequiredMessage(contactInformationInput, i18n.form.validation.fillContactInformation);
+    bindRequiredMessage(otherSexInput, i18n.form.validation.specifyOtherSex);
 
     ageInput.addEventListener('invalid', () => {
         if (ageInput.validity.valueMissing) {
-            ageInput.setCustomValidity('請填寫年齡');
+            ageInput.setCustomValidity(i18n.form.validation.fillAge);
         } else if (
             ageInput.validity.badInput
             || ageInput.validity.rangeOverflow
             || ageInput.validity.rangeUnderflow
             || ageInput.validity.stepMismatch
         ) {
-            ageInput.setCustomValidity(`年齡必須是 ${formRules.age.min} 到 ${formRules.age.max} 的整數`);
+            ageInput.setCustomValidity(
+                i18n.form.validation.ageRange
+                    .replace('{min}', formRules.age.min)
+                    .replace('{max}', formRules.age.max)
+            );
         } else {
             ageInput.setCustomValidity('');
         }

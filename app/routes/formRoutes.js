@@ -13,6 +13,9 @@ function createFormRoutes({ formDryRun, googleFormUrl, submitRateLimitMax, title
   const router = express.Router();
   const submitLimiter = createSubmitRateLimiter({
     max: submitRateLimitMax,
+    getMessage(req) {
+      return req.t('server.tooManyRequests');
+    },
     onLimit(req, status, message) {
       logAuditEvent(req, 'submit_rate_limited', { status, message });
     }
@@ -24,16 +27,16 @@ function createFormRoutes({ formDryRun, googleFormUrl, submitRateLimitMax, title
 
     try {
       // 先把请求体校验并规范化成 Google Form 需要的值。
-      const { errors, values } = validateSubmission(req.body);
+      const { errors, values } = validateSubmission(req.body, req.t);
       if (errors.length > 0) {
         logAuditEvent(req, 'submit_validation_failed', {
           errorCount: errors.length,
           status: 400
         });
-        return res.status(400).send(`提交失敗：${errors.join('；')}`);
+        return res.status(400).send(`${req.t('server.submitFailedPrefix')}${errors.join('；')}`);
       }
 
-      const fields = buildGoogleFormFields(values);
+      const fields = buildGoogleFormFields(values, req.t);
       const encodedPayload = encodeGoogleFormFields(fields);
 
       // 干跑模式下直接渲染预览页，不真正请求 Google。
@@ -43,7 +46,7 @@ function createFormRoutes({ formDryRun, googleFormUrl, submitRateLimitMax, title
           status: 200
         });
         return res.render('submit_preview', {
-          title: `提交預覽|${title}`,
+          title: req.t('pageTitles.submitPreview', { title }),
           googleFormUrl,
           fields,
           encodedPayload
@@ -56,7 +59,9 @@ function createFormRoutes({ formDryRun, googleFormUrl, submitRateLimitMax, title
         fieldCount: fields.length,
         status: 200
       });
-      return res.render('submit');
+      return res.render('submit', {
+        title
+      });
     } catch (error) {
       logAuditEvent(req, 'submit_failed', {
         error: error.message,
@@ -64,7 +69,7 @@ function createFormRoutes({ formDryRun, googleFormUrl, submitRateLimitMax, title
       });
       // 详细错误保留在服务端日志里，对外仍返回统一失败文案。
       console.error('Submission Error:', error.response ? error.response.data : error.message);
-      return res.status(500).send('提交失敗');
+      return res.status(500).send(req.t('server.submitFailed'));
     }
   });
 

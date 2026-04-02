@@ -1,24 +1,30 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="<%= lang %>">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>NO TORSION</title>
+        <meta name="color-scheme" content="light dark">
+        <title><%= t('common.siteName') %></title>
         <link rel="stylesheet" href="/css/index.css">
+        <script>
+            window.APP_LANG = "<%= lang %>";
+            window.I18N = <%- JSON.stringify(clientMessages) %>;
+        </script>
     </head>
-    <body>
-
+    <body class="submit-page">
         <div class="hero">
-            <h1>提交成功！感謝您的參與。</h1>
+            <h1><%= t('submitSuccess.title') %></h1>
             <p>
-                我們已經收到了您的表單，感謝您的參與。您的參與將是我們前進的動力！
+                <%= t('submitSuccess.message') %>
             </p>
-            <a href="/" class="btn">返回首頁</a>
-            <a href="https://github.com/HosinoEJ/No-Torsion" class="btn">抵制扭轉機構簽名會</a>
+            <div class="hero__actions submit-page__actions">
+                <a href="/" class="btn"><%= t('submitSuccess.backHome') %></a>
+                <a href="https://github.com/HosinoEJ/No-Torsion" class="btn"><%= t('submitSuccess.petition') %></a>
+            </div>
         </div>
 
         <div class="footer">
-            © 2026 NO CONVERSION THERAPY Project. By:<a href="https://github.com/HosinoEJ">HosinoNeko</a>
+            <%= t('common.footerBy') %><a href="https://github.com/HosinoEJ">HosinoNeko</a>
         </div>
         <%- include('partials/foot') %>
     </body>

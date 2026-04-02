@@ -1,25 +1,74 @@
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
-
-<div class="form-group" style="display: flex; flex-direction: column; align-items: center;">
-    <input type="text" name="search" id="mapSearchInput" placeholder="检索学校名、负责人、省份、地址、丑闻、联系方式等">
-    <button id="mapSearchButton" type="button">检索</button>
+<div class="form-group map-search-panel">
+    <input type="text" name="search" id="mapSearchInput" placeholder="<%= t('map.list.searchPlaceholder') %>">
+    <button id="mapSearchButton" type="button"><%= t('map.list.searchButton') %></button>
 </div>
 
 
-<div id="data-container" style="display: flex; flex-direction: column;align-items: center;"></div>
+<div id="data-container" class="map-record-list"></div>
 
 <script>
+(() => {
+    const i18n = window.I18N;
     const urlParams = new URLSearchParams(window.location.search);
     const inputType = urlParams.get('inputType');
     const inputSearch = (urlParams.get('search') || '').trim();
     const mapSearchInput = document.getElementById('mapSearchInput');
     const dataContainer = document.getElementById('data-container');
+    const shouldTranslateDetails = window.APP_LANG !== 'zh-CN';
+    const originalChineseFieldLabels = {
+        experience: '受害者经历：',
+        scandal: '学校丑闻：',
+        other: '其他：'
+    };
+    const translatableFieldConfigs = [
+        {
+            key: 'experience',
+            sourceKey: 'experience',
+            originalLabel: originalChineseFieldLabels.experience,
+            translatedLabel: i18n.map.list.fields.experience
+        },
+        {
+            key: 'scandal',
+            sourceKey: 'scandal',
+            originalLabel: originalChineseFieldLabels.scandal,
+            translatedLabel: i18n.map.list.fields.scandal
+        },
+        {
+            key: 'other',
+            sourceKey: 'else',
+            originalLabel: originalChineseFieldLabels.other,
+            translatedLabel: i18n.map.list.fields.other
+        }
+    ];
 
     mapSearchInput.value = inputSearch;
 
     function normalizeSearchText(value) {
         return String(value || '').trim().toLowerCase().replace(/\s+/g, '');
+    }
+
+    function getInputTypeDisplay(value) {
+        if (!value) {
+            return i18n.data.inputTypes.bulk;
+        }
+
+        if (value === '受害者本人') {
+            return i18n.data.inputTypes.self;
+        }
+
+        if (value === '受害者的代理人') {
+            return i18n.data.inputTypes.agent;
+        }
+
+        if (value === '批量数据') {
+            return i18n.data.inputTypes.bulk;
+        }
+
+        return value;
+    }
+
+    function getProvinceDisplay(value) {
+        return i18n.data.provinceNames[value] || value || '';
     }
 
     function getSearchTokens(searchText) {
@@ -29,6 +78,10 @@
             .split(/\s+/)
             .map((token) => normalizeSearchText(token))
             .filter(Boolean);
+    }
+
+    function getRecordAnchorId(index) {
+        return `record-${index}`;
     }
 
     function matchesInputType(item, expectedInputType) {
@@ -46,12 +99,14 @@
             item.experience,
             item.HMaster,
             item.province,
+            getProvinceDisplay(item.province),
             item.prov,
             item.addr,
             item.scandal,
             item.contact,
             item.else,
-            item.inputType
+            item.inputType,
+            getInputTypeDisplay(item.inputType)
         ];
 
         const searchableText = searchableFields.map((field) => normalizeSearchText(field)).join(' ');
@@ -65,6 +120,146 @@
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#39;');
+    }
+
+    function getTranslationCacheKey(targetLanguage, text) {
+        return `detail-translation:${targetLanguage}:${text}`;
+    }
+
+    function readTranslationCache(targetLanguage, text) {
+        try {
+            return window.sessionStorage.getItem(getTranslationCacheKey(targetLanguage, text));
+        } catch (error) {
+            console.warn('读取翻译缓存失败:', error);
+            return null;
+        }
+    }
+
+    function writeTranslationCache(targetLanguage, text, translatedText) {
+        try {
+            window.sessionStorage.setItem(getTranslationCacheKey(targetLanguage, text), translatedText);
+        } catch (error) {
+            console.warn('写入翻译缓存失败:', error);
+        }
+    }
+
+    function getSourceTextByField(item, fieldConfig) {
+        return String(item[fieldConfig.sourceKey] || '').trim();
+    }
+
+    function buildTranslatableSection(fieldKey, sourceText) {
+        if (!sourceText) {
+            return '';
+        }
+
+        const fieldConfig = translatableFieldConfigs.find((config) => config.key === fieldKey);
+        if (!fieldConfig) {
+            return '';
+        }
+
+        const originalHtml = `
+            <div class="map-detail-block">
+                <strong>${escapeHtml(fieldConfig.originalLabel)}</strong> ${escapeHtml(sourceText)}
+            </div>
+        `;
+
+        if (!shouldTranslateDetails) {
+            return originalHtml;
+        }
+
+        return `
+            ${originalHtml}
+            <div class="map-detail-block map-detail-block--translation" data-translate-field="${fieldKey}">
+                <strong>${escapeHtml(fieldConfig.translatedLabel)}</strong>
+                <span class="map-detail-translation__text">${escapeHtml(i18n.map.list.translationLoading)}</span>
+            </div>
+        `;
+    }
+
+    async function requestTranslations(items) {
+        const response = await window.fetch('/api/translate-text', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                targetLanguage: window.APP_LANG,
+                items
+            })
+        });
+
+        const payload = await response.json();
+        if (!response.ok) {
+            throw new Error(payload.error || i18n.map.list.translationUnavailable);
+        }
+
+        return Array.isArray(payload.translations) ? payload.translations : [];
+    }
+
+    async function hydrateTranslations(card, item) {
+        if (!shouldTranslateDetails || card.dataset.translationState === 'loaded' || card.dataset.translationState === 'loading') {
+            return;
+        }
+
+        const itemsToTranslate = translatableFieldConfigs
+            .map((config) => ({
+                fieldKey: config.key,
+                text: getSourceTextByField(item, config)
+            }))
+            .filter((entry) => entry.text);
+
+        if (itemsToTranslate.length === 0) {
+            card.dataset.translationState = 'loaded';
+            return;
+        }
+
+        const translatedTextByField = Object.create(null);
+        const pendingItems = [];
+
+        itemsToTranslate.forEach((entry) => {
+            const cachedTranslation = readTranslationCache(window.APP_LANG, entry.text);
+
+            if (cachedTranslation) {
+                translatedTextByField[entry.fieldKey] = cachedTranslation;
+            } else {
+                pendingItems.push(entry);
+            }
+        });
+
+        card.dataset.translationState = 'loading';
+
+        try {
+            if (pendingItems.length > 0) {
+                const translatedItems = await requestTranslations(pendingItems);
+                translatedItems.forEach((entry) => {
+                    translatedTextByField[entry.fieldKey] = entry.translatedText || '';
+
+                    if (entry.translatedText) {
+                        writeTranslationCache(window.APP_LANG, entry.text, entry.translatedText);
+                    }
+                });
+            }
+
+            itemsToTranslate.forEach((entry) => {
+                const targetNode = card.querySelector(`[data-translate-field="${entry.fieldKey}"] .map-detail-translation__text`);
+
+                if (targetNode) {
+                    targetNode.textContent = translatedTextByField[entry.fieldKey] || i18n.map.list.translationUnavailable;
+                }
+            });
+
+            card.dataset.translationState = 'loaded';
+        } catch (error) {
+            console.error('翻译详情失败:', error);
+            itemsToTranslate.forEach((entry) => {
+                const targetNode = card.querySelector(`[data-translate-field="${entry.fieldKey}"] .map-detail-translation__text`);
+
+                if (targetNode) {
+                    targetNode.textContent = i18n.map.list.translationUnavailable;
+                }
+            });
+            card.dataset.translationState = 'error';
+        }
     }
 
     function buildFilterLink(nextInputType) {
@@ -95,52 +290,69 @@
 
     async function loadData() {
         try {
-            const response = await axios.get(window.API_URL);
-            const rawData = response.data.data;
+            const response = await window.getSharedMapData();
+            const rawData = response.data;
             const filteredData = rawData.filter((item) => matchesInputType(item, inputType) && matchesSearch(item, inputSearch));
 
             dataContainer.innerHTML = '';
 
             if (filteredData.length === 0) {
-                dataContainer.innerHTML = '<p>沒有符合檢索條件的結果</p>';
+                dataContainer.innerHTML = `<p>${escapeHtml(i18n.map.list.noResults)}</p>`;
                 return;
             }
 
-            filteredData.forEach(item => {
+            filteredData.forEach((item, index) => {
                 const card = document.createElement('details');
-                card.className = 'div';
-                card.id = `${item.name}`;
+                card.className = 'div map-record-card';
+                card.id = getRecordAnchorId(index);
                 card.style.width = '100%';
 
-                const scandalHtml = item.scandal ? `<div><strong>学校丑闻：</strong> ${escapeHtml(item.scandal)}</div>` : '';
-                const experienceHtml = item.experience ? `<div><strong>受害者经历：</strong> ${escapeHtml(item.experience)}</div>` : '';
-                const elseHtml = item.else ? `<div><strong>其他：</strong> ${escapeHtml(item.else)}</div>` : '';
+                const experienceHtml = buildTranslatableSection('experience', item.experience);
+                const scandalHtml = buildTranslatableSection('scandal', item.scandal);
+                const elseHtml = buildTranslatableSection('other', item.else);
                 const inputHtml = item.inputType ? item.inputType : '批量数据';
                 const inputHref = buildFilterLink(inputHtml);
+                const inputDisplay = getInputTypeDisplay(inputHtml);
 
                 card.innerHTML = `
-                    <summary><h2>${escapeHtml(item.name)}</h2><br><small style="margin-left: auto;"><a href="${inputHref}">${escapeHtml(inputHtml)}</a></small></summary>
-                    <div class="div">
-                        <p><strong>負責人：</strong>${escapeHtml(item.HMaster)}</p>
-                        <p><strong>省份：</strong>${escapeHtml(item.province)}</p>
-                        <p><strong>鄉、鎮：</strong>${escapeHtml(item.prov)}</p>
-                        <p><strong>地址：</strong>${escapeHtml(item.addr)}</p>
+                    <summary class="map-record-summary">
+                        <div class="map-record-summary__title-group">
+                            <h2 class="map-record-summary__title">${escapeHtml(item.name)}</h2>
+                        </div>
+                        <small class="map-record-summary__tag">
+                            <a href="${inputHref}">${escapeHtml(inputDisplay)}</a>
+                        </small>
+                    </summary>
+                    <div class="div map-record-body">
+                        <p><strong>${escapeHtml(i18n.map.list.fields.headmaster)}</strong>${escapeHtml(item.HMaster)}</p>
+                        <p><strong>${escapeHtml(i18n.map.list.fields.province)}</strong>${escapeHtml(getProvinceDisplay(item.province))}</p>
+                        <p><strong>${escapeHtml(i18n.map.list.fields.region)}</strong>${escapeHtml(item.prov)}</p>
+                        <p><strong>${escapeHtml(i18n.map.list.fields.address)}</strong>${escapeHtml(item.addr)}</p>
                         <hr>
                         ${experienceHtml}
                         ${scandalHtml}
                         ${elseHtml}
-                        <div class="contact"><strong>聯繫方式：</strong>\n${escapeHtml(item.contact)}</div>
+                        <div class="contact"><strong>${escapeHtml(i18n.map.list.fields.contact)}</strong>\n${escapeHtml(item.contact)}</div>
                     </div>
                 `;
 
                 dataContainer.appendChild(card);
+
+                if (shouldTranslateDetails) {
+                    card.addEventListener('toggle', () => {
+                        if (card.open) {
+                            hydrateTranslations(card, item);
+                        }
+                    });
+                }
             });
         } catch (error) {
             console.error('獲取數據失敗:', error);
-            document.getElementById('data-container').innerHTML = '<p>數據加載失敗</p>';
+            document.getElementById('data-container').innerHTML = `<p>${escapeHtml(i18n.map.list.loadFailed)}</p>`;
         }
     }
 
     // 執行函數
     loadData();
+})();
 </script>

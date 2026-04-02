@@ -1,5 +1,6 @@
 (() => {
   const areaSelectorData = window.AREA_SELECTOR_DATA || { provinces: [], citiesByProvinceCode: {}, countiesByCityCode: {} };
+  const i18n = window.I18N;
   const provinceSelect = document.getElementById('provinceSelect');
   const citySelect = document.getElementById('citySelect');
   const countySelect = document.getElementById('countySelect');
@@ -24,7 +25,11 @@
   function updateCityOptions(provinceCode) {
     const cityOptions = areaSelectorData.citiesByProvinceCode[provinceCode] || [];
     citySelect.disabled = cityOptions.length === 0;
-    renderOptions(citySelect, cityOptions, cityOptions.length === 0 ? '請先選擇省份' : '選擇城市 / 區縣');
+    renderOptions(
+      citySelect,
+      cityOptions,
+      cityOptions.length === 0 ? i18n.form.placeholders.city : i18n.form.fields.city
+    );
     updateCountyOptions('');
   }
 
@@ -35,15 +40,19 @@
 
     const countyOptions = areaSelectorData.countiesByCityCode[cityCode] || [];
     countySelect.disabled = countyOptions.length === 0;
-    renderOptions(countySelect, countyOptions, countyOptions.length === 0 ? '可選：當前城市無縣區可選' : '可選：選擇縣區');
+    renderOptions(
+      countySelect,
+      countyOptions,
+      countyOptions.length === 0 ? i18n.form.placeholders.countyUnavailable : i18n.form.placeholders.county
+    );
   }
 
   if (provinceSelect && citySelect) {
-    renderOptions(provinceSelect, areaSelectorData.provinces || [], '選擇省份');
+    renderOptions(provinceSelect, areaSelectorData.provinces || [], i18n.form.placeholders.province);
     citySelect.disabled = true;
     if (countySelect) {
       countySelect.disabled = true;
-      renderOptions(countySelect, [], '可選：請先選擇城市 / 區縣');
+      renderOptions(countySelect, [], i18n.form.placeholders.countyInitial);
     }
 
     provinceSelect.addEventListener('change', () => {

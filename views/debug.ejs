@@ -1,0 +1,17 @@
+<%- include('partials/head') %>
+<body>
+    <a href="/" class="page-back-link">← <%= t('navigation.home') %></a>
+
+    <main class="container">
+        <h1>Debug</h1>
+        <div class="div" style="width: 100%;">
+            <p>This page is only available when `DEBUG_MOD=true`.</p>
+            <p><strong>Language:</strong> <code><%= lang %></code></p>
+            <p><strong>API URL:</strong> <code><%= apiUrl %></code></p>
+            <p><strong>Debug Mode:</strong> <code><%= debugMode %></code></p>
+        </div>
+    </main>
+
+    <%- include('partials/foot') %>
+</body>
+</html>

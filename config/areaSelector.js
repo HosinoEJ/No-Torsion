@@ -1,4 +1,5 @@
 const chinaAreaData = require('china-area-data');
+const { getProvinceCodeLabels } = require('./i18n');
 
 // china-area-data 提供的是标准行政区名称，这里维护旧表单沿用的省份展示名映射。
 const legacyProvinceNameByCode = {
@@ -84,6 +85,18 @@ const countiesByCityCode = Object.fromEntries(
     .map((city) => [city.code, getCountyOptionsForCity(city.code)])
 );
 
+function getAreaOptions(language) {
+  const provinceLabels = getProvinceCodeLabels(language);
+  return {
+    provinces: provinceOptions.map((province) => ({
+      code: province.code,
+      name: provinceLabels[province.code] || province.name
+    })),
+    citiesByProvinceCode: cityOptionsByProvinceCode,
+    countiesByCityCode
+  };
+}
+
 // 用于后端校验“省份 code + 城市 code”是否合法匹配。
 function validateProvinceAndCity(provinceCode, cityCode) {
   const province = provinceOptions.find((item) => item.code === provinceCode);
@@ -128,6 +141,7 @@ module.exports = {
   provinceOptions,
   cityOptionsByProvinceCode,
   countiesByCityCode,
+  getAreaOptions,
   validateProvinceAndCity,
   validateCountyForCity
 };

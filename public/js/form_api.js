@@ -31,7 +31,7 @@ if (schoolInput && resultsList) {
     });
 
     function renderSchools(schools) {
-        resultsList.innerHTML = '';
+        resultsList.replaceChildren();
         
         if (schools.length === 0) {
             resultsList.style.display = 'none';
@@ -40,11 +40,12 @@ if (schoolInput && resultsList) {
 
         schools.forEach(item => {
             const div = document.createElement('div');
+            const title = document.createElement('span');
+
             div.className = 'result-item';
-            // 显示名称和地址，方便用户辨别
-            div.innerHTML = `
-                <span class="school-title">${item.name}</span>
-            `;
+            title.className = 'school-title';
+            title.textContent = item.name || '';
+            div.appendChild(title);
             
             div.onclick = () => {
                 schoolInput.value = item.name; // 填充输入框

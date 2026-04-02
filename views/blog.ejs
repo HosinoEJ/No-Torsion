@@ -1,12 +1,12 @@
 <%- include('partials/head') %>
 <html>
 <body>
-    <h1>NCT.Blogs</h1>
-    <h3>在这里，也许会有些有用的</h3>
-    <p><a href="/">返回首页</a></p>
+    <a href="/" class="page-back-link">← <%= t('navigation.home') %></a>
+    <h1><%= t('blog.title') %></h1>
+    <h3><%= t('blog.subtitle') %></h3>
 
     <section class="div">
-        <a class="button" href="?">全部</a>
+        <a class="button" href="?"><%= t('blog.all') %></a>
         <% const keys = Object.keys(AllTags); %>
         <% keys.forEach(function(id) { %>
             <% const name = AllTags[id]; %>
@@ -19,17 +19,22 @@
             <% SavedTags.forEach(Prot =>{%>
                 <div class="div">
                     <a href="/port/<%= Prot.filename %>">
-                        <h2><%= Prot.title %></h2>
-                        <p>作者：<%= Prot.author%></p>
-                        <p>創稿日期：<%= Prot.CreationDate%></p>
-                        <p>語言：<%= Prot.Language%></p>
+                        <h2 class="blog-list-card__title">
+                            <span class="blog-list-card__title-original"><%= Prot.title %></span>
+                            <% if (Prot.translatedTitle) { %>
+                                <span class="blog-list-card__title-translation"><%= Prot.translatedTitle %></span>
+                            <% } %>
+                        </h2>
+                        <p><%= t('blog.author') %><%= Prot.author %></p>
+                        <p><%= t('blog.creationDate') %><%= Prot.CreationDate %></p>
+                        <p><%= t('blog.language') %><%= Prot.Language %></p>
                         <p>
                             <% if (Prot.tagid && Prot.tagid.length > 0) { %>
                                 <% Prot.tagid.forEach(id => { %>
                                     <span class="tag-label">#<%= AllTags[id] %> </span>
                                 <% }) %>
                             <% } else { %>
-                                #無標籤
+                                <%= t('blog.noTag') %>
                             <% } %>
                         </p>
                     </a>
@@ -37,11 +42,10 @@
                 </div>
             <%})%>
         <%} else {%>
-            <h3>暫時還沒有文章喵~</h3>
+            <h3><%= t('blog.empty') %></h3>
         <%}%>
     </section>
 
     <%- include('partials/foot') %>
 </body>
 </html>
-

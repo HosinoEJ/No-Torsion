@@ -1,10 +1,21 @@
-<div style="display: flex;     flex-direction: row;
-    justify-content: center;">
-    <div class="div">
-        <h3>填寫類型</h3>
-        <button type="button" data-query-name="inputType" data-query-value="">全部</button>
-        <button type="button" data-query-name="inputType" data-query-value="受害者本人">受害者本人</button>
-        <button type="button" data-query-name="inputType" data-query-value="受害者的代理人">受害者的代理人</button>
-        <button type="button" data-query-name="inputType" data-query-value="批量数据">批量数据</button>
-    </div>
+<%
+    const currentInputType = typeof QTag === 'string' ? QTag : '';
+    const tagOptions = [
+        { value: '', label: t('map.tags.all') },
+        { value: '受害者本人', label: t('map.tags.self') },
+        { value: '受害者的代理人', label: t('map.tags.agent') },
+        { value: '批量数据', label: t('map.tags.bulk') }
+    ];
+%>
+<div class="map-filter-bar">
+    <% tagOptions.forEach((option) => { %>
+        <button
+            type="button"
+            class="map-filter-chip <%= option.value === currentInputType ? 'is-active' : '' %>"
+            data-query-name="inputType"
+            data-query-value="<%= option.value %>"
+        >
+            <%= option.label %>
+        </button>
+    <% }) %>
 </div>

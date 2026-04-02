@@ -1,35 +1,69 @@
-const { provinceOptions, cityOptionsByProvinceCode, countiesByCityCode } = require('./areaSelector');
-
 // 表單枚举值、长度规则和地区联动数据都集中在这里，前后端共用一套定义。
 const allowedIdentities = new Set(['受害者本人', '受害者的代理人']);
 const allowedSexes = new Set(['男', '女', 'MtF', 'FtM', '__other_option__']);
-const formRules = {
-  age: { label: '年齡', required: true, min: 1, max: 100 },
-  identity: { label: '填寫身份', required: true },
-  sex: { label: '性別', required: true },
-  sexOther: { label: '其他性別說明', maxLength: 10 },
-  provinceCode: { label: '省份', required: true },
-  cityCode: { label: '城市 / 區縣', required: true },
-  countyCode: { label: '縣區', required: false },
-  schoolName: { label: '學校名稱', required: true, maxLength: 20 },
-  schoolAddress: { label: '學校地址', maxLength: 50 },
-  dateStart: { label: '入學日期', required: true },
-  dateEnd: { label: '離開日期' },
-  experience: { label: '經歷描述', maxLength: 8000 },
-  headmasterName: { label: '負責人/校長姓名', maxLength: 10 },
-  contactInformation: { label: '學校聯繫方式', required: true, maxLength: 30 },
-  scandal: { label: '已知醜聞', maxLength: 3000 },
-  other: { label: '其他補充', maxLength: 3000 }
+const identityOptions = [
+  { value: '受害者本人', labelKey: 'form.identityOptions.self' },
+  { value: '受害者的代理人', labelKey: 'form.identityOptions.agent' }
+];
+const sexOptions = [
+  { value: '男', labelKey: 'form.sexOptions.male' },
+  { value: '女', labelKey: 'form.sexOptions.female' },
+  { value: 'MtF', labelKey: 'form.sexOptions.mtf' },
+  { value: 'FtM', labelKey: 'form.sexOptions.ftm' },
+  { value: '__other_option__', labelKey: 'form.sexOptions.other' }
+];
+const formRuleDefinitions = {
+  age: { labelKey: 'fields.age', required: true, min: 1, max: 100 },
+  identity: { labelKey: 'fields.identity', required: true },
+  sex: { labelKey: 'fields.sex', required: true },
+  sexOther: { labelKey: 'fields.sexOther', maxLength: 10 },
+  provinceCode: { labelKey: 'fields.provinceCode', required: true },
+  cityCode: { labelKey: 'fields.cityCode', required: true },
+  countyCode: { labelKey: 'fields.countyCode', required: false },
+  schoolName: { labelKey: 'fields.schoolName', required: true, maxLength: 20 },
+  schoolAddress: { labelKey: 'fields.schoolAddress', maxLength: 50 },
+  dateStart: { labelKey: 'fields.dateStart', required: true },
+  dateEnd: { labelKey: 'fields.dateEnd' },
+  experience: { labelKey: 'fields.experience', maxLength: 8000 },
+  headmasterName: { labelKey: 'fields.headmasterName', maxLength: 10 },
+  contactInformation: { labelKey: 'fields.contactInformation', required: true, maxLength: 30 },
+  scandal: { labelKey: 'fields.scandal', maxLength: 3000 },
+  other: { labelKey: 'fields.other', maxLength: 3000 }
 };
-const areaOptions = {
-  provinces: provinceOptions,
-  citiesByProvinceCode: cityOptionsByProvinceCode,
-  countiesByCityCode
-};
+
+function getLocalizedFormRules(t) {
+  return Object.fromEntries(
+    Object.entries(formRuleDefinitions).map(([field, definition]) => [
+      field,
+      {
+        ...definition,
+        label: t(definition.labelKey)
+      }
+    ])
+  );
+}
+
+function getLocalizedIdentityOptions(t) {
+  return identityOptions.map((option) => ({
+    value: option.value,
+    label: t(option.labelKey)
+  }));
+}
+
+function getLocalizedSexOptions(t) {
+  return sexOptions.map((option) => ({
+    value: option.value,
+    label: t(option.labelKey)
+  }));
+}
 
 module.exports = {
   allowedIdentities,
   allowedSexes,
-  areaOptions,
-  formRules
+  formRuleDefinitions,
+  getLocalizedFormRules,
+  getLocalizedIdentityOptions,
+  getLocalizedSexOptions,
+  identityOptions,
+  sexOptions
 };

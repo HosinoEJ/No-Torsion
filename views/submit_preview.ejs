@@ -1,72 +1,155 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="<%= lang %>">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="color-scheme" content="light dark">
         <title><%= title %></title>
         <link rel="stylesheet" href="/css/main.css">
+        <script>
+            window.APP_LANG = "<%= lang %>";
+            window.I18N = <%- JSON.stringify(clientMessages) %>;
+        </script>
         <style>
             body {
                 padding: 2rem 1rem 4rem;
             }
             .preview-container {
-                max-width: 960px;
+                width: min(100%, 960px);
                 margin: 0 auto;
+            }
+            .preview-summary {
+                word-break: break-word;
+            }
+            .preview-table-wrap {
+                width: 100%;
+                margin-top: 1.5rem;
+                overflow-x: auto;
+                border-radius: 14px;
+                box-shadow: var(--shadow-soft);
+                -webkit-overflow-scrolling: touch;
             }
             .preview-table {
                 width: 100%;
                 border-collapse: collapse;
-                margin-top: 1.5rem;
-                background: #fff;
+                background: var(--card-bg);
+                color: var(--text);
+                min-width: 620px;
             }
             .preview-table th,
             .preview-table td {
-                border: 1px solid #ddd;
+                border: 1px solid var(--panel-border);
                 padding: 0.75rem;
                 text-align: left;
                 vertical-align: top;
             }
             .preview-table th {
-                background: #f5f5f5;
+                background: var(--surface-soft);
             }
             pre {
                 white-space: pre-wrap;
-                word-break: break-all;
-                background: #111;
-                color: #f5f5f5;
+                word-break: break-word;
+                overflow-wrap: anywhere;
+                background: var(--code-bg);
+                color: var(--code-text);
                 padding: 1rem;
                 border-radius: 8px;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+            .preview-actions {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.75rem;
+                margin-top: 1.5rem;
+            }
+            .preview-actions a {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 2.75rem;
+                padding: 0.8rem 1rem;
+                border-radius: 12px;
+                background: linear-gradient(135deg, rgba(52, 152, 219, 0.12), rgba(93, 173, 226, 0.22));
+                border: 1px solid var(--panel-border);
+                box-sizing: border-box;
+                text-align: center;
+            }
+            @media (max-width: 720px) {
+                body {
+                    padding: 1.25rem 0.75rem 2rem;
+                }
+                .preview-container {
+                    width: 100%;
+                }
+                .preview-table-wrap {
+                    margin-top: 1rem;
+                    border-radius: 12px;
+                }
+                .preview-table th,
+                .preview-table td {
+                    padding: 0.65rem;
+                    font-size: 0.92rem;
+                }
+                pre {
+                    padding: 0.85rem;
+                    font-size: 0.84rem;
+                }
+                .preview-actions {
+                    flex-direction: column;
+                }
+                .preview-actions a {
+                    width: 100%;
+                }
+            }
+            @media (max-width: 480px) {
+                body {
+                    padding: 1rem 0.6rem 1.5rem;
+                }
+                .preview-table th,
+                .preview-table td {
+                    padding: 0.58rem;
+                    font-size: 0.86rem;
+                }
+                pre {
+                    font-size: 0.78rem;
+                }
             }
         </style>
     </head>
     <body>
         <div class="preview-container">
-            <h1>表單乾跑預覽</h1>
-            <p>這次提交沒有發送到 Google Form。下面是本次本地組裝出的最終欄位和值。</p>
-            <p><strong>目標網址：</strong> <code><%= googleFormUrl %></code></p>
-            <table class="preview-table">
-                <thead>
-                    <tr>
-                        <th>Google Form Entry</th>
-                        <th>欄位</th>
-                        <th>值</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% fields.forEach((field) => { %>
+            <h1><%= t('submitPreview.title') %></h1>
+            <p><%= t('submitPreview.intro') %></p>
+            <p class="preview-summary"><strong><%= t('submitPreview.targetUrl') %></strong> <code><%= googleFormUrl %></code></p>
+            <div class="preview-table-wrap">
+                <table class="preview-table">
+                    <thead>
                         <tr>
-                            <td><code><%= field.entryId %></code></td>
-                            <td><%= field.label %></td>
-                            <td><%= field.value %></td>
+                            <th><%= t('submitPreview.columns.entry') %></th>
+                            <th><%= t('submitPreview.columns.field') %></th>
+                            <th><%= t('submitPreview.columns.value') %></th>
                         </tr>
-                    <% }); %>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <% fields.forEach((field) => { %>
+                            <tr>
+                                <td><code><%= field.entryId %></code></td>
+                                <td><%= field.label %></td>
+                                <td><%= field.value %></td>
+                            </tr>
+                        <% }); %>
+                    </tbody>
+                </table>
+            </div>
 
-            <h2>URL Encoded Payload</h2>
+            <h2><%= t('submitPreview.payload') %></h2>
             <pre><%= encodedPayload %></pre>
 
-            <p><a href="/form">返回表單</a></p>
+            <div class="preview-actions">
+                <a href="/form"><%= t('submitPreview.backForm') %></a>
+            </div>
         </div>
+        <%- include('partials/foot') %>
     </body>
 </html>

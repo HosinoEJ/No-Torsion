@@ -1,29 +1,37 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="<%= lang %>">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="color-scheme" content="light dark">
         <title><%- title %></title>
         <link rel="stylesheet" href="/css/index.css">
         <link rel="icon" href="/favicon.svg"/>
+        <script>
+            window.APP_LANG = "<%= lang %>";
+            window.I18N = <%- JSON.stringify(clientMessages) %>;
+        </script>
     </head>
     <body>
+        <%- include('partials/language_switcher') %>
 
         <div class="hero">
-            <h1>NO CONVERSION THERAPY</h1>
+            <h1><%= t('common.siteName') %></h1>
             <p>
-                每一份真實的聲音，都是終結扭轉與傷害的力量。
+                <%= t('index.tagline') %>
             </p>
-            <a href="/form" class="btn">參與填表</a>
-            <a href="/map" class="btn">查看扭转机构地图</a>
-            <a href="/blog" class="btn">文库</a>
-            
+            <div class="hero__actions">
+                <a href="/form" class="btn"><%= t('index.fillForm') %></a>
+                <a href="/map" class="btn"><%= t('index.viewMap') %></a>
+                <a href="/blog" class="btn btn--library"><%= t('index.blogLibrary') %></a>
+            </div>
         </div>
 
         <div class="footer">
-            <p>© 2026 NO CONVERSION THERAPY Project. By:<a href="mailto:notorsion@hosinoneko.me">HosinoNeko</a></p>
-            <a href="/aboutus">關於我們</a>
+            <p><%= t('common.footerBy') %><a href="mailto:notorsion@hosinoneko.me">HosinoNeko</a></p>
+            <a href="/aboutus"><%= t('navigation.about') %></a>
         </div>
+        <script src="/js/language_switcher.js"></script>
         <%- include('partials/foot') %>
     </body>
 </html>

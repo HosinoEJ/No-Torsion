@@ -24,18 +24,21 @@ const requestBodyLimits = {
 };
 
 // 表单提交限流单独封装，方便在 route 层直接创建并接审计回调。
-function createSubmitRateLimiter({ max, onLimit }) {
+function createSubmitRateLimiter({ max, onLimit, getMessage }) {
   return rateLimit({
     windowMs: 15 * 60 * 1000,
     max: Number.isFinite(max) && max > 0 ? max : 5,
     standardHeaders: true,
     legacyHeaders: false,
-    message: '提交過於頻繁，請稍後再試。',
     handler(req, res, _next, options) {
+      const message = typeof getMessage === 'function'
+        ? getMessage(req)
+        : '提交過於頻繁，請稍後再試。';
+
       if (typeof onLimit === 'function') {
-        onLimit(req, options.statusCode, options.message);
+        onLimit(req, options.statusCode, message);
       }
-      res.status(options.statusCode).send(options.message);
+      res.status(options.statusCode).send(message);
     }
   });
 }

@@ -2,20 +2,22 @@
 <html>
 <body>
     <div>
-        <p><a href="/">返回首页</a></p>
-        <p><a href="/blog">所有文章</a></p>
+        <p><a href="/"><%= t('navigation.home') %></a></p>
+        <p><a href="/blog"><%= t('navigation.allArticles') %></a></p>
     </div>
 
-    <div class="div" style="width: 70%;">
+    <div class="div blog-article-card" style="width: 70%;">
         <% reports.forEach(report => { %>
-        <main class="main">
+        <main class="main blog-article">
                 <div class="port" id="markdown">
                     <%- report.html %>
                 </div>
             </main>
         <% }) %>
     </div>
+    <% if (lang === 'en') { %>
+        <script src="/js/blog_article_translation.js"></script>
+    <% } %>
     <%- include('partials/foot') %>
 </body>
 </html>
-

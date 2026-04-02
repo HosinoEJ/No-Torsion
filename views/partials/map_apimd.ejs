@@ -1,17 +1,17 @@
-<details class="div" close>
-    <summary style="color: blue;"><h3>想要调用API？</h3></summary>
+<details class="div map-api-card" close>
+    <summary><h3><%= t('map.api.summary') %></h3></summary>
     <div class="details-content">
-        我们明确表示：我们永远不会泄露受访者的任何敏感性资料。<br>
-        在调用api之前，我们要明白：HosinoNeko站长只允许自己正在使用的资料，这些资料全部会在map上显示。<br>
+        <%= t('map.api.privacy') %><br>
+        <%= t('map.api.beforeUse') %><br>
         <hr>
-        我们如何实现的？<br>
-        首先你的表单会透过vercel上传到google forms，在那里会生成一个excel表格，站长在其表格的AppScript部署了应用程式，会将地址一栏转化为经纬度并保存在表格中。然后会生成一个JSON在google为其创建的api中，值得注意的是这个api因为包含着所有资讯，所以我会对其保密。本站会将其中需要的讯息传送到本站，并再次生成一个api。而这个api是允许你们存取的。<br>
+        <%= t('map.api.implementationTitle') %><br>
+        <%= t('map.api.implementationBody') %><br>
         <hr>
-        我们的看法：<br>
-        我们可太希望你们可以使用我的api并接入到你们的网站上了！因为如果中国国安局封禁了我的网站，你们还可以透过api继续在国内网路中传播。换言之这是一种去中心化。<br>
-        知道了这些，你就可以使用我们的api了！快去放在你们的网站上吧！<br>
+        <%= t('map.api.opinionTitle') %><br>
+        <%= t('map.api.opinionBody') %><br>
+        <%= t('map.api.cta') %><br>
         <a href="https://nct.hosinoneko.me/api/map-data" class="api-link-highlight" target="_blank">
-            🔗 獲取API數據源
+            🔗 <%= t('map.api.link') %>
         </a>
     </div>
 </details>
