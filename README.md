@@ -51,7 +51,13 @@
 
 ---
 
-## 快速開始
+## Stargazers over time
+[![Stargazers over time](https://starchart.cc/NO-CONVERSION-THERAPY/NCT.svg?variant=adaptive)](https://starchart.cc/NO-CONVERSION-THERAPY/NCT)
+
+
+
+## 開發與貢獻
+
 
 ### 1. 取得專案
 
