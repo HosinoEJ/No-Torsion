@@ -4,6 +4,10 @@
     let formMapTileLayer = null;
     let leafletAssetsPromise = null;
     const i18n = window.I18N;
+    const LEAFLET_CSS_URL = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    const LEAFLET_CSS_INTEGRITY = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
+    const LEAFLET_JS_URL = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    const LEAFLET_JS_INTEGRITY = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
     const TILE_ERROR_THRESHOLD = 6;
     const FORM_MAP_TILE_PROVIDERS = {
         dark: [
@@ -133,7 +137,9 @@
 
         const stylesheet = document.createElement('link');
         stylesheet.rel = 'stylesheet';
-        stylesheet.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        stylesheet.href = LEAFLET_CSS_URL;
+        stylesheet.integrity = LEAFLET_CSS_INTEGRITY;
+        stylesheet.crossOrigin = 'anonymous';
         stylesheet.setAttribute('data-form-leaflet-css', 'true');
         document.head.appendChild(stylesheet);
     }
@@ -148,8 +154,10 @@
             }
 
             const script = document.createElement('script');
-            script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+            script.src = LEAFLET_JS_URL;
             script.async = true;
+            script.integrity = LEAFLET_JS_INTEGRITY;
+            script.crossOrigin = 'anonymous';
             script.setAttribute('data-form-leaflet-script', 'true');
             script.addEventListener('load', resolve, { once: true });
             script.addEventListener('error', reject, { once: true });

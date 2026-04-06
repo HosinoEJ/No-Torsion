@@ -28,6 +28,14 @@ const requestBodyLimits = {
   json: '50kb',
   urlencoded: '50kb'
 };
+const sensitiveRobotsPolicy = 'noindex, nofollow, noarchive, nosnippet';
+const sensitiveResponseHeaders = {
+  'Cache-Control': 'private, no-store, no-cache, max-age=0, must-revalidate',
+  Pragma: 'no-cache',
+  Expires: '0',
+  'Surrogate-Control': 'no-store',
+  'X-Robots-Tag': sensitiveRobotsPolicy
+};
 
 // 复用 Redis client 和 rate-limit store，避免每个 limiter 单独建连接。
 const redisClientCache = new Map();
@@ -134,10 +142,17 @@ function createSubmitRateLimiter({ max, onLimit, getMessage, redisUrl }) {
   });
 }
 
+function applySensitivePageHeaders(res) {
+  res.set(sensitiveResponseHeaders);
+  return res;
+}
+
 module.exports = {
+  applySensitivePageHeaders,
   createRateLimiter,
   getRedisRateLimitStore,
   createSubmitRateLimiter,
   helmetConfig,
-  requestBodyLimits
+  requestBodyLimits,
+  sensitiveRobotsPolicy
 };

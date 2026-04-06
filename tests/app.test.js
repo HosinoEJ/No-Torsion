@@ -286,6 +286,8 @@ test('map page renders the record container and lazy-load sentinel', async () =>
   assert.match(response.body, /\/js\/map_backTop\.js/);
   assert.match(response.body, /\/js\/queryUpd\.js/);
   assert.match(response.body, /cdn\.jsdelivr\.net\/npm\/chart\.js/);
+  assert.match(response.body, /sha256-p4NxAoJBhIIN\+hmNHrzRCf9tD\/miZyoHS5obTRR9BMY=/);
+  assert.match(response.body, /sha256-20nQCchB9co0qIjJZRGuk2\/Z9VM\+kNiyxNV1lvTlZBo=/);
 });
 
 test('map page keeps an OSM-compatible referrer policy for tile requests', async () => {
@@ -318,6 +320,18 @@ test('form page includes school name and address autocomplete hooks', async () =
   assert.doesNotMatch(response.body, /unpkg\.com\/leaflet@1\.9\.4\/dist\/leaflet\.js/);
   assert.doesNotMatch(response.body, /\/js\/map_backTop\.js/);
   assert.doesNotMatch(response.body, /\/js\/queryUpd\.js/);
+});
+
+test('form page disables indexing and caching because it issues sensitive submission tokens', async () => {
+  const app = loadApp({ DEBUG_MOD: 'false' });
+  const response = await requestPath(app, '/form');
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.headers['x-robots-tag'], 'noindex, nofollow, noarchive, nosnippet');
+  assert.equal(response.headers['surrogate-control'], 'no-store');
+  assert.match(response.headers['cache-control'], /private/);
+  assert.match(response.headers['cache-control'], /no-store/);
+  assert.match(response.body, /<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">/);
 });
 
 test('area options API localizes city options for the current language', async () => {
@@ -375,12 +389,12 @@ test('sitemap.xml lists static pages and blog articles', async () => {
   assert.equal(response.statusCode, 200);
   assert.match(response.headers['content-type'], /application\/xml/);
   assert.match(response.body, /<loc>https:\/\/example\.com\/<\/loc>/);
-  assert.match(response.body, /<loc>https:\/\/example\.com\/form<\/loc>/);
   assert.match(response.body, /<loc>https:\/\/example\.com\/map<\/loc>/);
   assert.match(response.body, /<loc>https:\/\/example\.com\/privacy<\/loc>/);
   assert.match(response.body, /<loc>https:\/\/example\.com\/blog<\/loc>/);
   assert.match(response.body, /https:\/\/example\.com\/port\/%E9%97%9C%E6%96%BC%E5%BF%83%E7%A8%AE%E5%AD%90%E6%95%99%E8%82%B2%E9%81%95%E6%B3%95%E8%BE%A6%E5%AD%B8%E7%9A%84%E6%8E%A7%E5%91%8A/);
   assert.doesNotMatch(response.body, /\/debug<\/loc>/);
+  assert.doesNotMatch(response.body, /<loc>https:\/\/example\.com\/form<\/loc>/);
 });
 
 test('robots.txt exposes sitemap and blocks non-indexable routes', async () => {
@@ -395,9 +409,24 @@ test('robots.txt exposes sitemap and blocks non-indexable routes', async () => {
   assert.match(response.body, /^User-agent: \*$/m);
   assert.match(response.body, /^Allow: \/$/m);
   assert.match(response.body, /^Disallow: \/api\/$/m);
+  assert.match(response.body, /^Disallow: \/form$/m);
   assert.match(response.body, /^Disallow: \/submit$/m);
   assert.match(response.body, /^Disallow: \/debug$/m);
+  assert.match(response.body, /^Crawl-delay: 5$/m);
   assert.match(response.body, /^Sitemap: https:\/\/example\.com\/sitemap\.xml$/m);
+});
+
+test('public content stays indexable while repeated page crawling is rate limited', async () => {
+  const app = loadApp({
+    DEBUG_MOD: 'false',
+    PAGE_READ_RATE_LIMIT_MAX: '1'
+  });
+  const firstResponse = await requestPath(app, '/blog');
+  const secondResponse = await requestPath(app, '/blog');
+
+  assert.equal(firstResponse.statusCode, 200);
+  assert.doesNotMatch(firstResponse.body, /<meta name="robots" content="noindex/i);
+  assert.equal(secondResponse.statusCode, 429);
 });
 
 test('debug page is hidden when debug mode is disabled', async () => {
@@ -520,6 +549,15 @@ test('translation service uses Google Cloud Translation when configured', async 
     global.fetch = originalFetch;
     clearProjectModules();
   }
+});
+
+test('rate-limit messages are localized in all supported languages', () => {
+  clearProjectModules();
+  const { translate } = require(path.join(projectRoot, 'config/i18n'));
+
+  assert.equal(translate('zh-CN', 'server.tooManyRequests'), '请求过于频繁，请稍后再试。');
+  assert.equal(translate('zh-TW', 'server.tooManyRequests'), '請求過於頻繁，請稍後再試。');
+  assert.equal(translate('en', 'server.tooManyRequests'), 'Too many requests. Please try again later.');
 });
 
 test('translation service retries transient fetch failures without relying on child processes', async () => {
@@ -1060,6 +1098,10 @@ test('submit route still accepts a valid protected form in dry run mode', async 
   });
 
   assert.equal(response.statusCode, 200);
+  assert.equal(response.headers['x-robots-tag'], 'noindex, nofollow, noarchive, nosnippet');
+  assert.equal(response.headers['surrogate-control'], 'no-store');
+  assert.match(response.headers['cache-control'], /no-store/);
+  assert.match(response.body, /<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">/);
   assert.match(response.body, /entry\.5034928/);
   assert.match(response.body, /测试学校/);
   assert.match(response.body, /entry\.842223433_year/);
@@ -1284,6 +1326,53 @@ test('public map API keeps CORS enabled while translate API stays same-origin on
     assert.equal(translateResponse.headers['access-control-allow-origin'], undefined);
   } finally {
     global.fetch = originalFetch;
+    clearProjectModules();
+  }
+});
+
+test('public map API throttles repeated read scraping without disabling cross-origin reads', async () => {
+  clearProjectModules();
+  const originalFetch = global.fetch;
+  const mapDataService = require(path.join(projectRoot, 'app/services/mapDataService'));
+
+  mapDataService.resetMapDataCache();
+  global.fetch = async () => ({
+    ok: true,
+    async json() {
+      return {
+        avg_age: 18,
+        last_synced: 1000,
+        statistics: [],
+        data: []
+      };
+    }
+  });
+
+  try {
+    const app = loadApp({
+      DEBUG_MOD: 'false',
+      MAP_READ_RATE_LIMIT_MAX: '1'
+    });
+    const firstResponse = await requestApp(app, {
+      path: '/api/map-data',
+      headers: {
+        Origin: 'https://crawler.example'
+      }
+    });
+    const secondResponse = await requestApp(app, {
+      path: '/api/map-data',
+      headers: {
+        Origin: 'https://crawler.example'
+      }
+    });
+
+    assert.equal(firstResponse.statusCode, 200);
+    assert.equal(firstResponse.headers['access-control-allow-origin'], '*');
+    assert.equal(secondResponse.statusCode, 429);
+    assert.equal(secondResponse.headers['access-control-allow-origin'], '*');
+  } finally {
+    global.fetch = originalFetch;
+    mapDataService.resetMapDataCache();
     clearProjectModules();
   }
 });

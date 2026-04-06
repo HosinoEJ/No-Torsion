@@ -488,7 +488,7 @@ const messages = {
       submitFailedPrefix: '提交失败：',
       submitFailed: '提交失败',
       invalidFormSubmission: '提交已失效或异常，请刷新页面后重试。',
-      tooManyRequests: '提交过于频繁，请稍后再试。',
+      tooManyRequests: '请求过于频繁，请稍后再试。',
       mapDataUnavailable: '无法取得地图数据',
       areaOptionsUnavailable: '无法取得地区选项'
     },
@@ -842,7 +842,7 @@ const messages = {
       submitFailedPrefix: '提交失敗：',
       submitFailed: '提交失敗',
       invalidFormSubmission: '提交已失效或異常，請重新整理頁面後再試。',
-      tooManyRequests: '提交過於頻繁，請稍後再試。',
+      tooManyRequests: '請求過於頻繁，請稍後再試。',
       mapDataUnavailable: '無法取得地圖數據',
       areaOptionsUnavailable: '無法取得地區選項'
     },
@@ -1196,7 +1196,7 @@ const messages = {
       submitFailedPrefix: 'Submission failed: ',
       submitFailed: 'Submission failed',
       invalidFormSubmission: 'This submission has expired or looks invalid. Please refresh the form and try again.',
-      tooManyRequests: 'Too many submissions. Please try again later.',
+      tooManyRequests: 'Too many requests. Please try again later.',
       mapDataUnavailable: 'Unable to fetch map data',
       areaOptionsUnavailable: 'Unable to load area options'
     },

@@ -7,6 +7,9 @@
     "nodejs_compat"
   ],
   "vars": {
+    // Deployment-specific runtime env vars such as SITE_URL, PAGE_READ_RATE_LIMIT_MAX,
+    // MAP_READ_RATE_LIMIT_MAX, FORM_PROTECTION_SECRET and API keys should be set in
+    // Cloudflare Workers Variables/Secrets or local .dev.vars instead of being checked in here.
     "RUNTIME_TARGET": "workers"
   },
   "find_additional_modules": true,
