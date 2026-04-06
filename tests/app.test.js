@@ -286,6 +286,14 @@ test('map page renders the record container and lazy-load sentinel', async () =>
   assert.match(response.body, /cdn\.jsdelivr\.net\/npm\/chart\.js/);
 });
 
+test('map page keeps an OSM-compatible referrer policy for tile requests', async () => {
+  const app = loadApp({ DEBUG_MOD: 'false' });
+  const response = await requestPath(app, '/map');
+
+  assert.equal(response.statusCode, 200);
+  assert.equal(response.headers['referrer-policy'], 'strict-origin-when-cross-origin');
+});
+
 test('form page includes school name and address autocomplete hooks', async () => {
   const app = loadApp({ DEBUG_MOD: 'false' });
   const response = await requestPath(app, '/form');

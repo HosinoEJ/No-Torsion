@@ -17,6 +17,10 @@ const helmetConfig = {
       formAction: ["'self'", 'https://docs.google.com'],
       frameAncestors: ["'none'"]
     }
+  },
+  referrerPolicy: {
+    // OSM 瓦片服务要求跨站请求保留来源站点，不能继续使用 Helmet 默认的 no-referrer。
+    policy: 'strict-origin-when-cross-origin'
   }
 };
 

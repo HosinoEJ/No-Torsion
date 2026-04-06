@@ -21,6 +21,52 @@ const themeMediaQuery = typeof window.matchMedia === 'function'
 let mapTileLayer = null;
 let provinceLayer = null;
 const chartInstances = [];
+const TILE_ERROR_THRESHOLD = 6;
+const BASE_TILE_PROVIDERS = {
+    dark: [
+        {
+            name: 'carto-dark',
+            url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+            options: {
+                attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+                subdomains: 'abcd'
+            }
+        },
+        {
+            name: 'carto-light',
+            url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+            options: {
+                attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+                subdomains: 'abcd'
+            }
+        },
+        {
+            name: 'osm-standard',
+            url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            options: {
+                attribution: '© OpenStreetMap'
+            }
+        }
+    ],
+    light: [
+        {
+            name: 'osm-standard',
+            url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            options: {
+                attribution: '© OpenStreetMap'
+            }
+        },
+        {
+            name: 'carto-light',
+            url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+            options: {
+                attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+                subdomains: 'abcd'
+            }
+        }
+    ]
+};
+let mapTileProviderIndex = 0;
 
 // 底图、边框和图表主题都跟随系统深色模式一起切换。
 function isDarkMode() {
@@ -63,30 +109,87 @@ function getThemeColors() {
         };
 }
 
-// 深浅色主题使用不同底图源，但对外保持同一个挂载接口。
-function createBaseTileLayer(minZoom) {
-    if (isDarkMode()) {
-        return L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-            subdomains: 'abcd',
-            maxZoom: 20,
-            minZoom
-        });
+function setMapTileFallbackState(isUnavailable) {
+    const mapElement = document.getElementById('map');
+    if (!mapElement) {
+        return;
     }
 
-    return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap',
-        maxZoom: 20,
-        minZoom
+    mapElement.classList.toggle('map--tiles-unavailable', Boolean(isUnavailable));
+}
+
+// 深浅色主题使用不同底图源，但对外保持同一个挂载接口。
+function getBaseTileProviders(minZoom) {
+    const themeKey = isDarkMode() ? 'dark' : 'light';
+
+    return BASE_TILE_PROVIDERS[themeKey].map((provider) => ({
+        ...provider,
+        options: {
+            ...provider.options,
+            maxZoom: 20,
+            minZoom
+        }
+    }));
+}
+
+function createBaseTileLayer(minZoom) {
+    const providers = getBaseTileProviders(minZoom);
+    const activeProvider = providers[Math.min(mapTileProviderIndex, providers.length - 1)];
+
+    return L.tileLayer(activeProvider.url, activeProvider.options);
+}
+
+function registerBaseTileLayerEvents(targetMap, minZoom) {
+    const providers = getBaseTileProviders(minZoom);
+    const activeProvider = providers[mapTileProviderIndex];
+    let hasLoadedAnyTile = false;
+    let tileErrorCount = 0;
+    let fallbackHandled = false;
+
+    mapTileLayer.on('tileload', () => {
+        hasLoadedAnyTile = true;
+        tileErrorCount = 0;
+        setMapTileFallbackState(false);
+    });
+
+    mapTileLayer.on('tileerror', () => {
+        if (hasLoadedAnyTile || fallbackHandled) {
+            return;
+        }
+
+        tileErrorCount += 1;
+        if (tileErrorCount < TILE_ERROR_THRESHOLD) {
+            return;
+        }
+
+        fallbackHandled = true;
+        const nextProviderIndex = mapTileProviderIndex + 1;
+
+        if (nextProviderIndex >= providers.length) {
+            setMapTileFallbackState(true);
+            console.warn(`地图底图加载失败，所有备用瓦片源都不可用。当前主题起始源：${activeProvider.name}`);
+            return;
+        }
+
+        mapTileProviderIndex = nextProviderIndex;
+        console.warn(`地图底图加载失败，切换到备用瓦片源：${providers[nextProviderIndex].name}`);
+        mountBaseTileLayer(targetMap, minZoom, { preserveProviderIndex: true });
     });
 }
 
-function mountBaseTileLayer(targetMap, minZoom) {
+function mountBaseTileLayer(targetMap, minZoom, { preserveProviderIndex = false } = {}) {
+    if (!preserveProviderIndex) {
+        mapTileProviderIndex = 0;
+    }
+
     if (mapTileLayer) {
+        mapTileLayer.off();
         targetMap.removeLayer(mapTileLayer);
     }
 
+    setMapTileFallbackState(false);
     mapTileLayer = createBaseTileLayer(minZoom);
+    registerBaseTileLayerEvents(targetMap, minZoom);
     mapTileLayer.addTo(targetMap);
 }
 
@@ -159,6 +262,32 @@ function getInputTypeDisplay(value) {
 
 function getProvinceDisplay(value) {
     return i18n.data.provinceNames[value] || value || '';
+}
+
+function getProvinceLabelLatLng(feature, layer) {
+    const center = feature?.properties?.center;
+    if (Array.isArray(center) && center.length >= 2) {
+        return L.latLng(center[1], center[0]);
+    }
+
+    return layer.getBounds().getCenter();
+}
+
+function bindProvinceLabel(feature, layer) {
+    const provinceName = feature?.properties?.name || feature?.properties?.province || '';
+    if (!provinceName) {
+        return;
+    }
+
+    const labelLatLng = getProvinceLabelLatLng(feature, layer);
+    layer.bindTooltip(escapeHtml(provinceName), {
+        permanent: true,
+        direction: 'center',
+        className: 'map-province-label',
+        interactive: false,
+        opacity: 1
+    });
+    layer.openTooltip(labelLatLng);
 }
 
 function getRecordAnchorId(index) {
@@ -397,6 +526,9 @@ window.getSharedMapData()
                             dashArray: '3',
                             fillOpacity: 0.7
                         };
+                    },
+                    onEachFeature: function(feature, layer) {
+                        bindProvinceLabel(feature, layer);
                     }
                 }).addTo(map);
                 //addMarkers(data);
