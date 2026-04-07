@@ -1,6 +1,6 @@
 # N·C·T
 
-## N·C·T Project
+## N·C·T Project. -by: VICTIMS UNION
 
 [![Status](https://img.shields.io/badge/Status-Active-brightgreen)]()
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blue.svg)]()
@@ -8,10 +8,17 @@
 **我們致力於記錄、曝光並抵制所有形式的「扭轉治療」機構。**  
 每一份真實的聲音，都是終結傷害的力量。
 
-- 站點首頁：https://nct.hosinoneko.me
-- 匿名表單：https://nct.hosinoneko.me/form
-- 公開地圖：https://nct.hosinoneko.me/map
+- 站點首頁：https://victimsunion.org
+- 匿名表單：https://victimsunion.org/form
+- 公開地圖：https://victimsunion.org/map
 - 原始 Google Form：https://forms.gle/eHwkmNCZtmZhLjzh7
+
+**歷史曾用名和域名**
+
+- NO TORSION
+
+- https://no-torsion.hosinoneko.me
+- https://nct.hosinoneko.me
 
 > 我們承諾不以任何理由主動收集不必要的個人資訊。
 
@@ -62,8 +69,8 @@
 ### 1. 取得專案
 
 ```bash
-git clone https://github.com/HosinoEJ/No-Torsion.git
-cd No-Torsion
+git clone https://github.com/NO-CONVERSION-THERAPY/NCT.git
+cd NCT
 npm install
 ```
 
@@ -99,7 +106,7 @@ npm run dev:workers
 npm test
 ```
 
-> 提示：本地運行時，表單實際提交到 Google Form 可能受到網絡環境影響。開發時建議先使用 `FORM_DRY_RUN="true"`。
+> 提示：本地運行環境在中華人民共和國大陸地區時，表單實際提交到 Google Form 可能受到網絡環境影響。開發時建議先使用 `FORM_DRY_RUN="true"`。
 
 ---
 
@@ -364,7 +371,7 @@ A: 因為它會呼叫 `npx wrangler deploy`，且與本倉庫的 `package.json` 
 公開接口：
 
 ```text
-https://nct.hosinoneko.me/api/map-data
+https://nct.hosinoeiji.workers.dev/api/map-data
 ```
 
 如果你是自行部署，則改用你自己的域名，例如：
@@ -408,18 +415,11 @@ https://你的網域/api/map-data
 - `last_synced`：毫秒級 Unix timestamp
 - 真正的機構列表位於 `data` 欄位
 
-### 站點還會自動輸出
-
-```text
-https://你的網域/sitemap.xml
-https://你的網域/robots.txt
-```
-
 ### 最簡單的調用示例
 
 ```html
 <script>
-  fetch('https://你的網域/api/map-data')
+  fetch('https://nct.hosinoeiji.workers.dev/api/map-data')
     .then((res) => res.json())
     .then((payload) => {
       console.log(payload.data);
