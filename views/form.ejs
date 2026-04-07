@@ -22,8 +22,30 @@
                     <option value="<%= option.value %>"><%= option.label %></option>
                 <% }) %>
             </select>
-            <label class="required"><%= t('form.fields.age') %></label>
-            <input type="number" name="age" id="ageInput" min="<%= formRules.age.min %>" max="<%= formRules.age.max %>" step="1" placeholder="<%= t('form.placeholders.age') %>" required>
+        </div>
+
+        <div class="form-group">
+            <label class="required" id="birthDateLabel" for="birthYearSelect"><%= t('form.fields.birthDate') %></label>
+            <div class="birth-date-group" role="group" aria-labelledby="birthDateLabel">
+                <select name="birth_year" id="birthYearSelect" required>
+                    <option value="" selected><%= t('form.placeholders.birthYear') %></option>
+                    <% for (let year = formRules.birthYear.max; year >= formRules.birthYear.min; year -= 1) { %>
+                        <option value="<%= year %>"><%= year %></option>
+                    <% } %>
+                </select>
+                <select name="birth_month" id="birthMonthSelect" required>
+                    <option value="" selected><%= t('form.placeholders.birthMonth') %></option>
+                    <% for (let month = formRules.birthMonth.min; month <= formRules.birthMonth.max; month += 1) { %>
+                        <option value="<%= month %>"><%= month %></option>
+                    <% } %>
+                </select>
+                <select name="birth_day" id="birthDaySelect" required>
+                    <option value="" selected><%= t('form.placeholders.birthDay') %></option>
+                    <% for (let day = formRules.birthDay.min; day <= formRules.birthDay.max; day += 1) { %>
+                        <option value="<%= day %>"><%= day %></option>
+                    <% } %>
+                </select>
+            </div>
         </div>
 
         <div class="form-group">
@@ -133,7 +155,9 @@
     const formRules = window.FORM_RULES;
     const mainForm = document.getElementById('mainForm');
     const identitySelect = document.getElementById('identitySelect');
-    const ageInput = document.getElementById('ageInput');
+    const birthYearSelect = document.getElementById('birthYearSelect');
+    const birthMonthSelect = document.getElementById('birthMonthSelect');
+    const birthDaySelect = document.getElementById('birthDaySelect');
     const sexSelect = document.getElementById('sexSelect');
     const otherSexInput = document.getElementById('otherSexInput');
     const provinceSelect = document.getElementById('provinceSelect');
@@ -172,6 +196,57 @@
         }
     }
 
+    function getDaysInMonth(year, month) {
+        if (!year || !month) {
+            return formRules.birthDay.max;
+        }
+
+        return new Date(Number(year), Number(month), 0).getDate();
+    }
+
+    function renderBirthDayOptions() {
+        const selectedDay = birthDaySelect.value;
+        const maxDay = getDaysInMonth(birthYearSelect.value, birthMonthSelect.value);
+
+        birthDaySelect.replaceChildren();
+
+        const placeholderOption = document.createElement('option');
+        placeholderOption.value = '';
+        placeholderOption.textContent = i18n.form.placeholders.birthDay;
+        birthDaySelect.appendChild(placeholderOption);
+
+        for (let day = formRules.birthDay.min; day <= maxDay; day += 1) {
+            const option = document.createElement('option');
+            option.value = String(day);
+            option.textContent = String(day);
+            birthDaySelect.appendChild(option);
+        }
+
+        birthDaySelect.value = selectedDay && Number(selectedDay) <= maxDay ? selectedDay : '';
+    }
+
+    function validateBirthDate() {
+        clearValidity(birthYearSelect);
+        clearValidity(birthMonthSelect);
+        clearValidity(birthDaySelect);
+
+        if (!birthYearSelect.value || !birthMonthSelect.value || !birthDaySelect.value) {
+            return;
+        }
+
+        const year = Number(birthYearSelect.value);
+        const month = Number(birthMonthSelect.value);
+        const day = Number(birthDaySelect.value);
+        const candidate = new Date(Date.UTC(year, month - 1, day));
+        const isValid = candidate.getUTCFullYear() === year
+            && candidate.getUTCMonth() === month - 1
+            && candidate.getUTCDate() === day;
+
+        if (!isValid) {
+            birthDaySelect.setCustomValidity(i18n.form.validation.invalidBirthDate);
+        }
+    }
+
     function validateCrossFields() {
         clearValidity(otherSexInput);
         clearValidity(dateEndInput);
@@ -179,6 +254,8 @@
         if (sexSelect.value === '__other_option__' && !otherSexInput.value.trim()) {
             otherSexInput.setCustomValidity(i18n.form.validation.specifyOtherSex);
         }
+
+        validateBirthDate();
 
         const start = dateStartInput.value;
         const end = dateEndInput.value;
@@ -188,6 +265,9 @@
     }
 
     bindRequiredMessage(identitySelect, i18n.form.validation.selectIdentity);
+    bindRequiredMessage(birthYearSelect, i18n.form.validation.fillBirthDate);
+    bindRequiredMessage(birthMonthSelect, i18n.form.validation.fillBirthDate);
+    bindRequiredMessage(birthDaySelect, i18n.form.validation.fillBirthDate);
     bindRequiredMessage(sexSelect, i18n.form.validation.selectSex);
     bindRequiredMessage(provinceSelect, i18n.form.validation.selectProvince);
     bindRequiredMessage(citySelect, i18n.form.validation.selectCity);
@@ -196,26 +276,15 @@
     bindRequiredMessage(contactInformationInput, i18n.form.validation.fillContactInformation);
     bindRequiredMessage(otherSexInput, i18n.form.validation.specifyOtherSex);
 
-    ageInput.addEventListener('invalid', () => {
-        if (ageInput.validity.valueMissing) {
-            ageInput.setCustomValidity(i18n.form.validation.fillAge);
-        } else if (
-            ageInput.validity.badInput
-            || ageInput.validity.rangeOverflow
-            || ageInput.validity.rangeUnderflow
-            || ageInput.validity.stepMismatch
-        ) {
-            ageInput.setCustomValidity(
-                i18n.form.validation.ageRange
-                    .replace('{min}', formRules.age.min)
-                    .replace('{max}', formRules.age.max)
-            );
-        } else {
-            ageInput.setCustomValidity('');
-        }
+    birthYearSelect.addEventListener('change', () => {
+        renderBirthDayOptions();
+        validateCrossFields();
     });
-    ageInput.addEventListener('input', () => clearValidity(ageInput));
-    ageInput.addEventListener('change', () => clearValidity(ageInput));
+    birthMonthSelect.addEventListener('change', () => {
+        renderBirthDayOptions();
+        validateCrossFields();
+    });
+    birthDaySelect.addEventListener('change', validateCrossFields);
     citySelect.addEventListener('change', () => clearValidity(countySelect));
 
     sexSelect.addEventListener('change', toggleOtherSex);
@@ -223,6 +292,7 @@
     otherSexInput.addEventListener('input', validateCrossFields);
     dateStartInput.addEventListener('change', validateCrossFields);
     dateEndInput.addEventListener('change', validateCrossFields);
+    renderBirthDayOptions();
     toggleOtherSex();
     validateCrossFields();
 

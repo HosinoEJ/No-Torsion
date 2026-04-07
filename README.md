@@ -122,6 +122,8 @@ npm test
 | `FORM_DRY_RUN` | 非必要 | `true` | 是否只預覽提交、不真正送出 |
 | `SITE_URL` | 非必要 | `https://www.victimsunion.org/` | 站點正式網址，用於 `sitemap.xml`、`robots.txt` 等 |
 | `PORT` | 非必要 | `3000` | 本地 Node 啓動端口 |
+| `PAGE_READ_RATE_LIMIT_MAX` | 非必要 | `180` | 5 分鐘內單 IP 最多頁面讀取次數，用於降低過度爬站 |
+| `MAP_READ_RATE_LIMIT_MAX` | 非必要 | `60` | 5 分鐘內單 IP 最多公開地圖 API 讀取次數 |
 | `SUBMIT_RATE_LIMIT_MAX` | 非必要 | `5` | 15 分鐘內單 IP 最多提交次數 |
 | `FORM_PROTECTION_SECRET` | 非必要 | 自動派生 | 未配置時會根據 `FORM_ID`、`SITE_URL` 和 `TITLE` 派生一個值；正式環境建議顯式設置 |
 | `FORM_PROTECTION_MIN_FILL_MS` | 非必要 | `3000` | 最短填寫時間 |
@@ -149,6 +151,7 @@ npm test
 
 - 本地開發：`DEBUG_MOD="true"`、`FORM_DRY_RUN="true"`。
 - 正式部署：`DEBUG_MOD="false"`、`FORM_DRY_RUN="false"`。
+- 若你希望公開內容可被搜索引擎正常收錄，但仍限制高頻抓取，建議保留 `PAGE_READ_RATE_LIMIT_MAX` 與 `MAP_READ_RATE_LIMIT_MAX`，並按實際流量調整。
 - 翻譯功能現在只走**正式翻譯後端**，不再使用 `translate.googleapis.com` 這類非正式接口。
 - 啓用翻譯時只需要配置 `GOOGLE_CLOUD_TRANSLATION_API_KEY`。
 - `FORM_PROTECTION_SECRET` 屬於服務端敏感資訊，不要提交到版本庫。
@@ -174,6 +177,12 @@ TRANSLATION_PROVIDER_TIMEOUT_MS="10000"
 - [wrangler.jsonc](./wrangler.jsonc)：Workers 配置
 
 這兩個文件會把 `views/`、`blog/`、`public/`、`data.json`、`friends.json` 一併打包進 Workers 的 `/bundle`。
+
+`wrangler.jsonc` 目前只保留必須寫死到倉庫裡的 `RUNTIME_TARGET="workers"`。
+其他環境變數不建議直接寫進 `wrangler.jsonc`，而是放到：
+
+- Cloudflare Dashboard 的 `Variables and Secrets`
+- 本地 Workers 調試使用的 `.dev.vars`
 
 ### 0. 前置條件
 
@@ -203,6 +212,8 @@ Workers 本地開發時，建議把變數放進 `.dev.vars`。最小示例：
 
 ```bash
 SITE_URL="http://127.0.0.1:8787"
+PAGE_READ_RATE_LIMIT_MAX="180"
+MAP_READ_RATE_LIMIT_MAX="60"
 ```
 
 如果你還想在本地測翻譯功能，再額外加上：
@@ -263,9 +274,19 @@ GOOGLE_CLOUD_TRANSLATION_API_KEY="換成你自己的正式 API Key"
 | `DEBUG_MOD` | Text | 正式環境填 `false` |
 | `FORM_DRY_RUN` | Text | 正式環境填 `false` |
 | `SITE_URL` | Text | 你的正式網址 |
+| `PAGE_READ_RATE_LIMIT_MAX` | Text | 視站點流量調整；預設 `180` |
+| `MAP_READ_RATE_LIMIT_MAX` | Text | 視 API 開放程度調整；預設 `60` |
+| `SUBMIT_RATE_LIMIT_MAX` | Text | 視提交入口風險調整；預設 `5` |
 | `FORM_ID` | Text | 你的 Google Form ID |
+| `FORM_PROTECTION_SECRET` | Secret | 正式環境強烈建議顯式配置 |
+| `FORM_PROTECTION_MIN_FILL_MS` | Text | 預設 `3000` |
+| `FORM_PROTECTION_MAX_AGE_MS` | Text | 預設 `86400000` |
 | `GOOGLE_SCRIPT_URL` | Text 或 Secret | 有私有資料源時填 |
+| `PUBLIC_MAP_DATA_URL` | Text | 沒有私有資料源時配置成你的公開地圖 API |
 | `GOOGLE_CLOUD_TRANSLATION_API_KEY` | Secret | 啓用翻譯功能時必填 |
+| `TRANSLATION_PROVIDER_TIMEOUT_MS` | Text | 預設 `10000` |
+| `TRUST_PROXY` | Text | Workers / 代理環境建議 `1` 或 `true` |
+| `RATE_LIMIT_REDIS_URL` | Secret | 多實例部署建議配置共享限流存儲 |
 
 補完變數後，重新觸發一次部署。
 

@@ -12,6 +12,8 @@ const {
   formProtectionSecret,
   googleFormUrl,
   googleScriptUrl,
+  mapReadRateLimitMax,
+  pageReadRateLimitMax,
   publicMapDataUrl,
   rateLimitRedisUrl,
   siteUrl,
@@ -81,6 +83,8 @@ app.use(createPageRoutes({
   apiUrl,
   debugMod,
   formProtectionSecret,
+  pageReadRateLimitMax,
+  rateLimitRedisUrl,
   siteUrl,
   title
 }));
@@ -96,6 +100,7 @@ app.use(createFormRoutes({
 }));
 app.use(createApiRoutes({
   googleScriptUrl,
+  mapReadRateLimitMax,
   publicMapDataUrl,
   rateLimitRedisUrl
 }));

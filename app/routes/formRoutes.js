@@ -1,5 +1,9 @@
 const express = require('express');
-const { createSubmitRateLimiter } = require('../../config/security');
+const {
+  applySensitivePageHeaders,
+  createSubmitRateLimiter,
+  sensitiveRobotsPolicy
+} = require('../../config/security');
 const {
   buildGoogleFormFields,
   encodeGoogleFormFields,
@@ -33,6 +37,8 @@ function createFormRoutes({
   });
 
   router.post('/submit', submitLimiter, async (req, res) => {
+    applySensitivePageHeaders(res);
+
     // 每次进入提交路由都先记录一条审计日志，便于后续排查来源 IP 和路径。
     logAuditEvent(req, 'submit_received', { dryRun: formDryRun });
 
@@ -77,7 +83,8 @@ function createFormRoutes({
           title: req.t('pageTitles.submitPreview', { title }),
           googleFormUrl,
           fields,
-          encodedPayload
+          encodedPayload,
+          pageRobots: sensitiveRobotsPolicy
         });
       }
 
@@ -88,6 +95,7 @@ function createFormRoutes({
         status: 200
       });
       return res.render('submit', {
+        pageRobots: sensitiveRobotsPolicy,
         title
       });
     } catch (error) {

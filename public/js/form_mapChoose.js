@@ -4,29 +4,129 @@
     let formMapTileLayer = null;
     let leafletAssetsPromise = null;
     const i18n = window.I18N;
+    const LEAFLET_CSS_URL = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    const LEAFLET_CSS_INTEGRITY = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
+    const LEAFLET_JS_URL = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+    const LEAFLET_JS_INTEGRITY = 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
+    const TILE_ERROR_THRESHOLD = 6;
+    const FORM_MAP_TILE_PROVIDERS = {
+        dark: [
+            {
+                name: 'carto-dark',
+                url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                options: {
+                    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+                    subdomains: 'abcd'
+                }
+            },
+            {
+                name: 'carto-light',
+                url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+                options: {
+                    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+                    subdomains: 'abcd'
+                }
+            },
+            {
+                name: 'osm-standard',
+                url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                options: {
+                    attribution: '© OpenStreetMap'
+                }
+            }
+        ],
+        light: [
+            {
+                name: 'osm-standard',
+                url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                options: {
+                    attribution: '© OpenStreetMap'
+                }
+            },
+            {
+                name: 'carto-light',
+                url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+                options: {
+                    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+                    subdomains: 'abcd'
+                }
+            }
+        ]
+    };
     const openMapButton = document.getElementById('openMapButton');
     const themeMediaQuery = typeof window.matchMedia === 'function'
         ? window.matchMedia('(prefers-color-scheme: dark)')
         : null;
+    let formMapTileProviderIndex = 0;
 
     function isDarkMode() {
         return Boolean(themeMediaQuery && themeMediaQuery.matches);
     }
 
-    function createFormMapTileLayer() {
-        if (isDarkMode()) {
-            return L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-                attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-                subdomains: 'abcd',
-                maxZoom: 20,
-                minZoom: 3
-            });
+    function setFormMapTileFallbackState(isUnavailable) {
+        const mapContainer = document.getElementById('map');
+        if (!mapContainer) {
+            return;
         }
 
-        return L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap',
-            maxZoom: 20,
-            minZoom: 3
+        mapContainer.classList.toggle('map--tiles-unavailable', Boolean(isUnavailable));
+    }
+
+    function getFormMapTileProviders() {
+        const themeKey = isDarkMode() ? 'dark' : 'light';
+
+        return FORM_MAP_TILE_PROVIDERS[themeKey].map((provider) => ({
+            ...provider,
+            options: {
+                ...provider.options,
+                maxZoom: 20,
+                minZoom: 3
+            }
+        }));
+    }
+
+    function createFormMapTileLayer() {
+        const providers = getFormMapTileProviders();
+        const activeProvider = providers[Math.min(formMapTileProviderIndex, providers.length - 1)];
+
+        return L.tileLayer(activeProvider.url, activeProvider.options);
+    }
+
+    function registerFormMapTileEvents() {
+        const providers = getFormMapTileProviders();
+        const activeProvider = providers[formMapTileProviderIndex];
+        let hasLoadedAnyTile = false;
+        let tileErrorCount = 0;
+        let fallbackHandled = false;
+
+        formMapTileLayer.on('tileload', () => {
+            hasLoadedAnyTile = true;
+            tileErrorCount = 0;
+            setFormMapTileFallbackState(false);
+        });
+
+        formMapTileLayer.on('tileerror', () => {
+            if (hasLoadedAnyTile || fallbackHandled) {
+                return;
+            }
+
+            tileErrorCount += 1;
+            if (tileErrorCount < TILE_ERROR_THRESHOLD) {
+                return;
+            }
+
+            fallbackHandled = true;
+            const nextProviderIndex = formMapTileProviderIndex + 1;
+
+            if (nextProviderIndex >= providers.length) {
+                setFormMapTileFallbackState(true);
+                console.warn(`选点地图底图加载失败，所有备用瓦片源都不可用。当前主题起始源：${activeProvider.name}`);
+                return;
+            }
+
+            formMapTileProviderIndex = nextProviderIndex;
+            console.warn(`选点地图底图加载失败，切换到备用瓦片源：${providers[nextProviderIndex].name}`);
+            mountFormMapTileLayer({ preserveProviderIndex: true });
         });
     }
 
@@ -37,7 +137,9 @@
 
         const stylesheet = document.createElement('link');
         stylesheet.rel = 'stylesheet';
-        stylesheet.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        stylesheet.href = LEAFLET_CSS_URL;
+        stylesheet.integrity = LEAFLET_CSS_INTEGRITY;
+        stylesheet.crossOrigin = 'anonymous';
         stylesheet.setAttribute('data-form-leaflet-css', 'true');
         document.head.appendChild(stylesheet);
     }
@@ -52,8 +154,10 @@
             }
 
             const script = document.createElement('script');
-            script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+            script.src = LEAFLET_JS_URL;
             script.async = true;
+            script.integrity = LEAFLET_JS_INTEGRITY;
+            script.crossOrigin = 'anonymous';
             script.setAttribute('data-form-leaflet-script', 'true');
             script.addEventListener('load', resolve, { once: true });
             script.addEventListener('error', reject, { once: true });
@@ -78,16 +182,23 @@
         await leafletAssetsPromise;
     }
 
-    function mountFormMapTileLayer() {
+    function mountFormMapTileLayer({ preserveProviderIndex = false } = {}) {
         if (!formMap) {
             return;
         }
 
+        if (!preserveProviderIndex) {
+            formMapTileProviderIndex = 0;
+        }
+
         if (formMapTileLayer) {
+            formMapTileLayer.off();
             formMap.removeLayer(formMapTileLayer);
         }
 
+        setFormMapTileFallbackState(false);
         formMapTileLayer = createFormMapTileLayer();
+        registerFormMapTileEvents();
         formMapTileLayer.addTo(formMap);
     }
 

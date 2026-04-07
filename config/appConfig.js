@@ -79,6 +79,8 @@ function resolveFormProtectionSecret({ explicitSecret, formId, siteUrl, title })
 const debugMod = process.env.DEBUG_MOD || 'true';
 const title = process.env.TITLE || 'N·C·T';
 const formDryRun = parseBooleanEnv(process.env.FORM_DRY_RUN, true);
+const pageReadRateLimitMax = parsePositiveInteger(process.env.PAGE_READ_RATE_LIMIT_MAX, 180);
+const mapReadRateLimitMax = parsePositiveInteger(process.env.MAP_READ_RATE_LIMIT_MAX, 60);
 const submitRateLimitMax = parsePositiveInteger(process.env.SUBMIT_RATE_LIMIT_MAX, 5);
 const formId = process.env.FORM_ID || '1FAIpQLScggjQgYutXQrjQDrutyxL0eLaFMktTMRKsFWPffQGavUFspA';
 const googleFormUrl = `https://docs.google.com/forms/d/e/${formId}/formResponse`;
@@ -118,6 +120,8 @@ module.exports = {
   googleCloudTranslationApiKey,
   googleFormUrl,
   googleScriptUrl,
+  mapReadRateLimitMax,
+  pageReadRateLimitMax,
   publicMapDataUrl,
   rateLimitRedisUrl,
   isWorkersRuntime: isWorkersRuntime(),

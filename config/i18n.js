@@ -228,6 +228,10 @@ const messages = {
       },
       fields: {
         identity: '请问您是作为什么身份来填写本表单？',
+        birthDate: '出生年月日',
+        birthYear: '出生年份',
+        birthMonth: '出生月份',
+        birthDay: '出生日期',
         age: '年龄',
         sex: '性别',
         province: '机构所在省份',
@@ -256,6 +260,9 @@ const messages = {
         other: '其他'
       },
       placeholders: {
+        birthYear: '选择年份',
+        birthMonth: '选择月份',
+        birthDay: '选择日期',
         age: '请输入年龄',
         otherSex: '请注明您的性别',
         province: '选择机构所在省份',
@@ -282,6 +289,8 @@ const messages = {
       },
       validation: {
         selectIdentity: '请选择填写身份',
+        fillBirthDate: '请选择出生年月日',
+        invalidBirthDate: '请选择有效的出生年月日',
         fillAge: '请填写年龄',
         ageRange: '年龄必须是 {min} 到 {max} 的整数',
         selectSex: '请选择性别',
@@ -425,6 +434,10 @@ const messages = {
       backForm: '返回表单'
     },
     fields: {
+      birthDate: '出生年月日',
+      birthYear: '出生年份',
+      birthMonth: '出生月份',
+      birthDay: '出生日期',
       age: '年龄',
       identity: '填写身份',
       sex: '性别',
@@ -443,7 +456,7 @@ const messages = {
       other: '其他补充'
     },
     previewFields: {
-      age: '年龄',
+      birthDate: '出生年月日',
       province: '机构所在省份',
       city: '机构所在城市 / 区县',
       schoolName: '学校名称',
@@ -461,6 +474,7 @@ const messages = {
     formErrors: {
       required: '{label}为必填',
       maxLength: '{label}不能超过 {maxLength} 字',
+      invalidBirthDate: '请选择有效的出生年月日',
       ageRange: '{label}必须是 {min} 到 {max} 的整数',
       invalidIdentity: '请选择有效的填写身份',
       invalidSex: '性别不合法，请修改',
@@ -474,7 +488,7 @@ const messages = {
       submitFailedPrefix: '提交失败：',
       submitFailed: '提交失败',
       invalidFormSubmission: '提交已失效或异常，请刷新页面后重试。',
-      tooManyRequests: '提交过于频繁，请稍后再试。',
+      tooManyRequests: '请求过于频繁，请稍后再试。',
       mapDataUnavailable: '无法取得地图数据',
       areaOptionsUnavailable: '无法取得地区选项'
     },
@@ -568,6 +582,10 @@ const messages = {
       },
       fields: {
         identity: '請問您是作爲什麽身份來填寫本表單？',
+        birthDate: '出生年月日',
+        birthYear: '出生年份',
+        birthMonth: '出生月份',
+        birthDay: '出生日期',
         age: '年齡',
         sex: '性別',
         province: '機構所在省份',
@@ -596,6 +614,9 @@ const messages = {
         other: '其他'
       },
       placeholders: {
+        birthYear: '選擇年份',
+        birthMonth: '選擇月份',
+        birthDay: '選擇日期',
         age: '請輸入年齡',
         otherSex: '請註明您的性別',
         province: '選擇機構所在省份',
@@ -622,6 +643,8 @@ const messages = {
       },
       validation: {
         selectIdentity: '請選擇填寫身份',
+        fillBirthDate: '請選擇出生年月日',
+        invalidBirthDate: '請選擇有效的出生年月日',
         fillAge: '請填寫年齡',
         ageRange: '年齡必須是 {min} 到 {max} 的整數',
         selectSex: '請選擇性別',
@@ -765,6 +788,10 @@ const messages = {
       backForm: '返回表單'
     },
     fields: {
+      birthDate: '出生年月日',
+      birthYear: '出生年份',
+      birthMonth: '出生月份',
+      birthDay: '出生日期',
       age: '年齡',
       identity: '填寫身份',
       sex: '性別',
@@ -783,7 +810,7 @@ const messages = {
       other: '其他補充'
     },
     previewFields: {
-      age: '年齡',
+      birthDate: '出生年月日',
       province: '機構所在省份',
       city: '機構所在城市 / 區縣',
       schoolName: '學校名稱',
@@ -801,6 +828,7 @@ const messages = {
     formErrors: {
       required: '{label}為必填',
       maxLength: '{label}不能超過 {maxLength} 字',
+      invalidBirthDate: '請選擇有效的出生年月日',
       ageRange: '{label}必須是 {min} 到 {max} 的整數',
       invalidIdentity: '請選擇有效的填寫身份',
       invalidSex: '性別不合法，請修改',
@@ -814,7 +842,7 @@ const messages = {
       submitFailedPrefix: '提交失敗：',
       submitFailed: '提交失敗',
       invalidFormSubmission: '提交已失效或異常，請重新整理頁面後再試。',
-      tooManyRequests: '提交過於頻繁，請稍後再試。',
+      tooManyRequests: '請求過於頻繁，請稍後再試。',
       mapDataUnavailable: '無法取得地圖數據',
       areaOptionsUnavailable: '無法取得地區選項'
     },
@@ -908,6 +936,10 @@ const messages = {
       },
       fields: {
         identity: 'What is your relationship to this submission?',
+        birthDate: 'Date of Birth',
+        birthYear: 'Birth Year',
+        birthMonth: 'Birth Month',
+        birthDay: 'Birth Day',
         age: 'Age',
         sex: 'Gender',
         province: 'Institution Province',
@@ -936,6 +968,9 @@ const messages = {
         other: 'Other'
       },
       placeholders: {
+        birthYear: 'Select year',
+        birthMonth: 'Select month',
+        birthDay: 'Select day',
         age: 'Enter age',
         otherSex: 'Please specify your gender',
         province: 'Select the institution province',
@@ -962,6 +997,8 @@ const messages = {
       },
       validation: {
         selectIdentity: 'Please choose your submission role',
+        fillBirthDate: 'Please select date of birth',
+        invalidBirthDate: 'Please select a valid date of birth',
         fillAge: 'Please enter age',
         ageRange: 'Age must be an integer between {min} and {max}',
         selectSex: 'Please choose gender',
@@ -1105,6 +1142,10 @@ const messages = {
       backForm: 'Back to Form'
     },
     fields: {
+      birthDate: 'Date of Birth',
+      birthYear: 'Birth Year',
+      birthMonth: 'Birth Month',
+      birthDay: 'Birth Day',
       age: 'Age',
       identity: 'Submission Role',
       sex: 'Gender',
@@ -1123,7 +1164,7 @@ const messages = {
       other: 'Other Notes'
     },
     previewFields: {
-      age: 'Age',
+      birthDate: 'Date of Birth',
       province: 'Institution Province',
       city: 'Institution City / District',
       schoolName: 'School Name',
@@ -1141,6 +1182,7 @@ const messages = {
     formErrors: {
       required: '{label} is required',
       maxLength: '{label} cannot exceed {maxLength} characters',
+      invalidBirthDate: 'Please select a valid date of birth',
       ageRange: '{label} must be an integer between {min} and {max}',
       invalidIdentity: 'Please choose a valid submission role',
       invalidSex: 'The selected gender value is invalid',
@@ -1154,7 +1196,7 @@ const messages = {
       submitFailedPrefix: 'Submission failed: ',
       submitFailed: 'Submission failed',
       invalidFormSubmission: 'This submission has expired or looks invalid. Please refresh the form and try again.',
-      tooManyRequests: 'Too many submissions. Please try again later.',
+      tooManyRequests: 'Too many requests. Please try again later.',
       mapDataUnavailable: 'Unable to fetch map data',
       areaOptionsUnavailable: 'Unable to load area options'
     },

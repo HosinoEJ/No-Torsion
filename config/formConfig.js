@@ -1,6 +1,7 @@
 // 表單枚举值、长度规则和地区联动数据都集中在这里，前后端共用一套定义。
 const allowedIdentities = new Set(['受害者本人', '受害者的代理人']);
 const allowedSexes = new Set(['男', '女', 'MtF', 'FtM', '__other_option__']);
+const currentYear = new Date().getUTCFullYear();
 const identityOptions = [
   { value: '受害者本人', labelKey: 'form.identityOptions.self' },
   { value: '受害者的代理人', labelKey: 'form.identityOptions.agent' }
@@ -13,7 +14,10 @@ const sexOptions = [
   { value: '__other_option__', labelKey: 'form.sexOptions.other' }
 ];
 const formRuleDefinitions = {
-  age: { labelKey: 'fields.age', required: true, min: 1, max: 100 },
+  birthDate: { labelKey: 'fields.birthDate', required: true },
+  birthYear: { labelKey: 'fields.birthYear', required: true, min: 1900, max: currentYear },
+  birthMonth: { labelKey: 'fields.birthMonth', required: true, min: 1, max: 12 },
+  birthDay: { labelKey: 'fields.birthDay', required: true, min: 1, max: 31 },
   identity: { labelKey: 'fields.identity', required: true },
   sex: { labelKey: 'fields.sex', required: true },
   sexOther: { labelKey: 'fields.sexOther', maxLength: 10 },

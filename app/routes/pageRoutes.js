@@ -8,7 +8,13 @@ const { loadFriends } = require('../services/friendsService');
 const { issueFormProtectionToken } = require('../services/formProtectionService');
 const { generateRobotsTxt } = require('../services/robotsService');
 const { generateSitemapXml } = require('../services/sitemapService');
+const { logAuditEvent } = require('../services/auditLogService');
 const { paths } = require('../../config/fileConfig');
+const {
+  applySensitivePageHeaders,
+  createRateLimiter,
+  sensitiveRobotsPolicy
+} = require('../../config/security');
 
 function translateWithFallback(t, key, fallbackValue = '') {
   if (typeof t !== 'function') {
@@ -92,8 +98,28 @@ function resolveMarkdownPath(blogDirectory, articleId) {
 }
 
 // 页面路由只负责渲染模板，不承载表单提交或 API 逻辑。
-function createPageRoutes({ apiUrl, debugMod, formProtectionSecret, siteUrl, title }) {
+function createPageRoutes({
+  apiUrl,
+  debugMod,
+  formProtectionSecret,
+  pageReadRateLimitMax,
+  rateLimitRedisUrl,
+  siteUrl,
+  title
+}) {
   const router = express.Router();
+  const pageReadLimiter = createRateLimiter({
+    windowMs: 5 * 60 * 1000,
+    max: pageReadRateLimitMax,
+    redisUrl: rateLimitRedisUrl,
+    storePrefix: 'page-read-rate-limit:',
+    getMessage(req) {
+      return req.t('server.tooManyRequests');
+    },
+    onLimit(req, status, message) {
+      logAuditEvent(req, 'page_read_rate_limited', { status, message });
+    }
+  });
 
   router.get('/robots.txt', (_req, res) => {
     res
@@ -116,7 +142,7 @@ function createPageRoutes({ apiUrl, debugMod, formProtectionSecret, siteUrl, tit
   });
 
   // 首頁：项目导航入口。
-  router.get('/', (req, res) => {
+  router.get('/', pageReadLimiter, (req, res) => {
     res.render('index', {
       title: req.t('pageTitles.home', { title }),
       apiUrl
@@ -124,9 +150,10 @@ function createPageRoutes({ apiUrl, debugMod, formProtectionSecret, siteUrl, tit
   });
 
   // 表單頁：把地区联动数据和前端校验规则一并下发到模板。
-  router.get('/form', (req, res) => {
+  router.get('/form', pageReadLimiter, (req, res) => {
     const t = req.t;
     const { provinces } = getAreaOptions(req.lang);
+    applySensitivePageHeaders(res);
     res.render('form', {
       title: t('pageTitles.form', { title }),
       apiUrl,
@@ -134,12 +161,13 @@ function createPageRoutes({ apiUrl, debugMod, formProtectionSecret, siteUrl, tit
       formProtectionToken: issueFormProtectionToken({ secret: formProtectionSecret }),
       formRules: getLocalizedFormRules(t),
       identityOptions: getLocalizedIdentityOptions(t),
+      pageRobots: sensitiveRobotsPolicy,
       sexOptions: getLocalizedSexOptions(t)
     });
   });
 
   // 地圖頁：展示汇总后的机构数据。
-  router.get('/map', (req, res) => {
+  router.get('/map', pageReadLimiter, (req, res) => {
     res.render('map', {
       title: req.t('pageTitles.map', { title }),
       apiUrl,
@@ -148,7 +176,7 @@ function createPageRoutes({ apiUrl, debugMod, formProtectionSecret, siteUrl, tit
   });
 
   // 關於頁：这里额外读取 friends.json 作为友链数据源。
-  router.get('/aboutus', async (req, res) => {
+  router.get('/aboutus', pageReadLimiter, async (req, res) => {
     const friendsData = await loadFriends({
       language: req.lang,
       t: req.t
@@ -160,7 +188,7 @@ function createPageRoutes({ apiUrl, debugMod, formProtectionSecret, siteUrl, tit
     });
   });
 
-  router.get('/privacy', (req, res) => {
+  router.get('/privacy', pageReadLimiter, (req, res) => {
     res.render('privacy', {
       title: req.t('pageTitles.privacy', { title }),
       apiUrl
@@ -168,7 +196,7 @@ function createPageRoutes({ apiUrl, debugMod, formProtectionSecret, siteUrl, tit
   });
 
   // 預留的調試頁面入口。
-  router.get('/debug', (req, res) => {
+  router.get('/debug', pageReadLimiter, (req, res) => {
     if (debugMod !== 'true') {
       return res.status(404).send(req.t('common.notFound'));
     }
@@ -180,7 +208,7 @@ function createPageRoutes({ apiUrl, debugMod, formProtectionSecret, siteUrl, tit
     });
   });
 
-  router.get('/blog', async (req,res) => {
+  router.get('/blog', pageReadLimiter, async (req,res) => {
     const SavedTags = JSON.parse(fs.readFileSync(paths.blogData, 'utf-8'));
     
     const QTag = req.query.tag;//現在頁面的query tag是什麽
@@ -209,7 +237,7 @@ function createPageRoutes({ apiUrl, debugMod, formProtectionSecret, siteUrl, tit
     })
   })
 
-  router.get('/port/:id', async (req, res) => {
+  router.get('/port/:id', pageReadLimiter, async (req, res) => {
     const mdName = req.params.id;
     const mdPath = resolveMarkdownPath(paths.blog, mdName);
     

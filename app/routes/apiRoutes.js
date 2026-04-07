@@ -5,17 +5,38 @@ const {
   getLocalizedCityOptionsForProvince,
   getLocalizedCountyOptionsForCity
 } = require('../services/areaOptionsService');
+const { logAuditEvent } = require('../services/auditLogService');
 const { getMapData } = require('../services/mapDataService');
 const { translateDetailItems } = require('../services/textTranslationService');
 
 // API 路由只负责把 service 层返回的数据转成 HTTP 响应。
-function createApiRoutes({ googleScriptUrl, publicMapDataUrl, rateLimitRedisUrl }) {
+function createApiRoutes({
+  googleScriptUrl,
+  mapReadRateLimitMax,
+  publicMapDataUrl,
+  rateLimitRedisUrl
+}) {
   const router = express.Router();
   const publicMapDataCors = cors({
     origin: '*',
     methods: ['GET'],
     maxAge: 86400,
     optionsSuccessStatus: 204
+  });
+  const mapReadRateLimiter = createRateLimiter({
+    windowMs: 5 * 60 * 1000,
+    max: mapReadRateLimitMax,
+    redisUrl: rateLimitRedisUrl,
+    storePrefix: 'map-read-rate-limit:',
+    getMessage(req) {
+      return req.t('server.tooManyRequests');
+    },
+    onLimit(req, status, message) {
+      logAuditEvent(req, 'map_read_rate_limited', { status, message });
+    },
+    sendLimitResponse(_req, res, statusCode, message) {
+      return res.status(statusCode).json({ error: message });
+    }
   });
   const refreshRateLimiter = createRateLimiter({
     windowMs: 5 * 60 * 1000,
@@ -77,7 +98,7 @@ function createApiRoutes({ googleScriptUrl, publicMapDataUrl, rateLimitRedisUrl 
     }
   });
 
-  router.get('/api/map-data', publicMapDataCors, refreshRateLimiter, async (req, res) => {
+  router.get('/api/map-data', publicMapDataCors, mapReadRateLimiter, refreshRateLimiter, async (req, res) => {
     try {
       const mapData = await getMapData({
         forceRefresh: shouldForceRefresh(req),

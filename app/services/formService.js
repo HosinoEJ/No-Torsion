@@ -8,6 +8,32 @@ function getTrimmedString(value) {
   return value.trim();
 }
 
+function parseIntegerString(value) {
+  const text = getTrimmedString(value);
+  if (!/^-?\d+$/.test(text)) {
+    return null;
+  }
+
+  return Number.parseInt(text, 10);
+}
+
+function padNumber(value) {
+  return String(value).padStart(2, '0');
+}
+
+function splitDateString(value) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!match) {
+    return null;
+  }
+
+  return {
+    year: match[1],
+    month: String(Number(match[2])),
+    day: String(Number(match[3]))
+  };
+}
+
 // 只接受 YYYY-MM-DD，且必须是一个真实存在的日期。
 function validateDateString(value) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
@@ -51,8 +77,12 @@ function validateSubmission(body, t) {
       }
     ])
   );
-  const ageValue = getTrimmedString(body.age);
-  const age = Number.parseInt(ageValue, 10);
+  const birthYearValue = getTrimmedString(body.birth_year);
+  const birthMonthValue = getTrimmedString(body.birth_month);
+  const birthDayValue = getTrimmedString(body.birth_day);
+  const birthYear = parseIntegerString(body.birth_year);
+  const birthMonth = parseIntegerString(body.birth_month);
+  const birthDay = parseIntegerString(body.birth_day);
   const identity = getTrimmedString(body.identity);
   const sex = getTrimmedString(body.sex);
   const sexOther = validateTextField(errors, t, formRules.sexOther.label, body.sex_other, {
@@ -86,15 +116,30 @@ function validateSubmission(body, t) {
   const other = validateTextField(errors, t, formRules.other.label, body.other, {
     maxLength: formRules.other.maxLength
   });
+  let birthDate = '';
   let validatedLocation = null;
   let validatedCounty = null;
 
-  if (!Number.isInteger(age) || age < formRules.age.min || age > formRules.age.max) {
-    errors.push(t('formErrors.ageRange', {
-      label: formRules.age.label,
-      min: formRules.age.min,
-      max: formRules.age.max
-    }));
+  if (!birthYearValue || !birthMonthValue || !birthDayValue) {
+    errors.push(t('formErrors.required', { label: formRules.birthDate.label }));
+  } else if (
+    !Number.isInteger(birthYear)
+    || birthYear < formRules.birthYear.min
+    || birthYear > formRules.birthYear.max
+    || !Number.isInteger(birthMonth)
+    || birthMonth < formRules.birthMonth.min
+    || birthMonth > formRules.birthMonth.max
+    || !Number.isInteger(birthDay)
+    || birthDay < formRules.birthDay.min
+    || birthDay > formRules.birthDay.max
+  ) {
+    errors.push(t('formErrors.invalidBirthDate'));
+  } else {
+    birthDate = `${String(birthYear).padStart(4, '0')}-${padNumber(birthMonth)}-${padNumber(birthDay)}`;
+
+    if (!validateDateString(birthDate)) {
+      errors.push(t('formErrors.invalidBirthDate'));
+    }
   }
 
   if (!allowedIdentities.has(identity)) {
@@ -153,7 +198,10 @@ function validateSubmission(body, t) {
   return {
     errors,
     values: {
-      age,
+      birthDate,
+      birthYear: birthYearValue,
+      birthMonth: birthMonthValue,
+      birthDay: birthDayValue,
       // Google Form 当前只有一个地区字段，所以县区存在时与城市拼成一个字符串。
       province: validatedLocation ? validatedLocation.legacyProvinceName : '',
       city: validatedLocation
@@ -176,8 +224,11 @@ function validateSubmission(body, t) {
 
 // 这里维护的是“站内字段 -> Google Form entry.xxx” 的最终映射。
 function buildGoogleFormFields(values, t) {
+  const birthDateParts = splitDateString(values.birthDate);
   const fields = [
-    { entryId: 'entry.842223433', label: t('previewFields.age'), value: String(values.age) },
+    { entryId: 'entry.842223433_year', label: t('fields.birthYear'), value: birthDateParts ? birthDateParts.year : values.birthYear },
+    { entryId: 'entry.842223433_month', label: t('fields.birthMonth'), value: birthDateParts ? birthDateParts.month : values.birthMonth },
+    { entryId: 'entry.842223433_day', label: t('fields.birthDay'), value: birthDateParts ? birthDateParts.day : values.birthDay },
     { entryId: 'entry.1766160152', label: t('previewFields.province'), value: values.province },
     { entryId: 'entry.402227428', label: t('previewFields.city'), value: values.city },
     { entryId: 'entry.5034928', label: t('previewFields.schoolName'), value: values.schoolName },

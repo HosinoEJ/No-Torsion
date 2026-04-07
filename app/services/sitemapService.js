@@ -81,11 +81,6 @@ function getStaticSitemapEntries(siteUrl) {
       priority: '1.0'
     }),
     createUrlEntry({
-      changefreq: 'weekly',
-      loc: createAbsoluteUrl(siteUrl, '/form'),
-      priority: '0.9'
-    }),
-    createUrlEntry({
       changefreq: 'hourly',
       loc: createAbsoluteUrl(siteUrl, '/map'),
       priority: '0.9'
