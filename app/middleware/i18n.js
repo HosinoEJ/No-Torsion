@@ -24,6 +24,7 @@ function createI18nMiddleware() {
 
     res.locals.lang = language;
     res.locals.t = req.t;
+    res.locals.assetVersion = req.app && req.app.locals ? req.app.locals.assetVersion : '';
     res.locals.clientMessages = getMessages(language);
     res.locals.languageOptions = getLanguageOptions(language);
 

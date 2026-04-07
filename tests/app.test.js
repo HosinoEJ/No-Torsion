@@ -435,6 +435,8 @@ test('map frontend keeps a renderer and layout fallback for province overlays', 
   const mainStylesheet = fs.readFileSync(path.join(projectRoot, 'public/css/main.css'), 'utf8');
 
   assert.match(mapScript, /preferCanvas:\s*true/);
+  assert.match(mapScript, /provinceFillPane/);
+  assert.match(mapScript, /getProvinceFillOpacity/);
   assert.match(mapScript, /scheduleMapLayoutRefresh/);
   assert.match(mapScript, /map\.invalidateSize\(\{ pan: false, animate: false \}\)/);
   assert.match(mainStylesheet, /#map \.leaflet-pane > svg,\s*#map \.leaflet-pane > canvas/);

@@ -24,6 +24,7 @@ const themeMediaQuery = typeof window.matchMedia === 'function'
 
 let mapTileLayer = null;
 let provinceLayer = null;
+let provinceFillLayer = null;
 const chartInstances = [];
 const TILE_ERROR_THRESHOLD = 6;
 const BASE_TILE_PROVIDERS = {
@@ -488,13 +489,42 @@ const map = L.map('map', {
     preferCanvas: true
 }).setView([37.5, 109], 4); // 預設視角
 const provinceLayerRenderer = L.canvas({ padding: 0.5 });
-const CNprov = '/cn.json';
+const CNprov = window.ASSET_VERSION
+    ? `/cn.json?v=${encodeURIComponent(window.ASSET_VERSION)}`
+    : '/cn.json';
 let pendingMapLayoutRefreshId = 0;
+
+function ensureProvincePanes() {
+    if (!map.getPane('provinceFillPane')) {
+        map.createPane('provinceFillPane');
+    }
+
+    if (!map.getPane('provinceBorderPane')) {
+        map.createPane('provinceBorderPane');
+    }
+
+    map.getPane('provinceFillPane').style.zIndex = '625';
+    map.getPane('provinceFillPane').style.pointerEvents = 'none';
+    map.getPane('provinceBorderPane').style.zIndex = '640';
+    map.getPane('provinceBorderPane').style.pointerEvents = 'none';
+}
+
+function getProvinceFillOpacity(count) {
+    if (count > 100) return 0.42;
+    if (count > 50) return 0.34;
+    if (count > 10) return 0.28;
+    if (count > 0) return 0.18;
+    return 0.1;
+}
 
 function scheduleMapLayoutRefresh(delayMs = 0) {
     window.clearTimeout(pendingMapLayoutRefreshId);
     pendingMapLayoutRefreshId = window.setTimeout(() => {
         map.invalidateSize({ pan: false, animate: false });
+
+        if (provinceFillLayer && typeof provinceFillLayer.bringToFront === 'function') {
+            provinceFillLayer.bringToFront();
+        }
 
         if (provinceLayer && typeof provinceLayer.bringToFront === 'function') {
             provinceLayer.bringToFront();
@@ -502,6 +532,7 @@ function scheduleMapLayoutRefresh(delayMs = 0) {
     }, delayMs);
 }
 
+ensureProvincePanes();
 mountBaseTileLayer(map, 4);
 map.whenReady(() => {
     scheduleMapLayoutRefresh();
@@ -554,28 +585,47 @@ window.getSharedMapData()
                 return response.json();
             })
             .then(dataP => {
-                provinceLayer = L.geoJSON(dataP, {
+                provinceFillLayer = L.geoJSON(dataP, {
+                    pane: 'provinceFillPane',
                     renderer: provinceLayerRenderer,
+                    interactive: false,
                     style: function(feature) {
                         const provinceCode = typeof getProvinceCodeFromFeature === 'function'
                             ? getProvinceCodeFromFeature(feature)
                             : '';
-                        
-                        // 使用稳定的省份 code 做匹配，避免繁简、全称和 GeoJSON 异名导致着色失效。
                         const count = provinceCountMap.get(provinceCode) || 0;
+
                         return {
                             fillColor: getColor(count),
+                            weight: 0,
+                            opacity: 0,
+                            color: 'transparent',
+                            fillOpacity: getProvinceFillOpacity(count)
+                        };
+                    }
+                }).addTo(map);
+
+                provinceLayer = L.geoJSON(dataP, {
+                    pane: 'provinceBorderPane',
+                    renderer: provinceLayerRenderer,
+                    interactive: false,
+                    style: function(feature) {
+                        return {
                             weight: 2,
                             opacity: 1,
                             color: getThemeColors().mapOutline,
                             dashArray: '3',
-                            fillOpacity: 0.7
+                            fillOpacity: 0
                         };
                     },
                     onEachFeature: function(feature, layer) {
                         bindProvinceLabel(feature, layer);
                     }
                 }).addTo(map);
+
+                if (typeof provinceFillLayer.bringToFront === 'function') {
+                    provinceFillLayer.bringToFront();
+                }
 
                 if (typeof provinceLayer.bringToFront === 'function') {
                     provinceLayer.bringToFront();

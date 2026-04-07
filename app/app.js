@@ -31,6 +31,7 @@ const { createMaintenanceMiddleware } = require('./middleware/maintenance');
 const createApiRoutes = require('./routes/apiRoutes');
 const createFormRoutes = require('./routes/formRoutes');
 const createPageRoutes = require('./routes/pageRoutes');
+const assetVersion = process.env.ASSET_VERSION || String(Date.now());
 
 function collectEjsTemplatePaths(directory) {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -63,6 +64,7 @@ function primeEjsTemplateCache(viewsDirectory) {
 const app = express();
 
 app.disable('x-powered-by');
+app.locals.assetVersion = assetVersion;
 app.set('trust proxy', trustProxy);
 app.use(helmet(helmetConfig));
 app.use(createI18nMiddleware());

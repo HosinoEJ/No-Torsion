@@ -34,9 +34,9 @@
 </head>
 <body class="map-page">
     <a href="/" class="page-back-link">← <%= t('navigation.home') %></a>
-    <script src="/js/map_data_store.js"></script>
-    <script src="/js/map_time_utils.js"></script>
-    <script src="/js/map_record_stats.js"></script>
+    <script src="/js/map_data_store.js?v=<%= assetVersion %>"></script>
+    <script src="/js/map_time_utils.js?v=<%= assetVersion %>"></script>
+    <script src="/js/map_record_stats.js?v=<%= assetVersion %>"></script>
     <h1><%= t('map.title') %></h1>
     <h2 class="map-section-title"><%= t('map.sections.stats') %></h2>
     <%- include('partials/map_allnum') %>
@@ -55,8 +55,8 @@
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
         crossorigin="anonymous"
     ></script>
-    <script src="/js/map_province_utils.js"></script>
-    <script src="/js/map_api.js"></script>
+    <script src="/js/map_province_utils.js?v=<%= assetVersion %>"></script>
+    <script src="/js/map_api.js?v=<%= assetVersion %>"></script>
     <%- include('partials/foot', {
         includeBackToTopScript: true,
         includeQueryUpdScript: true
