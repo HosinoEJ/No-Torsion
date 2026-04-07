@@ -79,6 +79,43 @@
         '810000': '香港',
         '820000': '澳門'
     };
+    // 省级行政区面积，单位为平方公里，采用公开常见陆地面积口径。
+    const provinceAreaSquareKilometersByCode = {
+        '110000': 16410.54,
+        '120000': 11966.45,
+        '130000': 188800,
+        '140000': 156700,
+        '150000': 1183000,
+        '210000': 148000,
+        '220000': 187400,
+        '230000': 473000,
+        '310000': 6340.5,
+        '320000': 107200,
+        '330000': 105500,
+        '340000': 140100,
+        '350000': 124000,
+        '360000': 166900,
+        '370000': 157900,
+        '410000': 167000,
+        '420000': 185900,
+        '430000': 211800,
+        '440000': 179800,
+        '450000': 237600,
+        '460000': 35400,
+        '500000': 82402,
+        '510000': 486000,
+        '520000': 176200,
+        '530000': 394000,
+        '540000': 1228400,
+        '610000': 205800,
+        '620000': 425800,
+        '630000': 722300,
+        '640000': 66400,
+        '650000': 1664900,
+        '710000': 36000,
+        '810000': 1113.76,
+        '820000': 32.9
+    };
     const provinceCodes = new Set(Object.keys(legacyProvinceNamesByCode));
     const provinceCodeByAlias = buildProvinceCodeByAliasMap();
 
@@ -144,6 +181,11 @@
         return Number.isFinite(numericCount) ? numericCount : 1;
     }
 
+    function getProvinceAreaSquareKilometers(value) {
+        const provinceCode = resolveProvinceCode(value);
+        return Number(provinceAreaSquareKilometersByCode[provinceCode]) || 0;
+    }
+
     function buildProvinceCountMap(items) {
         const countMap = new Map();
 
@@ -159,8 +201,24 @@
         return countMap;
     }
 
+    function buildProvinceDensityMap(items) {
+        const densityMap = new Map();
+
+        buildProvinceCountMap(items).forEach((count, provinceCode) => {
+            const areaSquareKilometers = getProvinceAreaSquareKilometers(provinceCode);
+            densityMap.set(
+                provinceCode,
+                areaSquareKilometers > 0 ? count / areaSquareKilometers : 0
+            );
+        });
+
+        return densityMap;
+    }
+
     return {
         buildProvinceCountMap,
+        buildProvinceDensityMap,
+        getProvinceAreaSquareKilometers,
         getProvinceCodeFromFeature,
         normalizeProvinceAlias,
         resolveProvinceCode

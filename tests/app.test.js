@@ -481,7 +481,11 @@ test('map frontend keeps a renderer and layout fallback for province overlays', 
   assert.match(mapScript, /preferCanvas:\s*true/);
   assert.match(mapScript, /provinceFillPane/);
   assert.match(mapScript, /schoolMarkerPane/);
+  assert.match(mapScript, /schoolTooltipPane/);
   assert.match(mapScript, /shadowPane:\s*'schoolShadowPane'/);
+  assert.match(mapScript, /pane:\s*'schoolTooltipPane'/);
+  assert.match(mapScript, /const densityRatio = density \/ maxDensity/);
+  assert.match(mapScript, /interpolateHexColor\('#FED976', '#800026', densityRatio\)/);
   assert.match(mapScript, /getProvinceFillOpacity/);
   assert.match(mapScript, /scheduleMapLayoutRefresh/);
   assert.match(mapScript, /map\.invalidateSize\(\{ pan: false, animate: false \}\)/);
@@ -1172,6 +1176,8 @@ test('map province utils normalize workers GeoJSON names and province aliases to
   clearProjectModules();
   const {
     buildProvinceCountMap,
+    buildProvinceDensityMap,
+    getProvinceAreaSquareKilometers,
     getProvinceCodeFromFeature,
     resolveProvinceCode
   } = require(path.join(projectRoot, 'public/js/map_province_utils'));
@@ -1180,6 +1186,9 @@ test('map province utils normalize workers GeoJSON names and province aliases to
   assert.equal(resolveProvinceCode('澳门特别行政区'), '820000');
   assert.equal(resolveProvinceCode('臺灣（ROC）'), '710000');
   assert.equal(resolveProvinceCode('新疆维吾尔自治区'), '650000');
+  assert.equal(getProvinceAreaSquareKilometers('北京'), 16410.54);
+  assert.equal(getProvinceAreaSquareKilometers('香港'), 1113.76);
+  assert.equal(getProvinceAreaSquareKilometers('不存在的省份'), 0);
 
   assert.equal(getProvinceCodeFromFeature({
     properties: {
@@ -1207,6 +1216,17 @@ test('map province utils normalize workers GeoJSON names and province aliases to
       ['820000', 1]
     ]
   );
+
+  const densityMap = buildProvinceDensityMap([
+    { province: '北京', count: 4 },
+    { province: '北京市', count: 1 },
+    { province: '內蒙古自治區', count: 6 },
+    { province: '不存在的省份', count: 100 }
+  ]);
+
+  assert.ok(Math.abs((densityMap.get('110000') || 0) - (5 / 16410.54)) < 1e-12);
+  assert.ok(Math.abs((densityMap.get('150000') || 0) - (6 / 1183000)) < 1e-12);
+  assert.equal(densityMap.has('不存在的省份'), false);
 });
 
 test('form protection tokens reject honeypot, tampering, and overly fast submissions', () => {

@@ -1,13 +1,33 @@
 (() => {
-function getColor(d) {
-    return d > 300 ? '#800026' :
-           d > 200  ? '#BD0026' :
-           d > 100  ? '#E31A1C' :
-           d > 50  ? '#FC4E2A' :
-           d > 20   ? '#FD8D3C' :
-           d > 10   ? '#FEB24C' :
-           d > 5   ? '#FED976' :
-                      '#FFEDA0';
+function toHexChannel(value) {
+    return Math.round(value).toString(16).padStart(2, '0');
+}
+
+function interpolateHexColor(startColor, endColor, ratio) {
+    const normalizedRatio = Math.min(1, Math.max(0, ratio));
+    const startChannels = [
+        parseInt(startColor.slice(1, 3), 16),
+        parseInt(startColor.slice(3, 5), 16),
+        parseInt(startColor.slice(5, 7), 16)
+    ];
+    const endChannels = [
+        parseInt(endColor.slice(1, 3), 16),
+        parseInt(endColor.slice(3, 5), 16),
+        parseInt(endColor.slice(5, 7), 16)
+    ];
+
+    return `#${startChannels.map((startChannel, index) => {
+        return toHexChannel(startChannel + ((endChannels[index] - startChannel) * normalizedRatio));
+    }).join('')}`;
+}
+
+function getProvinceDensityColor(density, maxDensity) {
+    if (!(density > 0) || !(maxDensity > 0)) {
+        return 'transparent';
+    }
+
+    const densityRatio = density / maxDensity;
+    return interpolateHexColor('#FED976', '#800026', densityRatio);
 }
 
 const i18n = window.I18N;
@@ -15,7 +35,7 @@ const MAP_DATA_REFRESH_INTERVAL_SECONDS = 300;
 const { getElapsedSeconds, renderLastSyncedValue } = window.MapTimeUtils;
 const { getSchoolStatsKey, groupSchoolRecords } = window.MapRecordStats;
 const {
-    buildProvinceCountMap,
+    buildProvinceDensityMap,
     getProvinceCodeFromFeature
 } = window.MapProvinceUtils || {};
 const themeMediaQuery = typeof window.matchMedia === 'function'
@@ -512,12 +532,19 @@ function ensureProvincePanes() {
         map.createPane('schoolMarkerPane');
     }
 
+    if (!map.getPane('schoolTooltipPane')) {
+        map.createPane('schoolTooltipPane');
+    }
+
     map.getPane('provinceFillPane').style.zIndex = '625';
     map.getPane('provinceFillPane').style.pointerEvents = 'none';
     map.getPane('provinceBorderPane').style.zIndex = '640';
     map.getPane('provinceBorderPane').style.pointerEvents = 'none';
     map.getPane('schoolShadowPane').style.zIndex = '670';
     map.getPane('schoolMarkerPane').style.zIndex = '675';
+    // 学校悬浮名称始终压过省份层、标记层和弹窗阴影层。
+    map.getPane('schoolTooltipPane').style.zIndex = '800';
+    map.getPane('schoolTooltipPane').style.pointerEvents = 'none';
 }
 
 function ensureProvinceRenderers() {
@@ -535,12 +562,8 @@ function ensureProvinceRenderers() {
     }
 }
 
-function getProvinceFillOpacity(count) {
-    if (count > 100) return 0.42;
-    if (count > 50) return 0.34;
-    if (count > 10) return 0.28;
-    if (count > 0) return 0.18;
-    return 0.1;
+function getProvinceFillOpacity(density) {
+    return density > 0 ? 0.25 : 0;
 }
 
 function scheduleMapLayoutRefresh(delayMs = 0) {
@@ -597,9 +620,10 @@ window.getSharedMapData()
         const provinceCountSource = Array.isArray(jsonResponse.statistics) && jsonResponse.statistics.length > 0
             ? jsonResponse.statistics
             : data;
-        const provinceCountMap = typeof buildProvinceCountMap === 'function'
-            ? buildProvinceCountMap(provinceCountSource)
+        const provinceDensityMap = typeof buildProvinceDensityMap === 'function'
+            ? buildProvinceDensityMap(provinceCountSource)
             : new Map();
+        const maxProvinceDensity = Math.max(0, ...provinceDensityMap.values());
 
         
         
@@ -619,14 +643,15 @@ window.getSharedMapData()
                         const provinceCode = typeof getProvinceCodeFromFeature === 'function'
                             ? getProvinceCodeFromFeature(feature)
                             : '';
-                        const count = provinceCountMap.get(provinceCode) || 0;
+                        const density = provinceDensityMap.get(provinceCode) || 0;
 
                         return {
-                            fillColor: getColor(count),
+                            fillColor: getProvinceDensityColor(density, maxProvinceDensity),
                             weight: 0,
                             opacity: 0,
                             color: 'transparent',
-                            fillOpacity: getProvinceFillOpacity(count)
+                            // 保持固定的 25% alpha，零密度省份不着色。
+                            fillOpacity: getProvinceFillOpacity(density)
                         };
                     }
                 }).addTo(map);
@@ -804,8 +829,9 @@ window.getSharedMapData()
 
             // 1. 鼠標指到圖標：顯示標題 (Tooltip)
             marker.bindTooltip(`<strong>${escapeHtml(item.name)}</strong>`, {
-                sticky: true, 
-                direction: 'top' 
+                sticky: true,
+                direction: 'top',
+                pane: 'schoolTooltipPane'
             });
 
             // 2. 點擊：顯示所有詳細資訊 (Popup)
