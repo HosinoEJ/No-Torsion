@@ -13,6 +13,12 @@ export async function rebuildResponseWithHeaders(response, headerEntries = {}) {
     ? await response.arrayBuffer()
     : null;
 
+  if (body) {
+    headers.set('Content-Length', String(body.byteLength));
+  } else {
+    headers.delete('Content-Length');
+  }
+
   return new Response(body, {
     status: response.status,
     statusText: response.statusText,

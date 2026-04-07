@@ -20,6 +20,7 @@ test('rebuildResponseWithHeaders preserves large response bodies while mutating 
 
   assert.equal(await rebuilt.text(), originalBody);
   assert.equal(rebuilt.headers.get('content-type'), 'text/plain; charset=utf-8');
+  assert.equal(rebuilt.headers.get('content-length'), String(Buffer.byteLength(originalBody)));
   assert.equal(rebuilt.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
 });
 
@@ -44,4 +45,13 @@ test('worker entry serves cn.json directly from the bundle for workers runtime',
   assert.match(workerScript, /readFileSync\(CHINA_GEOJSON_PATH, 'utf8'\)/);
   assert.match(workerScript, /JSON\.stringify\(JSON\.parse\(source\)\)/);
   assert.doesNotMatch(workerScript, /Content-Encoding': 'gzip'/);
+});
+
+test('worker entry rebuilds /api/map-data responses to preserve large payload integrity', () => {
+  const workerScript = fs.readFileSync(path.resolve('worker.mjs'), 'utf8');
+
+  assert.match(workerScript, /requestUrl\.pathname === MAP_DATA_API_PATH/);
+  assert.match(workerScript, /buildIntegrityCacheControlHeader/);
+  assert.match(workerScript, /rebuildResponseWithHeaders\(response, \{/);
+  assert.match(workerScript, /no-transform/);
 });
