@@ -1,7 +1,6 @@
 // 表單枚举值、长度规则和地区联动数据都集中在这里，前后端共用一套定义。
 const allowedIdentities = new Set(['受害者本人', '受害者的代理人']);
 const allowedSexes = new Set(['男', '女', 'MtF', 'FtM', '__other_option__']);
-const currentYear = new Date().getUTCFullYear();
 const identityOptions = [
   { value: '受害者本人', labelKey: 'form.identityOptions.self' },
   { value: '受害者的代理人', labelKey: 'form.identityOptions.agent' }
@@ -13,29 +12,37 @@ const sexOptions = [
   { value: 'FtM', labelKey: 'form.sexOptions.ftm' },
   { value: '__other_option__', labelKey: 'form.sexOptions.other' }
 ];
-const formRuleDefinitions = {
-  birthDate: { labelKey: 'fields.birthDate', required: true },
-  birthYear: { labelKey: 'fields.birthYear', required: true, min: 1900, max: currentYear },
-  birthMonth: { labelKey: 'fields.birthMonth', required: true, min: 1, max: 12 },
-  birthDay: { labelKey: 'fields.birthDay', required: true, min: 1, max: 31 },
-  identity: { labelKey: 'fields.identity', required: true },
-  sex: { labelKey: 'fields.sex', required: true },
-  sexOther: { labelKey: 'fields.sexOther', maxLength: 10 },
-  provinceCode: { labelKey: 'fields.provinceCode', required: true },
-  cityCode: { labelKey: 'fields.cityCode', required: true },
-  countyCode: { labelKey: 'fields.countyCode', required: false },
-  schoolName: { labelKey: 'fields.schoolName', required: true, maxLength: 20 },
-  schoolAddress: { labelKey: 'fields.schoolAddress', maxLength: 50 },
-  dateStart: { labelKey: 'fields.dateStart', required: true },
-  dateEnd: { labelKey: 'fields.dateEnd' },
-  experience: { labelKey: 'fields.experience', maxLength: 8000 },
-  headmasterName: { labelKey: 'fields.headmasterName', maxLength: 10 },
-  contactInformation: { labelKey: 'fields.contactInformation', required: true, maxLength: 30 },
-  scandal: { labelKey: 'fields.scandal', maxLength: 3000 },
-  other: { labelKey: 'fields.other', maxLength: 3000 }
-};
 
-function getLocalizedFormRules(t) {
+function getFormRuleDefinitions(now = new Date()) {
+  const currentYear = now.getUTCFullYear();
+
+  return {
+    birthDate: { labelKey: 'fields.birthDate', required: true },
+    // Worker 可能跨年持续复用同一模块实例，所以年份上限要按调用时动态计算。
+    birthYear: { labelKey: 'fields.birthYear', required: true, min: 1900, max: currentYear },
+    birthMonth: { labelKey: 'fields.birthMonth', required: true, min: 1, max: 12 },
+    birthDay: { labelKey: 'fields.birthDay', required: true, min: 1, max: 31 },
+    identity: { labelKey: 'fields.identity', required: true },
+    sex: { labelKey: 'fields.sex', required: true },
+    sexOther: { labelKey: 'fields.sexOther', maxLength: 10 },
+    provinceCode: { labelKey: 'fields.provinceCode', required: true },
+    cityCode: { labelKey: 'fields.cityCode', required: true },
+    countyCode: { labelKey: 'fields.countyCode', required: false },
+    schoolName: { labelKey: 'fields.schoolName', required: true, maxLength: 20 },
+    schoolAddress: { labelKey: 'fields.schoolAddress', maxLength: 50 },
+    dateStart: { labelKey: 'fields.dateStart', required: true },
+    dateEnd: { labelKey: 'fields.dateEnd' },
+    experience: { labelKey: 'fields.experience', maxLength: 8000 },
+    headmasterName: { labelKey: 'fields.headmasterName', maxLength: 10 },
+    contactInformation: { labelKey: 'fields.contactInformation', required: true, maxLength: 30 },
+    scandal: { labelKey: 'fields.scandal', maxLength: 3000 },
+    other: { labelKey: 'fields.other', maxLength: 3000 }
+  };
+}
+
+function getLocalizedFormRules(t, now = new Date()) {
+  const formRuleDefinitions = getFormRuleDefinitions(now);
+
   return Object.fromEntries(
     Object.entries(formRuleDefinitions).map(([field, definition]) => [
       field,
@@ -64,7 +71,7 @@ function getLocalizedSexOptions(t) {
 module.exports = {
   allowedIdentities,
   allowedSexes,
-  formRuleDefinitions,
+  getFormRuleDefinitions,
   getLocalizedFormRules,
   getLocalizedIdentityOptions,
   getLocalizedSexOptions,

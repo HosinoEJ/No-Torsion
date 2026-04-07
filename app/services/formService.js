@@ -1,6 +1,6 @@
 const axios = require('axios');
 const { validateProvinceAndCity, validateCountyForCity } = require('../../config/areaSelector');
-const { allowedIdentities, allowedSexes, formRuleDefinitions } = require('../../config/formConfig');
+const { allowedIdentities, allowedSexes, getFormRuleDefinitions } = require('../../config/formConfig');
 
 // 提交前统一做 trim，避免首尾空格造成前后端校验不一致。
 function getTrimmedString(value) {
@@ -68,6 +68,7 @@ function validateTextField(errors, t, label, value, { required = false, maxLengt
 // 把前端表单请求体校验并整理成后续可直接发往 Google Form 的结构。
 function validateSubmission(body, t) {
   const errors = [];
+  const formRuleDefinitions = getFormRuleDefinitions();
   const formRules = Object.fromEntries(
     Object.entries(formRuleDefinitions).map(([field, definition]) => [
       field,

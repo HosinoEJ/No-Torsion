@@ -69,6 +69,37 @@ function getGoogleTranslationTestEnv(overrides = {}) {
   };
 }
 
+async function withMockedDate(isoString, callback) {
+  const RealDate = Date;
+  const fixedTimestamp = RealDate.parse(isoString);
+
+  class MockDate extends RealDate {
+    constructor(...args) {
+      super(args.length === 0 ? fixedTimestamp : args[0], ...args.slice(1));
+    }
+
+    static now() {
+      return fixedTimestamp;
+    }
+
+    static parse(value) {
+      return RealDate.parse(value);
+    }
+
+    static UTC(...args) {
+      return RealDate.UTC(...args);
+    }
+  }
+
+  global.Date = MockDate;
+
+  try {
+    return await callback();
+  } finally {
+    global.Date = RealDate;
+  }
+}
+
 function requestPath(app, requestPath) {
   return new Promise((resolve, reject) => {
     const server = app.listen(0, () => {
@@ -341,6 +372,28 @@ test('form page includes school name and address autocomplete hooks', async () =
   assert.doesNotMatch(response.body, /unpkg\.com\/leaflet@1\.9\.4\/dist\/leaflet\.js/);
   assert.doesNotMatch(response.body, /\/js\/map_backTop\.js/);
   assert.doesNotMatch(response.body, /\/js\/queryUpd\.js/);
+});
+
+test('form page recomputes birth year options for long-lived runtimes', async () => {
+  let app;
+
+  await withMockedDate('2025-12-31T23:30:00Z', async () => {
+    app = loadApp({ DEBUG_MOD: 'false' });
+    const response = await requestPath(app, '/form');
+
+    assert.equal(response.statusCode, 200);
+    assert.match(response.body, /<option value="2025">2025<\/option>/);
+    assert.doesNotMatch(response.body, /<option value="2026">2026<\/option>/);
+  });
+
+  await withMockedDate('2026-01-01T00:30:00Z', async () => {
+    const response = await requestPath(app, '/form');
+
+    assert.equal(response.statusCode, 200);
+    assert.match(response.body, /<option value="2026">2026<\/option>/);
+  });
+
+  clearProjectModules();
 });
 
 test('form page disables indexing and caching because it issues sensitive submission tokens', async () => {
