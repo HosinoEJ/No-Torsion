@@ -133,7 +133,7 @@ npm test
 | `FORM_PROTECTION_MAX_AGE_MS` | 非必要 | `86400000` | 表單 token 最長有效期 |
 | `FORM_ID` | 非必要 | `1FAIpQLScggjQgYutXQrjQDrutyxL0eLaFMktTMRKsFWPffQGavUFspA` | Google Form ID |
 | `GOOGLE_SCRIPT_URL` | 非必要 | 空 | 私有 Google Apps Script 資料源；留空時回退公開資料源 |
-| `PUBLIC_MAP_DATA_URL` | 非必要 | `https://nct.hosinoneko.me/api/map-data` | 公開地圖 API 地址 |
+| `PUBLIC_MAP_DATA_URL` | 非必要 | `https://nct.hosinoeiji.workers.dev/api/map-data` | 公開地圖 API 地址 |
 | `GOOGLE_CLOUD_TRANSLATION_API_KEY` | 按需 | 空 | Google Cloud Translation API Key；啓用翻譯功能時必填 |
 | `TRANSLATION_PROVIDER_TIMEOUT_MS` | 非必要 | `10000` | 翻譯請求超時，單位毫秒 |
 | `TRUST_PROXY` | 非必要 | `1` | 是否信任反向代理；預設信任一層代理 |
@@ -386,7 +386,7 @@ A: 因為它會呼叫 `npx wrangler deploy`，且與本倉庫的 `package.json` 
 公開接口：
 
 ```text
-https://nct.hosinoneko.me/api/map-data
+https://nct.hosinoeiji.workers.dev/api/map-data
 ```
 
 如果你是自行部署，則改用你自己的域名，例如：
