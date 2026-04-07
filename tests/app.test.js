@@ -444,6 +444,18 @@ test('map page ignores app locals assetVersion=0 and rewrites it before renderin
   });
 });
 
+test('cn.json endpoint returns the complete GeoJSON payload', async () => {
+  const app = loadApp({ DEBUG_MOD: 'false' });
+  const response = await requestPath(app, '/cn.json');
+  const expectedPayload = fs.readFileSync(path.join(projectRoot, 'public/cn.json'), 'utf8');
+
+  assert.equal(response.statusCode, 200);
+  assert.match(response.headers['content-type'], /application\/json/);
+  assert.equal(response.body.length, expectedPayload.length);
+  assert.equal(response.body, expectedPayload);
+  assert.equal(JSON.parse(response.body).type, 'FeatureCollection');
+});
+
 test('map page keeps an OSM-compatible referrer policy for tile requests', async () => {
   const app = loadApp({ DEBUG_MOD: 'false' });
   const response = await requestPath(app, '/map');

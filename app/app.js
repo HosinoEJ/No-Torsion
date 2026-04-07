@@ -36,6 +36,7 @@ const configuredAssetVersion = String(process.env.ASSET_VERSION || '').trim();
 const assetVersion = configuredAssetVersion && configuredAssetVersion !== '0'
   ? configuredAssetVersion
   : String(Date.now());
+const chinaGeoJsonPayload = fs.readFileSync(nodePath.join(paths.public, 'cn.json'), 'utf8');
 
 function collectEjsTemplatePaths(directory) {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -75,6 +76,14 @@ app.use(createI18nMiddleware());
 
 // 模板与静态资源根目录。
 app.set('views', paths.views);
+app.get('/cn.json', (_req, res) => {
+  // Workers 里的 express.static 在大文件上偶发 64 KiB 截断，
+  // 这里直接返回完整字符串，确保地图 GeoJSON 始终可解析。
+  res
+    .type('application/json')
+    .set('Cache-Control', 'public, max-age=0')
+    .send(chinaGeoJsonPayload);
+});
 app.use(express.static(paths.public));
 app.use(createMaintenanceMiddleware({
   maintenanceMode,
