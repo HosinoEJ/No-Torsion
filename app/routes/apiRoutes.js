@@ -12,6 +12,7 @@ const { translateDetailItems } = require('../services/textTranslationService');
 // API 路由只负责把 service 层返回的数据转成 HTTP 响应。
 function createApiRoutes({
   googleScriptUrl,
+  mapDataForceIpv4,
   mapReadRateLimitMax,
   publicMapDataUrl,
   rateLimitRedisUrl
@@ -103,6 +104,7 @@ function createApiRoutes({
       const mapData = await getMapData({
         forceRefresh: shouldForceRefresh(req),
         googleScriptUrl,
+        mapDataForceIpv4,
         publicMapDataUrl
       });
       return res.json(mapData);

@@ -230,10 +230,11 @@ async function fetchJsonDirectIpv4(dataSourceUrl) {
   });
 }
 
-async function fetchMapPayloadFromSource(dataSourceUrl) {
+async function fetchMapPayloadFromSource(dataSourceUrl, { mapDataForceIpv4 = false } = {}) {
   const strategies = [];
   let lastError = null;
   const workersRuntime = isWorkersRuntime();
+  const shouldUseDirectIpv4 = !workersRuntime && mapDataForceIpv4;
 
   if (!workersRuntime && hasProxyConfiguration()) {
     strategies.push({
@@ -242,20 +243,22 @@ async function fetchMapPayloadFromSource(dataSourceUrl) {
     });
   }
 
-  strategies.push({
-    name: 'direct-fetch',
-    request: () => fetchJsonDirect(dataSourceUrl)
-  });
+  if (shouldUseDirectIpv4) {
+    strategies.push({
+      name: 'direct-ipv4',
+      request: () => fetchJsonDirectIpv4(dataSourceUrl)
+    });
+  } else {
+    strategies.push({
+      name: 'direct-fetch',
+      request: () => fetchJsonDirect(dataSourceUrl)
+    });
+  }
 
   if (workersRuntime) {
     strategies.push({
       name: 'direct-fetch-retry',
       request: () => fetchJsonDirect(dataSourceUrl)
-    });
-  } else {
-    strategies.push({
-      name: 'direct-ipv4',
-      request: () => fetchJsonDirectIpv4(dataSourceUrl)
     });
   }
 
@@ -315,7 +318,7 @@ function cleanMapData(rawData) {
 }
 
 // 公开地图接口的主逻辑：读取远端数据、清洗、缓存、失败时尽量回退到缓存。
-async function getMapData({ forceRefresh = false, googleScriptUrl, publicMapDataUrl }) {
+async function getMapData({ forceRefresh = false, googleScriptUrl, mapDataForceIpv4 = false, publicMapDataUrl }) {
   const now = Date.now();
 
   // 常规请求优先命中缓存，避免每次页面访问都走网络。
@@ -340,7 +343,9 @@ async function getMapData({ forceRefresh = false, googleScriptUrl, publicMapData
   const request = (async () => {
     try {
       const dataSourceUrl = resolveMapDataSource({ googleScriptUrl, publicMapDataUrl });
-      const responseBody = await fetchMapPayloadFromSource(dataSourceUrl);
+      const responseBody = await fetchMapPayloadFromSource(dataSourceUrl, {
+        mapDataForceIpv4
+      });
       const rawData = normalizeRawData(responseBody.data);
       const avgAge = resolveNumericValue(responseBody.avg_age);
       const schoolNum = resolveNumericValue(responseBody.schoolNum, responseBody.SchoolNum);

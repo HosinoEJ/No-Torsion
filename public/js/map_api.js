@@ -504,10 +504,20 @@ function ensureProvincePanes() {
         map.createPane('provinceBorderPane');
     }
 
+    if (!map.getPane('schoolShadowPane')) {
+        map.createPane('schoolShadowPane');
+    }
+
+    if (!map.getPane('schoolMarkerPane')) {
+        map.createPane('schoolMarkerPane');
+    }
+
     map.getPane('provinceFillPane').style.zIndex = '625';
     map.getPane('provinceFillPane').style.pointerEvents = 'none';
     map.getPane('provinceBorderPane').style.zIndex = '640';
     map.getPane('provinceBorderPane').style.pointerEvents = 'none';
+    map.getPane('schoolShadowPane').style.zIndex = '670';
+    map.getPane('schoolMarkerPane').style.zIndex = '675';
 }
 
 function ensureProvinceRenderers() {
@@ -787,7 +797,10 @@ window.getSharedMapData()
         );
 
         filteredData.forEach((item, index) => {
-            const marker = L.marker([item.lat, item.lng]).addTo(map);
+            const marker = L.marker([item.lat, item.lng], {
+                pane: 'schoolMarkerPane',
+                shadowPane: 'schoolShadowPane'
+            }).addTo(map);
 
             // 1. 鼠標指到圖標：顯示標題 (Tooltip)
             marker.bindTooltip(`<strong>${escapeHtml(item.name)}</strong>`, {

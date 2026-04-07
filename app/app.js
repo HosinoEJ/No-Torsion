@@ -15,6 +15,7 @@ const {
   maintenanceMode,
   maintenanceNotice,
   maintenanceRetryAfterSeconds,
+  mapDataForceIpv4,
   mapReadRateLimitMax,
   pageReadRateLimitMax,
   publicMapDataUrl,
@@ -31,7 +32,10 @@ const { createMaintenanceMiddleware } = require('./middleware/maintenance');
 const createApiRoutes = require('./routes/apiRoutes');
 const createFormRoutes = require('./routes/formRoutes');
 const createPageRoutes = require('./routes/pageRoutes');
-const assetVersion = process.env.ASSET_VERSION || String(Date.now());
+const configuredAssetVersion = String(process.env.ASSET_VERSION || '').trim();
+const assetVersion = configuredAssetVersion && configuredAssetVersion !== '0'
+  ? configuredAssetVersion
+  : String(Date.now());
 
 function collectEjsTemplatePaths(directory) {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -112,6 +116,7 @@ app.use(createFormRoutes({
 }));
 app.use(createApiRoutes({
   googleScriptUrl,
+  mapDataForceIpv4,
   mapReadRateLimitMax,
   publicMapDataUrl,
   rateLimitRedisUrl

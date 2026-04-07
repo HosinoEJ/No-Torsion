@@ -18,6 +18,7 @@ function loadApp(envOverrides = {}) {
   const effectiveEnvOverrides = {
     MAINTENANCE_MODE: 'false',
     MAINTENANCE_NOTICE: '',
+    MAP_DATA_FORCE_IPV4: 'false',
     ...envOverrides
   };
 
@@ -412,6 +413,22 @@ test('map page renders the record container and lazy-load sentinel', async () =>
   assert.match(response.body, /sha256-20nQCchB9co0qIjJZRGuk2\/Z9VM\+kNiyxNV1lvTlZBo=/);
 });
 
+test('map page ignores ASSET_VERSION=0 and falls back to a real cache-busting version', async () => {
+  await withMockedDate('2026-04-07T12:45:00.000Z', async () => {
+    const app = loadApp({
+      DEBUG_MOD: 'false',
+      ASSET_VERSION: '0'
+    });
+    const response = await requestPath(app, '/map');
+
+    assert.equal(response.statusCode, 200);
+    assert.doesNotMatch(response.body, /window\.ASSET_VERSION = "0"/);
+    assert.match(response.body, /window\.ASSET_VERSION = "1775565900000"/);
+    assert.match(response.body, /\/js\/map_api\.js\?v=1775565900000/);
+    assert.match(response.body, /\/js\/map_province_utils\.js\?v=1775565900000/);
+  });
+});
+
 test('map page keeps an OSM-compatible referrer policy for tile requests', async () => {
   const app = loadApp({ DEBUG_MOD: 'false' });
   const response = await requestPath(app, '/map');
@@ -436,6 +453,8 @@ test('map frontend keeps a renderer and layout fallback for province overlays', 
 
   assert.match(mapScript, /preferCanvas:\s*true/);
   assert.match(mapScript, /provinceFillPane/);
+  assert.match(mapScript, /schoolMarkerPane/);
+  assert.match(mapScript, /shadowPane:\s*'schoolShadowPane'/);
   assert.match(mapScript, /getProvinceFillOpacity/);
   assert.match(mapScript, /scheduleMapLayoutRefresh/);
   assert.match(mapScript, /map\.invalidateSize\(\{ pan: false, animate: false \}\)/);
@@ -1503,6 +1522,17 @@ test('map data service uses proxy agent when proxy env is configured', async () 
   }, async () => {
     clearProjectModules();
     const axios = require('axios');
+    const proxyAgentModulePath = require.resolve('proxy-agent');
+    const originalProxyAgentModule = require.cache[proxyAgentModulePath];
+    class FakeProxyAgent {}
+    require.cache[proxyAgentModulePath] = {
+      id: proxyAgentModulePath,
+      filename: proxyAgentModulePath,
+      loaded: true,
+      exports: {
+        ProxyAgent: FakeProxyAgent
+      }
+    };
     const mapDataService = require(path.join(projectRoot, 'app/services/mapDataService'));
     const originalGet = axios.get;
     const originalFetch = global.fetch;
@@ -1535,17 +1565,23 @@ test('map data service uses proxy agent when proxy env is configured', async () 
       assert.equal(result.schoolNum, 2);
       assert.equal(axiosCalls.length, 1);
       assert.equal(axiosCalls[0].proxy, false);
-      assert.ok(axiosCalls[0].httpAgent);
-      assert.ok(axiosCalls[0].httpsAgent);
+      assert.ok(axiosCalls[0].httpAgent instanceof FakeProxyAgent);
+      assert.ok(axiosCalls[0].httpsAgent instanceof FakeProxyAgent);
     } finally {
       axios.get = originalGet;
       global.fetch = originalFetch;
       mapDataService.resetMapDataCache();
+
+      if (originalProxyAgentModule) {
+        require.cache[proxyAgentModulePath] = originalProxyAgentModule;
+      } else {
+        delete require.cache[proxyAgentModulePath];
+      }
     }
   });
 });
 
-test('map data service falls back to direct IPv4 requests when direct fetch fails', async () => {
+test('map data service uses direct IPv4 requests when MAP_DATA_FORCE_IPV4 is enabled', async () => {
   await withEnvOverrides(getNoProxyEnv(), async () => {
     clearProjectModules();
     const axios = require('axios');
@@ -1553,14 +1589,10 @@ test('map data service falls back to direct IPv4 requests when direct fetch fail
     const originalGet = axios.get;
     const originalFetch = global.fetch;
     const axiosCalls = [];
-    let fetchCount = 0;
 
     mapDataService.resetMapDataCache();
     global.fetch = async () => {
-      fetchCount += 1;
-      const error = new TypeError('fetch failed');
-      error.cause = { code: 'ETIMEDOUT', message: 'connect timeout' };
-      throw error;
+      throw new Error('fetch should not be called when MAP_DATA_FORCE_IPV4 is enabled');
     };
     axios.get = async (_url, config = {}) => {
       axiosCalls.push(config);
@@ -1580,10 +1612,12 @@ test('map data service falls back to direct IPv4 requests when direct fetch fail
     };
 
     try {
-      const result = await mapDataService.getMapData({ publicMapDataUrl: 'https://example.com/api/map-data' });
+      const result = await mapDataService.getMapData({
+        publicMapDataUrl: 'https://example.com/api/map-data',
+        mapDataForceIpv4: true
+      });
 
       assert.equal(result.schoolNum, 3);
-      assert.equal(fetchCount, 1);
       assert.equal(axiosCalls.length, 1);
       assert.equal(axiosCalls[0].proxy, false);
       assert.equal(axiosCalls[0].httpAgent.options.family, 4);
