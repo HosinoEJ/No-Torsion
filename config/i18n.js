@@ -294,7 +294,8 @@ const messages = {
         security: '安全措施',
         cookie: '当前使用的 Cookie',
         manage: '您的选择',
-        contact: '联系我们'
+        contact: '联系我们',
+        publicInfo: '公开数据'
       },
       summary: '本站当前仅在您主动切换语言时，使用一个站内 Cookie 来记住您的语言偏好。我们不会将该 Cookie 用于广告投放、跨站跟踪或画像分析。',
       overviewItems: [
@@ -741,7 +742,8 @@ const messages = {
         security: '安全措施',
         cookie: '目前使用的 Cookie',
         manage: '您的選擇',
-        contact: '聯絡我們'
+        contact: '聯絡我們',
+        publicInfo: '公開資料'
       },
       summary: '本站目前僅在您主動切換語言時，使用一個站內 Cookie 來記住您的語言偏好。我們不會將該 Cookie 用於廣告投放、跨站追蹤或人物畫像分析。',
       overviewItems: [
@@ -1188,7 +1190,8 @@ const messages = {
         security: 'Security Measures',
         cookie: 'Cookie Currently In Use',
         manage: 'Your Choices',
-        contact: 'Contact'
+        contact: 'Contact',
+        publicInfo: 'Public Data'
       },
       summary: 'At the moment, this site only uses one first-party cookie to remember your language preference when you actively switch languages. We do not use this cookie for advertising, cross-site tracking, or profiling.',
       overviewItems: [

@@ -775,6 +775,8 @@ test('privacy page documents the language cookie, form-disclosure flow, and foot
   assert.match(privacyResponse.body, /Form Submission And Public Display/);
   assert.match(privacyResponse.body, /Third-Party Services/);
   assert.match(privacyResponse.body, /Retention And Removal/);
+  assert.match(privacyResponse.body, /Public Data/);
+  assert.match(privacyResponse.body, /href="https:\/\/docs\.google\.com\/spreadsheets\/d\/12GSD0Hzi0P6q3B9V4-DT9SOQghL8zV2A-7FsWFYhFxk"/);
   assert.match(privacyResponse.body, /<code>lang<\/code>/);
   assert.match(privacyResponse.body, /2592000/);
   assert.match(privacyResponse.body, /SameSite=Lax/);
