@@ -584,6 +584,10 @@ test('form page includes school name and address autocomplete hooks', async () =
   assert.match(response.body, /MtF/);
   assert.match(response.body, /name="sex_other_type" value="FtM"/);
   assert.match(response.body, /FtM/);
+  assert.match(response.body, /name="sex_other_type" value="X"/);
+  assert.match(response.body, />X</);
+  assert.match(response.body, /name="sex_other_type" value="Queer"/);
+  assert.match(response.body, /Queer/);
   assert.match(response.body, /id="otherSexCustomRadio"/);
   assert.match(response.body, /placeholder="其它性别认同或补充说明"/);
   assert.doesNotMatch(response.body, /id="otherSexTypeSelect"/);
@@ -1534,6 +1538,36 @@ test('submit route accepts custom other gender identity text in dry run mode', a
 
   assert.equal(response.statusCode, 200);
   assert.match(response.body, /entry\.1422578992<\/code><\/td>\s*<td>性别<\/td>\s*<td>非二元<\/td>/);
+  clearProjectModules();
+});
+
+test('submit route accepts Queer selected for other gender identity in dry run mode', async () => {
+  clearProjectModules();
+  const { issueFormProtectionToken } = require(path.join(projectRoot, 'app/services/formProtectionService'));
+  const app = loadApp({
+    DEBUG_MOD: 'false',
+    FORM_DRY_RUN: 'true',
+    FORM_PROTECTION_SECRET: 'test-form-protection-secret',
+    FORM_PROTECTION_MIN_FILL_MS: '3000'
+  });
+  const response = await requestApp(app, {
+    path: '/submit',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: buildValidSubmissionBody({
+      sex: '__other_option__',
+      sex_other_type: 'Queer',
+      form_token: issueFormProtectionToken({
+        secret: 'test-form-protection-secret',
+        issuedAt: Date.now() - 5000
+      })
+    })
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.match(response.body, /entry\.1422578992<\/code><\/td>\s*<td>性别<\/td>\s*<td>Queer<\/td>/);
   clearProjectModules();
 });
 

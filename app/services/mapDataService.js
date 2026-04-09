@@ -1,7 +1,7 @@
 const axios = require('axios');
 const http = require('http');
 const https = require('https');
-const { getProvinceCodeLabels } = require('../../config/i18n');
+const { provinceMetadataByCode } = require('../../config/provinceMetadata');
 const { isWorkersRuntime } = require('../../config/runtimeConfig');
 
 // 地图数据缓存放在 service 层，避免每次请求都直打 Apps Script。
@@ -13,23 +13,57 @@ const cacheDurationMs = 300000;
 // 即使用户手动点刷新，也给上游 Apps Script 一个冷却时间，避免被连续击穿。
 const forceRefreshCooldownMs = 30000;
 const defaultUpstreamRequestTimeoutMs = 25000;
-const simplifiedProvinceLabels = getProvinceCodeLabels('zh-CN');
-const legacyProvinceLabels = getProvinceCodeLabels('zh-TW');
 const provinceAliasToLegacyName = buildProvinceAliasToLegacyNameMap();
 let ProxyAgentConstructor = null;
 let cachedProxyAgent = null;
 let cachedIpv4HttpAgent = null;
 let cachedIpv4HttpsAgent = null;
 
+function normalizeProvinceAlias(value) {
+  return String(value || '')
+    .trim()
+    .replace(/\s+/g, '')
+    .replace(/[（(][^）)]*[）)]/g, '')
+    .replace(
+      /(维吾尔自治区|維吾爾自治區|壮族自治区|壯族自治區|回族自治区|回族自治區|特别行政区|特別行政區|自治区|自治區|省|市|province|municipality|autonomousregion|specialadministrativeregion)$/giu,
+      ''
+    )
+    .toLowerCase();
+}
+
+function addProvinceAlias(aliasMap, alias, legacyName) {
+  const normalizedAlias = String(alias || '').trim();
+
+  if (!normalizedAlias) {
+    return;
+  }
+
+  aliasMap.set(normalizedAlias, legacyName);
+
+  const compactAlias = normalizeProvinceAlias(normalizedAlias);
+  if (compactAlias) {
+    aliasMap.set(compactAlias, legacyName);
+  }
+}
+
 function buildProvinceAliasToLegacyNameMap() {
   const aliasMap = new Map();
 
-  Object.keys(legacyProvinceLabels).forEach((code) => {
-    const legacyName = legacyProvinceLabels[code];
-    const simplifiedName = simplifiedProvinceLabels[code];
+  Object.entries(provinceMetadataByCode).forEach(([code, metadata]) => {
+    const aliases = new Set([
+      code,
+      metadata.legacyName,
+      ...Object.values(metadata.shortLabels || {}),
+      ...Object.values(metadata.fullLabels || {})
+    ]);
 
-    [legacyName, simplifiedName].filter(Boolean).forEach((alias) => {
-      aliasMap.set(alias, legacyName);
+    if (code === '710000') {
+      aliases.add('臺灣（ROC）');
+      aliases.add('台湾');
+    }
+
+    aliases.forEach((alias) => {
+      addProvinceAlias(aliasMap, alias, metadata.legacyName);
     });
   });
 
@@ -43,7 +77,9 @@ function normalizeProvinceNameToLegacy(provinceName) {
     return '';
   }
 
-  return provinceAliasToLegacyName.get(normalizedProvinceName) || normalizedProvinceName;
+  return provinceAliasToLegacyName.get(normalizedProvinceName)
+    || provinceAliasToLegacyName.get(normalizeProvinceAlias(normalizedProvinceName))
+    || normalizedProvinceName;
 }
 
 function normalizeProvinceStatistics(items) {

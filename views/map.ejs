@@ -55,6 +55,9 @@
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
         crossorigin="anonymous"
     ></script>
+    <script>
+        window.PROVINCE_METADATA = <%- JSON.stringify(provinceMetadata || {}) %>;
+    </script>
     <script src="/js/map_province_utils.js?v=<%= assetVersion %>"></script>
     <script src="/js/map_api.js?v=<%= assetVersion %>"></script>
     <%- include('partials/foot', {

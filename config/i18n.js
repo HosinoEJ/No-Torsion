@@ -1,153 +1,15 @@
-const supportedLanguages = ['zh-CN', 'zh-TW', 'en'];
-const defaultLanguage = 'zh-CN';
+const {
+  defaultLanguage,
+  getLegacyProvinceNamesByCode,
+  getProvinceCodeLabels: getProvinceCodeLabelsFromMetadata,
+  supportedLanguages
+} = require('./provinceMetadata');
 
-const provinceCodeLabels = {
-  'zh-CN': {
-    '110000': '北京',
-    '120000': '天津',
-    '130000': '河北',
-    '140000': '山西',
-    '150000': '内蒙古',
-    '210000': '辽宁',
-    '220000': '吉林',
-    '230000': '黑龙江',
-    '310000': '上海',
-    '320000': '江苏',
-    '330000': '浙江',
-    '340000': '安徽',
-    '350000': '福建',
-    '360000': '江西',
-    '370000': '山东',
-    '410000': '河南',
-    '420000': '湖北',
-    '430000': '湖南',
-    '440000': '广东',
-    '450000': '广西',
-    '460000': '海南',
-    '500000': '重庆',
-    '510000': '四川',
-    '520000': '贵州',
-    '530000': '云南',
-    '540000': '西藏',
-    '610000': '陕西',
-    '620000': '甘肃',
-    '630000': '青海',
-    '640000': '宁夏',
-    '650000': '新疆',
-    '710000': '台湾',
-    '810000': '香港',
-    '820000': '澳门'
-  },
-  'zh-TW': {
-    '110000': '北京',
-    '120000': '天津',
-    '130000': '河北',
-    '140000': '山西',
-    '150000': '內蒙古',
-    '210000': '遼寧',
-    '220000': '吉林',
-    '230000': '黑龍江',
-    '310000': '上海',
-    '320000': '江蘇',
-    '330000': '浙江',
-    '340000': '安徽',
-    '350000': '福建',
-    '360000': '江西',
-    '370000': '山東',
-    '410000': '河南',
-    '420000': '湖北',
-    '430000': '湖南',
-    '440000': '廣東',
-    '450000': '廣西',
-    '460000': '海南',
-    '500000': '重慶',
-    '510000': '四川',
-    '520000': '貴州',
-    '530000': '雲南',
-    '540000': '西藏',
-    '610000': '陝西',
-    '620000': '甘肅',
-    '630000': '青海',
-    '640000': '寧夏',
-    '650000': '新疆',
-    '710000': '臺灣',
-    '810000': '香港',
-    '820000': '澳門'
-  },
-  en: {
-    '110000': 'Beijing',
-    '120000': 'Tianjin',
-    '130000': 'Hebei',
-    '140000': 'Shanxi',
-    '150000': 'Inner Mongolia',
-    '210000': 'Liaoning',
-    '220000': 'Jilin',
-    '230000': 'Heilongjiang',
-    '310000': 'Shanghai',
-    '320000': 'Jiangsu',
-    '330000': 'Zhejiang',
-    '340000': 'Anhui',
-    '350000': 'Fujian',
-    '360000': 'Jiangxi',
-    '370000': 'Shandong',
-    '410000': 'Henan',
-    '420000': 'Hubei',
-    '430000': 'Hunan',
-    '440000': 'Guangdong',
-    '450000': 'Guangxi',
-    '460000': 'Hainan',
-    '500000': 'Chongqing',
-    '510000': 'Sichuan',
-    '520000': 'Guizhou',
-    '530000': 'Yunnan',
-    '540000': 'Tibet',
-    '610000': 'Shaanxi',
-    '620000': 'Gansu',
-    '630000': 'Qinghai',
-    '640000': 'Ningxia',
-    '650000': 'Xinjiang',
-    '710000': 'Taiwan',
-    '810000': 'Hong Kong',
-    '820000': 'Macau'
-  }
-};
+const provinceCodeLabels = Object.fromEntries(
+  supportedLanguages.map((language) => [language, getProvinceCodeLabelsFromMetadata(language)])
+);
 
-const legacyProvinceNamesByCode = {
-  '110000': '北京',
-  '120000': '天津',
-  '130000': '河北',
-  '140000': '山西',
-  '150000': '內蒙古',
-  '210000': '遼寧',
-  '220000': '吉林',
-  '230000': '黑龍江',
-  '310000': '上海',
-  '320000': '江蘇',
-  '330000': '浙江',
-  '340000': '安徽',
-  '350000': '福建',
-  '360000': '江西',
-  '370000': '山東',
-  '410000': '河南',
-  '420000': '湖北',
-  '430000': '湖南',
-  '440000': '廣東',
-  '450000': '廣西',
-  '460000': '海南',
-  '500000': '重慶',
-  '510000': '四川',
-  '520000': '貴州',
-  '530000': '雲南',
-  '540000': '西藏',
-  '610000': '陝西',
-  '620000': '甘肅',
-  '630000': '青海',
-  '640000': '寧夏',
-  '650000': '新疆',
-  '710000': '臺灣',
-  '810000': '香港',
-  '820000': '澳門'
-};
+const legacyProvinceNamesByCode = getLegacyProvinceNamesByCode();
 
 function buildLocalizedLegacyProvinceNames(language) {
   return Object.fromEntries(
@@ -265,7 +127,9 @@ const messages = {
       },
       sexIdentityOptions: {
         mtf: 'MtF',
-        ftm: 'FtM'
+        ftm: 'FtM',
+        x: 'X',
+        queer: 'Queer'
       },
       placeholders: {
         birthYear: '选择年份',
@@ -296,7 +160,7 @@ const messages = {
         dateStart: '假如有多次被送入经历，可在经历描述中说明情况',
         dateEnd: '若目前仍在校，可不填',
         experience: '若描述别人经历请在“其他补充”中填写',
-        otherSex: '请选择 MtF / FtM，或点击输入框填写其它性别认同或补充说明',
+        otherSex: '请选择 MtF / FtM / X / Queer，或点击输入框填写其它性别认同或补充说明',
         selectedPoint: '选取点: {lat}, {lng}'
       },
       validation: {
@@ -313,7 +177,7 @@ const messages = {
         fillSchoolName: '请填写机构名称',
         fillDateStart: '请填写首次被送入日期',
         fillContactInformation: '请填写机构联系方式',
-        specifyOtherSex: '请选择 MtF / FtM，或选择输入框填写其它性别认同或补充说明',
+        specifyOtherSex: '请选择 MtF / FtM / X / Queer，或选择输入框填写其它性别认同或补充说明',
         fillOtherSex: '请输入其它性别认同或补充说明',
         endDateBeforeStart: '离开日期不能早于首次被送入日期'
       }
@@ -517,7 +381,7 @@ const messages = {
       ageRange: '{label}必须是 {min} 到 {max} 的整数',
       invalidIdentity: '请选择有效的填写身份',
       invalidSex: '性别不合法，请修改',
-      otherSexRequired: '选择其它性别认同时，请选择 MtF / FtM，或选择输入框填写其它性别认同或补充说明',
+      otherSexRequired: '选择其它性别认同时，请选择 MtF / FtM / X / Queer，或选择输入框填写其它性别认同或补充说明',
       provinceCityMismatch: '机构所在省份和机构所在城市 / 区县不匹配',
       cityCountyMismatch: '机构所在城市 / 区县和机构所在县区不匹配',
       invalidFormat: '{label}格式不正确',
@@ -659,7 +523,9 @@ const messages = {
       },
       sexIdentityOptions: {
         mtf: 'MtF',
-        ftm: 'FtM'
+        ftm: 'FtM',
+        x: 'X',
+        queer: 'Queer'
       },
       placeholders: {
         birthYear: '選擇年份',
@@ -690,7 +556,7 @@ const messages = {
         dateStart: '假如有多次被送入經歷，可在經歷描述中說明情況',
         dateEnd: '若目前仍在校，可不填',
         experience: '若描述別人經歷請在「其他補充」中填寫',
-        otherSex: '請選擇 MtF / FtM，或點擊輸入框填寫其他性別認同或補充說明',
+        otherSex: '請選擇 MtF / FtM / X / Queer，或點擊輸入框填寫其他性別認同或補充說明',
         selectedPoint: '選取點: {lat}, {lng}'
       },
       validation: {
@@ -707,7 +573,7 @@ const messages = {
         fillSchoolName: '請填寫機構名稱',
         fillDateStart: '請填寫首次被送入日期',
         fillContactInformation: '請填寫機構聯繫方式',
-        specifyOtherSex: '請選擇 MtF / FtM，或選擇輸入框填寫其他性別認同或補充說明',
+        specifyOtherSex: '請選擇 MtF / FtM / X / Queer，或選擇輸入框填寫其他性別認同或補充說明',
         fillOtherSex: '請輸入其他性別認同或補充說明',
         endDateBeforeStart: '離開日期不能早於首次被送入日期'
       }
@@ -911,7 +777,7 @@ const messages = {
       ageRange: '{label}必須是 {min} 到 {max} 的整數',
       invalidIdentity: '請選擇有效的填寫身份',
       invalidSex: '性別不合法，請修改',
-      otherSexRequired: '選擇其他性別認同時，請選擇 MtF / FtM，或選擇輸入框填寫其他性別認同或補充說明',
+      otherSexRequired: '選擇其他性別認同時，請選擇 MtF / FtM / X / Queer，或選擇輸入框填寫其他性別認同或補充說明',
       provinceCityMismatch: '機構所在省份和機構所在城市 / 區縣不匹配',
       cityCountyMismatch: '機構所在城市 / 區縣和機構所在縣區不匹配',
       invalidFormat: '{label}格式不正確',
@@ -1053,7 +919,9 @@ const messages = {
       },
       sexIdentityOptions: {
         mtf: 'MtF',
-        ftm: 'FtM'
+        ftm: 'FtM',
+        x: 'X',
+        queer: 'Queer'
       },
       placeholders: {
         birthYear: 'Select year',
@@ -1084,7 +952,7 @@ const messages = {
         dateStart: 'If the survivor was sent there more than once, please explain that in the experience description.',
         dateEnd: 'Leave blank if the survivor is still there',
         experience: 'If you are describing someone else’s experience, please add that in "Other Notes".',
-        otherSex: 'Choose MtF / FtM, or use the text field for another gender identity or additional notes.',
+        otherSex: 'Choose MtF / FtM / X / Queer, or use the text field for another gender identity or additional notes.',
         selectedPoint: 'Selected point: {lat}, {lng}'
       },
       validation: {
@@ -1101,7 +969,7 @@ const messages = {
         fillSchoolName: 'Please enter the institution name',
         fillDateStart: 'Please enter the first date sent there',
         fillContactInformation: 'Please enter the institution contact information',
-        specifyOtherSex: 'Please choose MtF / FtM, or choose the text field and enter another gender identity or additional notes',
+        specifyOtherSex: 'Please choose MtF / FtM / X / Queer, or choose the text field and enter another gender identity or additional notes',
         fillOtherSex: 'Please enter another gender identity or additional notes',
         endDateBeforeStart: 'Departure date cannot be earlier than the first date sent there'
       }
@@ -1305,7 +1173,7 @@ const messages = {
       ageRange: '{label} must be an integer between {min} and {max}',
       invalidIdentity: 'Please choose a valid submission role',
       invalidSex: 'The selected gender value is invalid',
-      otherSexRequired: 'When "Other gender identity" is selected, please choose MtF / FtM or enter another gender identity or additional notes',
+      otherSexRequired: 'When "Other gender identity" is selected, please choose MtF / FtM / X / Queer or enter another gender identity or additional notes',
       provinceCityMismatch: 'The selected institution province and institution city / district do not match',
       cityCountyMismatch: 'The selected institution city / district and institution county / district do not match',
       invalidFormat: '{label} has an invalid format',

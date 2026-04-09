@@ -7,7 +7,9 @@ const allowedIdentities = new Set([SELF_IDENTITY, AGENT_IDENTITY]);
 const allowedSexes = new Set(['女性', '男性', OTHER_SEX_OPTION]);
 const otherSexTypeOptions = [
   { value: 'MtF', labelKey: 'form.sexIdentityOptions.mtf' },
-  { value: 'FtM', labelKey: 'form.sexIdentityOptions.ftm' }
+  { value: 'FtM', labelKey: 'form.sexIdentityOptions.ftm' },
+  { value: 'X', labelKey: 'form.sexIdentityOptions.x' },
+  { value: 'Queer', labelKey: 'form.sexIdentityOptions.queer' }
 ];
 const allowedOtherSexTypes = new Set([
   ...otherSexTypeOptions.map((option) => option.value),

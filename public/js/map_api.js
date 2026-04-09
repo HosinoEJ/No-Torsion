@@ -1,13 +1,11 @@
 (() => {
 const SCHOOL_MARKER_SCALE = 0.75;
-const SCHOOL_MARKER_DEFAULT_OPACITY = 0.6;
+const SCHOOL_MARKER_DEFAULT_OPACITY = 0.75;
 const SCHOOL_MARKER_MAX_OPACITY = 1.0;
 const SCHOOL_MARKER_SHADOW_URL = 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png';
 const SCHOOL_MARKER_DEFAULT_COLOR = '#36a2eb';
 const SCHOOL_MARKER_REPORT_MIN_COLOR = '#fca5a5';
 const SCHOOL_MARKER_REPORT_MAX_COLOR = '#FF0000';
-const PROVINCE_DENSITY_MIN_COLOR = '#FFFBE6';
-const PROVINCE_DENSITY_MAX_COLOR = '#A40012';
 
 const PROVINCE_DENSITY_FILL_OPACITY = 0.75;
 
@@ -39,7 +37,7 @@ function getProvinceDensityColor(density, maxDensity) {
     }
 
     const densityRatio = density / maxDensity;
-    return interpolateHexColor(PROVINCE_DENSITY_MIN_COLOR, PROVINCE_DENSITY_MAX_COLOR, densityRatio);
+    return interpolateHexColor('#FED976', '#800026', densityRatio);
 }
 
 const i18n = window.I18N;
@@ -53,7 +51,9 @@ const {
 } = window.MapRecordStats;
 const {
     buildProvinceDensityMap,
-    getProvinceCodeFromFeature
+    getFeatureProvinceDisplayName,
+    getProvinceCodeFromFeature,
+    getProvinceDisplayName
 } = window.MapProvinceUtils || {};
 const themeMediaQuery = typeof window.matchMedia === 'function'
     ? window.matchMedia('(prefers-color-scheme: dark)')
@@ -380,6 +380,13 @@ function getInputTypeDisplay(value) {
 }
 
 function getProvinceDisplay(value) {
+    if (typeof getProvinceDisplayName === 'function') {
+        const localizedProvinceName = getProvinceDisplayName(value, window.APP_LANG);
+        if (localizedProvinceName) {
+            return localizedProvinceName;
+        }
+    }
+
     return i18n.data.provinceNames[value] || value || '';
 }
 
@@ -393,7 +400,10 @@ function getProvinceLabelLatLng(feature, layer) {
 }
 
 function bindProvinceLabel(feature, layer) {
-    const provinceName = feature?.properties?.name || feature?.properties?.province || '';
+    const provinceName = typeof getFeatureProvinceDisplayName === 'function'
+        ? getFeatureProvinceDisplayName(feature, window.APP_LANG)
+        : feature?.properties?.name || feature?.properties?.province || '';
+
     if (!provinceName) {
         return;
     }

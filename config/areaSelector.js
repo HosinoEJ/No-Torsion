@@ -1,43 +1,9 @@
 const chinaAreaData = require('china-area-data');
 const { getProvinceCodeLabels } = require('./i18n');
+const { getLegacyProvinceNamesByCode } = require('./provinceMetadata');
 
 // china-area-data 提供的是标准行政区名称，这里维护旧表单沿用的省份展示名映射。
-const legacyProvinceNameByCode = {
-  '110000': '北京',
-  '120000': '天津',
-  '130000': '河北',
-  '140000': '山西',
-  '150000': '內蒙古',
-  '210000': '遼寧',
-  '220000': '吉林',
-  '230000': '黑龍江',
-  '310000': '上海',
-  '320000': '江蘇',
-  '330000': '浙江',
-  '340000': '安徽',
-  '350000': '福建',
-  '360000': '江西',
-  '370000': '山東',
-  '410000': '河南',
-  '420000': '湖北',
-  '430000': '湖南',
-  '440000': '廣東',
-  '450000': '廣西',
-  '460000': '海南',
-  '500000': '重慶',
-  '510000': '四川',
-  '520000': '貴州',
-  '530000': '雲南',
-  '540000': '西藏',
-  '610000': '陝西',
-  '620000': '甘肅',
-  '630000': '青海',
-  '640000': '寧夏',
-  '650000': '新疆',
-  '710000': '臺灣',
-  '810000': '香港',
-  '820000': '澳門'
-};
+const legacyProvinceNameByCode = getLegacyProvinceNamesByCode();
 
 function toOption([code, name]) {
   return { code, name };

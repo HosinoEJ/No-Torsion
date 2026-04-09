@@ -2,6 +2,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const { getAreaOptions } = require('../../config/areaSelector');
+const { getClientProvinceMetadata } = require('../../config/provinceMetadata');
 const {
   getLocalizedFormRules,
   getLocalizedIdentityOptions,
@@ -177,7 +178,8 @@ function createPageRoutes({
     res.render('map', {
       title: req.t('pageTitles.map', { title }),
       apiUrl,
-      QTag: req.query.inputType || ''
+      QTag: req.query.inputType || '',
+      provinceMetadata: getClientProvinceMetadata()
     });
   });
 
