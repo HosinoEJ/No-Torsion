@@ -4,6 +4,7 @@ const {
   allowedIdentities,
   allowedOtherSexTypes,
   allowedSexes,
+  CUSTOM_OTHER_SEX_OPTION,
   getBirthYearLabelKey,
   getFormRuleDefinitions,
   getSexLabelKey,
@@ -78,7 +79,15 @@ function buildNormalizedSexValue(sex, sexOtherType, sexOther) {
     return sex;
   }
 
-  return [sexOtherType, sexOther].filter(Boolean).join(' / ');
+  if (sexOtherType === CUSTOM_OTHER_SEX_OPTION) {
+    return sexOther;
+  }
+
+  if (sexOtherType && sexOther) {
+    return `${sexOtherType} / ${sexOther}`;
+  }
+
+  return sexOtherType || sexOther;
 }
 
 // 把前端表单请求体校验并整理成后续可直接发往 Google Form 的结构。
@@ -173,6 +182,10 @@ function validateSubmission(body, t) {
   }
 
   if (sex === OTHER_SEX_OPTION && !sexOtherType && !sexOther) {
+    errors.push(t('formErrors.otherSexRequired'));
+  }
+
+  if (sex === OTHER_SEX_OPTION && sexOtherType === CUSTOM_OTHER_SEX_OPTION && !sexOther) {
     errors.push(t('formErrors.otherSexRequired'));
   }
 

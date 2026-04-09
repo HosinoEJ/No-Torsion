@@ -261,7 +261,7 @@ const messages = {
         placeholder: '请选择',
         male: '男性',
         female: '女性',
-        other: '其它'
+        other: '其它性别认同'
       },
       sexIdentityOptions: {
         mtf: 'MtF',
@@ -273,7 +273,7 @@ const messages = {
         birthDay: '选择日期',
         age: '请输入年龄',
         otherSexType: '请选择',
-        otherSex: '可填写其它性别认同',
+        otherSex: '其它性别认同或补充说明',
         province: '选择机构所在省份',
         city: '请先选择机构所在省份',
         countyInitial: '可选：请先选择机构所在城市 / 区县',
@@ -296,8 +296,7 @@ const messages = {
         dateStart: '假如有多次被送入经历，可在经历描述中说明情况',
         dateEnd: '若目前仍在校，可不填',
         experience: '若描述别人经历请在“其他补充”中填写',
-        sexIdentity: '注：选择性别认同',
-        otherSex: '可选择 MtF / FtM，并可在输入框补充说明',
+        otherSex: '请选择 MtF / FtM，或点击输入框填写其它性别认同或补充说明',
         selectedPoint: '选取点: {lat}, {lng}'
       },
       validation: {
@@ -314,7 +313,8 @@ const messages = {
         fillSchoolName: '请填写机构名称',
         fillDateStart: '请填写首次被送入日期',
         fillContactInformation: '请填写机构联系方式',
-        specifyOtherSex: '请选择 MtF / FtM 或填写其它性别认同',
+        specifyOtherSex: '请选择 MtF / FtM，或选择输入框填写其它性别认同或补充说明',
+        fillOtherSex: '请输入其它性别认同或补充说明',
         endDateBeforeStart: '离开日期不能早于首次被送入日期'
       }
     },
@@ -480,7 +480,7 @@ const messages = {
       identity: '填写身份',
       sex: '性别',
       victimSex: '受害者性别',
-      sexOther: '其它性别认同补充',
+      sexOther: '其它性别认同或补充说明',
       provinceCode: '机构所在省份',
       cityCode: '机构所在城市 / 区县',
       countyCode: '机构所在县区',
@@ -517,7 +517,7 @@ const messages = {
       ageRange: '{label}必须是 {min} 到 {max} 的整数',
       invalidIdentity: '请选择有效的填写身份',
       invalidSex: '性别不合法，请修改',
-      otherSexRequired: '选择其它性别时，请选择 MtF / FtM 或填写说明',
+      otherSexRequired: '选择其它性别认同时，请选择 MtF / FtM，或选择输入框填写其它性别认同或补充说明',
       provinceCityMismatch: '机构所在省份和机构所在城市 / 区县不匹配',
       cityCountyMismatch: '机构所在城市 / 区县和机构所在县区不匹配',
       invalidFormat: '{label}格式不正确',
@@ -655,7 +655,7 @@ const messages = {
         placeholder: '請選擇',
         male: '男性',
         female: '女性',
-        other: '其他'
+        other: '其他性別認同'
       },
       sexIdentityOptions: {
         mtf: 'MtF',
@@ -667,7 +667,7 @@ const messages = {
         birthDay: '選擇日期',
         age: '請輸入年齡',
         otherSexType: '請選擇',
-        otherSex: '可填寫其他性別認同',
+        otherSex: '其他性別認同或補充說明',
         province: '選擇機構所在省份',
         city: '請先選擇機構所在省份',
         countyInitial: '可選：請先選擇機構所在城市 / 區縣',
@@ -690,8 +690,7 @@ const messages = {
         dateStart: '假如有多次被送入經歷，可在經歷描述中說明情況',
         dateEnd: '若目前仍在校，可不填',
         experience: '若描述別人經歷請在「其他補充」中填寫',
-        sexIdentity: '註：選擇性別認同',
-        otherSex: '可選擇 MtF / FtM，並可在輸入框補充說明',
+        otherSex: '請選擇 MtF / FtM，或點擊輸入框填寫其他性別認同或補充說明',
         selectedPoint: '選取點: {lat}, {lng}'
       },
       validation: {
@@ -708,7 +707,8 @@ const messages = {
         fillSchoolName: '請填寫機構名稱',
         fillDateStart: '請填寫首次被送入日期',
         fillContactInformation: '請填寫機構聯繫方式',
-        specifyOtherSex: '請選擇 MtF / FtM 或填寫其他性別認同',
+        specifyOtherSex: '請選擇 MtF / FtM，或選擇輸入框填寫其他性別認同或補充說明',
+        fillOtherSex: '請輸入其他性別認同或補充說明',
         endDateBeforeStart: '離開日期不能早於首次被送入日期'
       }
     },
@@ -874,7 +874,7 @@ const messages = {
       identity: '填寫身份',
       sex: '性別',
       victimSex: '受害者性別',
-      sexOther: '其他性別認同補充',
+      sexOther: '其他性別認同或補充說明',
       provinceCode: '機構所在省份',
       cityCode: '機構所在城市 / 區縣',
       countyCode: '機構所在縣區',
@@ -911,7 +911,7 @@ const messages = {
       ageRange: '{label}必須是 {min} 到 {max} 的整數',
       invalidIdentity: '請選擇有效的填寫身份',
       invalidSex: '性別不合法，請修改',
-      otherSexRequired: '選擇其他性別時，請選擇 MtF / FtM 或填寫說明',
+      otherSexRequired: '選擇其他性別認同時，請選擇 MtF / FtM，或選擇輸入框填寫其他性別認同或補充說明',
       provinceCityMismatch: '機構所在省份和機構所在城市 / 區縣不匹配',
       cityCountyMismatch: '機構所在城市 / 區縣和機構所在縣區不匹配',
       invalidFormat: '{label}格式不正確',
@@ -1049,7 +1049,7 @@ const messages = {
         placeholder: 'Please select',
         male: 'Male',
         female: 'Female',
-        other: 'Other'
+        other: 'Other gender identity'
       },
       sexIdentityOptions: {
         mtf: 'MtF',
@@ -1061,7 +1061,7 @@ const messages = {
         birthDay: 'Select day',
         age: 'Enter age',
         otherSexType: 'Please select',
-        otherSex: 'Enter another gender identity if needed',
+        otherSex: 'Another gender identity or additional notes',
         province: 'Select the institution province',
         city: 'Select the institution province first',
         countyInitial: 'Optional: select the institution city / district first',
@@ -1084,8 +1084,7 @@ const messages = {
         dateStart: 'If the survivor was sent there more than once, please explain that in the experience description.',
         dateEnd: 'Leave blank if the survivor is still there',
         experience: 'If you are describing someone else’s experience, please add that in "Other Notes".',
-        sexIdentity: 'Note: choose gender identity.',
-        otherSex: 'You can choose MtF / FtM and also add a custom note in the text field.',
+        otherSex: 'Choose MtF / FtM, or use the text field for another gender identity or additional notes.',
         selectedPoint: 'Selected point: {lat}, {lng}'
       },
       validation: {
@@ -1102,7 +1101,8 @@ const messages = {
         fillSchoolName: 'Please enter the institution name',
         fillDateStart: 'Please enter the first date sent there',
         fillContactInformation: 'Please enter the institution contact information',
-        specifyOtherSex: 'Please select MtF / FtM or enter another gender identity',
+        specifyOtherSex: 'Please choose MtF / FtM, or choose the text field and enter another gender identity or additional notes',
+        fillOtherSex: 'Please enter another gender identity or additional notes',
         endDateBeforeStart: 'Departure date cannot be earlier than the first date sent there'
       }
     },
@@ -1268,7 +1268,7 @@ const messages = {
       identity: 'Submission Role',
       sex: 'Gender',
       victimSex: 'Survivor Gender',
-      sexOther: 'Additional Gender Identity Details',
+      sexOther: 'Other Gender Identity or Additional Notes',
       provinceCode: 'Institution Province',
       cityCode: 'Institution City / District',
       countyCode: 'Institution County / District',
@@ -1305,7 +1305,7 @@ const messages = {
       ageRange: '{label} must be an integer between {min} and {max}',
       invalidIdentity: 'Please choose a valid submission role',
       invalidSex: 'The selected gender value is invalid',
-      otherSexRequired: 'When "Other" is selected, please choose MtF / FtM or provide a description',
+      otherSexRequired: 'When "Other gender identity" is selected, please choose MtF / FtM or enter another gender identity or additional notes',
       provinceCityMismatch: 'The selected institution province and institution city / district do not match',
       cityCountyMismatch: 'The selected institution city / district and institution county / district do not match',
       invalidFormat: '{label} has an invalid format',

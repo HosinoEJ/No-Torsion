@@ -667,7 +667,7 @@ label.required::after { content: " *"; color: #e74c3c; }
     color: var(--text-muted);
 }
 
-input, select, textarea {
+input:not([type="radio"]):not([type="checkbox"]), select, textarea {
     width: 100%;
     padding: 12px;
     color: var(--text);
@@ -678,13 +678,13 @@ input, select, textarea {
     font-size: 14px;
 }
 
-input:focus, select:focus, textarea:focus {
+input:not([type="radio"]):not([type="checkbox"]):focus, select:focus, textarea:focus {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 5px rgba(52, 152, 219, 0.3);
 }
 
-input::placeholder,
+input:not([type="radio"]):not([type="checkbox"])::placeholder,
 textarea::placeholder {
     color: var(--text-subtle);
 }
@@ -705,8 +705,42 @@ textarea::placeholder {
     margin-top: 10px;
 }
 
+.other-sex-options {
+    display: grid;
+    gap: 10px;
+}
+
+.other-sex-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px dashed var(--panel-border);
+    border-radius: 10px;
+    background: var(--surface-soft);
+}
+
+.other-sex-option--custom {
+    align-items: stretch;
+}
+
+.other-sex-radio {
+    width: auto;
+    padding: 0;
+    margin: 0;
+    flex-shrink: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
 .other-input[hidden] {
     display: none;
+}
+
+.other-input--choice {
+    width: 100%;
+    margin-top: 0;
 }
 
 .hint { font-size: 12px; color: var(--text-subtle); margin-top: 5px; }

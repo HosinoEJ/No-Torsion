@@ -2,13 +2,17 @@
 const SELF_IDENTITY = '受害者本人';
 const AGENT_IDENTITY = '受害者的代理人';
 const OTHER_SEX_OPTION = '__other_option__';
+const CUSTOM_OTHER_SEX_OPTION = '__custom_other_sex__';
 const allowedIdentities = new Set([SELF_IDENTITY, AGENT_IDENTITY]);
 const allowedSexes = new Set(['女性', '男性', OTHER_SEX_OPTION]);
 const otherSexTypeOptions = [
   { value: 'MtF', labelKey: 'form.sexIdentityOptions.mtf' },
   { value: 'FtM', labelKey: 'form.sexIdentityOptions.ftm' }
 ];
-const allowedOtherSexTypes = new Set(otherSexTypeOptions.map((option) => option.value));
+const allowedOtherSexTypes = new Set([
+  ...otherSexTypeOptions.map((option) => option.value),
+  CUSTOM_OTHER_SEX_OPTION
+]);
 const identityOptions = [
   { value: SELF_IDENTITY, labelKey: 'form.identityOptions.self' },
   { value: AGENT_IDENTITY, labelKey: 'form.identityOptions.agent' }
@@ -95,6 +99,7 @@ function getLocalizedOtherSexTypeOptions(t) {
 
 module.exports = {
   AGENT_IDENTITY,
+  CUSTOM_OTHER_SEX_OPTION,
   OTHER_SEX_OPTION,
   SELF_IDENTITY,
   allowedIdentities,

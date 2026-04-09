@@ -46,16 +46,28 @@
                     <option value="<%= option.value %>"><%= option.label %></option>
                 <% }) %>
             </select>
-            <div class="hint"><%= t('form.hints.sexIdentity') %></div>
             <div id="otherSexFields" class="form-conditional-fields" hidden>
-                <select id="otherSexTypeSelect" name="sex_other_type" class="other-input" disabled>
-                    <option value="" selected><%= t('form.placeholders.otherSexType') %></option>
+                <div class="other-sex-options" role="radiogroup" aria-label="<%= t('fields.sexOther') %>">
                     <% otherSexTypeOptions.forEach((option) => { %>
-                        <option value="<%= option.value %>"><%= option.label %></option>
+                        <label class="other-sex-option">
+                            <input type="radio" name="sex_other_type" value="<%= option.value %>" class="other-sex-radio" disabled>
+                            <span><%= option.label %></span>
+                        </label>
                     <% }) %>
-                </select>
-                <input type="text" id="otherSexInput" name="sex_other" class="other-input" placeholder="<%= t('form.placeholders.otherSex') %>" maxlength="<%= formRules.sexOther.maxLength %>" disabled>
-                <div class="hint"><%= t('form.hints.otherSex') %></div>
+                    <label class="other-sex-option other-sex-option--custom">
+                        <input type="radio" id="otherSexCustomRadio" name="sex_other_type" value="__custom_other_sex__" class="other-sex-radio" disabled>
+                        <input
+                            type="text"
+                            id="otherSexInput"
+                            name="sex_other"
+                            class="other-input other-input--choice"
+                            placeholder="<%= t('form.placeholders.otherSex') %>"
+                            aria-label="<%= t('fields.sexOther') %>"
+                            maxlength="<%= formRules.sexOther.maxLength %>"
+                            disabled
+                        >
+                    </label>
+                </div>
             </div>
         </div>
 
@@ -157,6 +169,7 @@
     const formRules = window.FORM_RULES;
     const AGENT_IDENTITY = '受害者的代理人';
     const OTHER_SEX_OPTION = '__other_option__';
+    const CUSTOM_OTHER_SEX_OPTION = '__custom_other_sex__';
     const mainForm = document.getElementById('mainForm');
     const identitySelect = document.getElementById('identitySelect');
     const birthFieldLabel = document.getElementById('birthFieldLabel');
@@ -165,7 +178,9 @@
     const sexLabel = document.getElementById('sexLabel');
     const sexSelect = document.getElementById('sexSelect');
     const otherSexFields = document.getElementById('otherSexFields');
-    const otherSexTypeSelect = document.getElementById('otherSexTypeSelect');
+    const otherSexTypeInputs = Array.from(document.querySelectorAll('input[name="sex_other_type"]'));
+    const otherSexTypeValidityTarget = otherSexTypeInputs[0] || null;
+    const otherSexCustomRadio = document.getElementById('otherSexCustomRadio');
     const otherSexInput = document.getElementById('otherSexInput');
     const provinceSelect = document.getElementById('provinceSelect');
     const citySelect = document.getElementById('citySelect');
@@ -188,6 +203,15 @@
 
     function isAgentMode() {
         return identitySelect.value === AGENT_IDENTITY;
+    }
+
+    function clearOtherSexTypeValidity() {
+        otherSexTypeInputs.forEach((input) => clearValidity(input));
+    }
+
+    function getSelectedOtherSexType() {
+        const selectedInput = otherSexTypeInputs.find((input) => input.checked);
+        return selectedInput ? selectedInput.value : '';
     }
 
     function getBirthFieldLabelText() {
@@ -235,15 +259,30 @@
     function toggleOtherSex() {
         const showOtherInput = sexSelect.value === OTHER_SEX_OPTION;
         otherSexFields.hidden = !showOtherInput;
-        otherSexTypeSelect.disabled = !showOtherInput;
-        otherSexInput.disabled = !showOtherInput;
-        clearValidity(otherSexTypeSelect);
+        otherSexTypeInputs.forEach((input) => {
+            input.disabled = !showOtherInput;
+        });
+        clearOtherSexTypeValidity();
         clearValidity(otherSexInput);
 
         if (!showOtherInput) {
-            otherSexTypeSelect.value = '';
+            otherSexTypeInputs.forEach((input) => {
+                input.checked = false;
+            });
             otherSexInput.value = '';
+            otherSexInput.disabled = true;
+            return;
         }
+
+        otherSexInput.disabled = false;
+    }
+
+    function selectOtherSexCustomInput() {
+        if (!otherSexCustomRadio || otherSexCustomRadio.disabled) {
+            return;
+        }
+
+        otherSexCustomRadio.checked = true;
     }
 
     function validateBirthField() {
@@ -268,16 +307,22 @@
     }
 
     function validateCrossFields() {
-        clearValidity(otherSexTypeSelect);
+        clearOtherSexTypeValidity();
         clearValidity(otherSexInput);
         clearValidity(dateEndInput);
 
-        if (
-            sexSelect.value === OTHER_SEX_OPTION
-            && !otherSexTypeSelect.value
-            && !otherSexInput.value.trim()
-        ) {
-            otherSexInput.setCustomValidity(i18n.form.validation.specifyOtherSex);
+        if (sexSelect.value === OTHER_SEX_OPTION) {
+            const selectedOtherSexType = getSelectedOtherSexType();
+
+            if (selectedOtherSexType && selectedOtherSexType !== CUSTOM_OTHER_SEX_OPTION && otherSexInput.value) {
+                otherSexInput.value = '';
+            }
+
+            if (!selectedOtherSexType && otherSexTypeValidityTarget) {
+                otherSexTypeValidityTarget.setCustomValidity(i18n.form.validation.specifyOtherSex);
+            } else if (selectedOtherSexType === CUSTOM_OTHER_SEX_OPTION && !otherSexInput.value.trim()) {
+                otherSexInput.setCustomValidity(i18n.form.validation.fillOtherSex);
+            }
         }
 
         validateBirthField();
@@ -305,8 +350,26 @@
 
     sexSelect.addEventListener('change', toggleOtherSex);
     sexSelect.addEventListener('change', validateCrossFields);
-    otherSexTypeSelect.addEventListener('change', validateCrossFields);
-    otherSexInput.addEventListener('input', validateCrossFields);
+    otherSexTypeInputs.forEach((input) => {
+        input.addEventListener('change', () => {
+            if (getSelectedOtherSexType() !== CUSTOM_OTHER_SEX_OPTION) {
+                otherSexInput.value = '';
+            }
+            validateCrossFields();
+        });
+    });
+    otherSexInput.addEventListener('focus', () => {
+        selectOtherSexCustomInput();
+        validateCrossFields();
+    });
+    otherSexInput.addEventListener('click', () => {
+        selectOtherSexCustomInput();
+        validateCrossFields();
+    });
+    otherSexInput.addEventListener('input', () => {
+        selectOtherSexCustomInput();
+        validateCrossFields();
+    });
     otherSexInput.addEventListener('change', validateCrossFields);
     dateStartInput.addEventListener('change', validateCrossFields);
     dateEndInput.addEventListener('change', validateCrossFields);

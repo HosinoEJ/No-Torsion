@@ -578,11 +578,15 @@ test('form page includes school name and address autocomplete hooks', async () =
   assert.match(response.body, /假如有多次被送入经历，可在经历描述中说明情况/);
   assert.match(response.body, /个人在校经历描述/);
   assert.match(response.body, /若描述别人经历请在“其他补充”中填写/);
-  assert.match(response.body, /注：选择性别认同/);
-  assert.match(response.body, /name="sex_other_type"/);
-  assert.match(response.body, /<select id="otherSexTypeSelect" name="sex_other_type" class="other-input" disabled>\s*<option value="" selected>请选择<\/option>/);
+  assert.match(response.body, /其它性别认同/);
+  assert.doesNotMatch(response.body, /注：选择性别认同/);
+  assert.match(response.body, /name="sex_other_type" value="MtF"/);
   assert.match(response.body, /MtF/);
+  assert.match(response.body, /name="sex_other_type" value="FtM"/);
   assert.match(response.body, /FtM/);
+  assert.match(response.body, /id="otherSexCustomRadio"/);
+  assert.match(response.body, /placeholder="其它性别认同或补充说明"/);
+  assert.doesNotMatch(response.body, /id="otherSexTypeSelect"/);
   assert.doesNotMatch(response.body, /学校名称/);
   assert.match(response.body, /机构曝光信息[\s\S]*?机构名称[\s\S]*?机构所在省份/);
   assert.match(response.body, /机构地址[\s\S]*?机构联系方式[\s\S]*?负责人\/校长姓名/);
@@ -1469,7 +1473,7 @@ test('submit route still accepts a valid protected form in dry run mode', async 
   clearProjectModules();
 });
 
-test('submit route accepts agent submissions with enrollment age and other gender details in dry run mode', async () => {
+test('submit route accepts agent submissions with MtF selected for other gender identity in dry run mode', async () => {
   clearProjectModules();
   const { issueFormProtectionToken } = require(path.join(projectRoot, 'app/services/formProtectionService'));
   const app = loadApp({
@@ -1489,7 +1493,6 @@ test('submit route accepts agent submissions with enrollment age and other gende
       birth_year: '2008',
       sex: '__other_option__',
       sex_other_type: 'MtF',
-      sex_other: '非二元',
       form_token: issueFormProtectionToken({
         secret: 'test-form-protection-secret',
         issuedAt: Date.now() - 5000
@@ -1499,7 +1502,38 @@ test('submit route accepts agent submissions with enrollment age and other gende
 
   assert.equal(response.statusCode, 200);
   assert.match(response.body, /entry\.842223433_year<\/code><\/td>\s*<td>受害者出生年份<\/td>\s*<td>2008<\/td>/);
-  assert.match(response.body, /entry\.1422578992<\/code><\/td>\s*<td>受害者性别<\/td>\s*<td>MtF \/ 非二元<\/td>/);
+  assert.match(response.body, /entry\.1422578992<\/code><\/td>\s*<td>受害者性别<\/td>\s*<td>MtF<\/td>/);
+  clearProjectModules();
+});
+
+test('submit route accepts custom other gender identity text in dry run mode', async () => {
+  clearProjectModules();
+  const { issueFormProtectionToken } = require(path.join(projectRoot, 'app/services/formProtectionService'));
+  const app = loadApp({
+    DEBUG_MOD: 'false',
+    FORM_DRY_RUN: 'true',
+    FORM_PROTECTION_SECRET: 'test-form-protection-secret',
+    FORM_PROTECTION_MIN_FILL_MS: '3000'
+  });
+  const response = await requestApp(app, {
+    path: '/submit',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    },
+    body: buildValidSubmissionBody({
+      sex: '__other_option__',
+      sex_other_type: '__custom_other_sex__',
+      sex_other: '非二元',
+      form_token: issueFormProtectionToken({
+        secret: 'test-form-protection-secret',
+        issuedAt: Date.now() - 5000
+      })
+    })
+  });
+
+  assert.equal(response.statusCode, 200);
+  assert.match(response.body, /entry\.1422578992<\/code><\/td>\s*<td>性别<\/td>\s*<td>非二元<\/td>/);
   clearProjectModules();
 });
 
