@@ -7,6 +7,7 @@
     "build": "node -e \"require('./server'); console.log('Build sanity check passed.')\"",
     "start": "node app/server.js",
     "test": "node --test",
+    "secure-config": "node scripts/secure-config.js",
     "dev:workers": "npx wrangler dev",
     "deploy:workers": "npx wrangler deploy --keep-vars"
   },

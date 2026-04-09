@@ -128,11 +128,13 @@ npm test
 | `PAGE_READ_RATE_LIMIT_MAX` | 非必要 | `180` | 5 分鐘內單 IP 最多頁面讀取次數，用於降低過度爬站 |
 | `MAP_READ_RATE_LIMIT_MAX` | 非必要 | `60` | 5 分鐘內單 IP 最多公開地圖 API 讀取次數 |
 | `SUBMIT_RATE_LIMIT_MAX` | 非必要 | `5` | 15 分鐘內單 IP 最多提交次數 |
-| `FORM_PROTECTION_SECRET` | 非必要 | 自動派生 | 未配置時會根據 `FORM_ID`、`SITE_URL` 和 `TITLE` 派生一個值；正式環境建議顯式設置 |
+| `FORM_PROTECTION_SECRET` | 非必要 | 自動派生 | 未配置時會根據 `FORM_ID`、`SITE_URL` 和 `TITLE` 派生一個值；正式環境強烈建議顯式設置高強度隨機值 |
 | `FORM_PROTECTION_MIN_FILL_MS` | 非必要 | `3000` | 最短填寫時間 |
 | `FORM_PROTECTION_MAX_AGE_MS` | 非必要 | `86400000` | 表單 token 最長有效期 |
-| `FORM_ID` | 非必要 | `1FAIpQLScggjQgYutXQrjQDrutyxL0eLaFMktTMRKsFWPffQGavUFspA` | Google Form ID |
-| `GOOGLE_SCRIPT_URL` | 非必要 | 空 | 私有 Google Apps Script 資料源；留空時回退公開資料源 |
+| `FORM_ID` | 非必要 | 空 | Google Form ID；建議放 Secret，或改用 `FORM_ID_ENCRYPTED` |
+| `FORM_ID_ENCRYPTED` | 非必要 | 空 | 用 `FORM_PROTECTION_SECRET` 派生子密鑰加密後的 Google Form ID |
+| `GOOGLE_SCRIPT_URL` | 非必要 | 空 | 私有 Google Apps Script 資料源；建議放 Secret，或改用 `GOOGLE_SCRIPT_URL_ENCRYPTED` |
+| `GOOGLE_SCRIPT_URL_ENCRYPTED` | 非必要 | 空 | 用 `FORM_PROTECTION_SECRET` 派生子密鑰加密後的 Apps Script URL |
 | `PUBLIC_MAP_DATA_URL` | 非必要 | `https://nct.hosinoeiji.workers.dev/api/map-data` | 公開地圖 API 地址 |
 | `MAP_DATA_NODE_TRANSPORT_OVERRIDES` | 非必要 | `false` | Node 運行時的地圖上游網路策略總開關；`true` 時才會啓用代理 agent 與 IPv4 直連，預設兩者都關閉；Workers 運行時會忽略 |
 | `MAP_DATA_UPSTREAM_TIMEOUT_MS` | 非必要 | `25000` | 地圖上游請求超時，單位毫秒 |
@@ -161,10 +163,39 @@ npm test
 - 若你希望公開內容可被搜索引擎正常收錄，但仍限制高頻抓取，建議保留 `PAGE_READ_RATE_LIMIT_MAX` 與 `MAP_READ_RATE_LIMIT_MAX`，並按實際流量調整。
 - 翻譯功能現在只走**正式翻譯後端**，不再使用 `translate.googleapis.com` 這類非正式接口。
 - 啓用翻譯時只需要配置 `GOOGLE_CLOUD_TRANSLATION_API_KEY`。
-- `FORM_PROTECTION_SECRET` 屬於服務端敏感資訊，不要提交到版本庫。
+- `FORM_PROTECTION_SECRET` 屬於服務端敏感資訊，不要提交到版本庫；正式環境建議使用至少 32 bytes 隨機值。
 - 若未配置 `GOOGLE_SCRIPT_URL`，地圖頁會退回使用 `PUBLIC_MAP_DATA_URL`。
+- 若使用 `FORM_ID_ENCRYPTED` 或 `GOOGLE_SCRIPT_URL_ENCRYPTED`，必須顯式配置 `FORM_PROTECTION_SECRET`；派生默認值不允許用來解密密文配置。
 - 若你的公開地圖資料源偶發超時，可適度調大 `MAP_DATA_UPSTREAM_TIMEOUT_MS`；預設 `25000` 毫秒。
 - 若未配置 `RATE_LIMIT_REDIS_URL`，限流會退回單實例記憶體模式。
+
+### 保護敏感配置
+
+如果你擔心 `FORM_ID` 被直接拿到後繞過網站校驗，或擔心 `GOOGLE_SCRIPT_URL` 以明文形式出現在普通環境變數中，可以把它們改成密文配置。
+
+先生成一個高強度 `FORM_PROTECTION_SECRET`：
+
+```bash
+npm run secure-config -- generate-secret
+```
+
+再分別加密：
+
+```bash
+npm run secure-config -- encrypt --purpose form-id --secret "你的_FORM_PROTECTION_SECRET" --value "你的_GOOGLE_FORM_ID"
+npm run secure-config -- encrypt --purpose google-script-url --secret "你的_FORM_PROTECTION_SECRET" --value "你的_GOOGLE_SCRIPT_URL"
+```
+
+然後把輸出的密文填到：
+
+- `FORM_ID_ENCRYPTED`
+- `GOOGLE_SCRIPT_URL_ENCRYPTED`
+
+注意：
+
+- 這種做法主要防止明文被誤貼到倉庫、日誌或普通配置欄位。
+- 如果攻擊者已經能讀取服務端所有 secrets，那麼同一台服務器上的密文和解密 secret 最終都可能被拿到，這不是替代後端鑑權的方案。
+- 真正要防止繞過網站驗證，最可靠的方法仍然是不要把最終寫入入口暴露成可匿名直打的 Google Form。
 
 ### 翻譯服務示例
 
@@ -228,6 +259,22 @@ Workers 本地開發時，建議把變數放進 `.dev.vars`。最小示例：
 SITE_URL="http://127.0.0.1:8787"
 PAGE_READ_RATE_LIMIT_MAX="180"
 MAP_READ_RATE_LIMIT_MAX="60"
+```
+
+如果你也想在 Workers 本地調試時測試密文配置，可以再加上：
+
+```bash
+FORM_PROTECTION_SECRET="換成你生成的高強度隨機值"
+FORM_ID_ENCRYPTED="換成 npm run secure-config 生成的密文"
+GOOGLE_SCRIPT_URL_ENCRYPTED="換成 npm run secure-config 生成的密文"
+```
+
+如果你只是本地臨時調試，也可以改用明文：
+
+```bash
+FORM_PROTECTION_SECRET="換成你生成的高強度隨機值"
+FORM_ID="你的 Google Form ID"
+GOOGLE_SCRIPT_URL="你的 Google Apps Script URL"
 ```
 
 如果你需要在 Workers 上臨時開站點維護模式，可以再加上：
@@ -302,11 +349,13 @@ GOOGLE_CLOUD_TRANSLATION_API_KEY="換成你自己的正式 API Key"
 | `PAGE_READ_RATE_LIMIT_MAX` | Text | 視站點流量調整；預設 `180` |
 | `MAP_READ_RATE_LIMIT_MAX` | Text | 視 API 開放程度調整；預設 `60` |
 | `SUBMIT_RATE_LIMIT_MAX` | Text | 視提交入口風險調整；預設 `5` |
-| `FORM_ID` | Text | 你的 Google Form ID |
+| `FORM_ID` | Secret | 你的 Google Form ID；或改用 `FORM_ID_ENCRYPTED` |
+| `FORM_ID_ENCRYPTED` | Text | 由 `npm run secure-config -- encrypt --purpose form-id ...` 生成 |
 | `FORM_PROTECTION_SECRET` | Secret | 正式環境強烈建議顯式配置 |
 | `FORM_PROTECTION_MIN_FILL_MS` | Text | 預設 `3000` |
 | `FORM_PROTECTION_MAX_AGE_MS` | Text | 預設 `86400000` |
-| `GOOGLE_SCRIPT_URL` | Text 或 Secret | 有私有資料源時填 |
+| `GOOGLE_SCRIPT_URL` | Secret | 有私有資料源時填；或改用 `GOOGLE_SCRIPT_URL_ENCRYPTED` |
+| `GOOGLE_SCRIPT_URL_ENCRYPTED` | Text | 由 `npm run secure-config -- encrypt --purpose google-script-url ...` 生成 |
 | `PUBLIC_MAP_DATA_URL` | Text | 沒有私有資料源時配置成你的公開地圖 API |
 | `MAP_DATA_NODE_TRANSPORT_OVERRIDES` | Text | 可選；Node 運行時的地圖上游網路策略總開關，`true` 時才啓用代理 agent 與 IPv4 直連 |
 | `MAP_DATA_UPSTREAM_TIMEOUT_MS` | Text | 預設 `25000` |

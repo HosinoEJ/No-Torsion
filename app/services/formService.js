@@ -319,6 +319,10 @@ function encodeGoogleFormFields(fields) {
 
 // 真正发往 Google Form 的 HTTP 请求。
 async function submitToGoogleForm(googleFormUrl, encodedPayload) {
+  if (!getTrimmedString(googleFormUrl)) {
+    throw new Error('未配置有效的 Google Form 提交地址');
+  }
+
   await axios.post(googleFormUrl, encodedPayload, {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     timeout: 10000,

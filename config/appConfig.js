@@ -1,5 +1,6 @@
 const crypto = require('crypto');
 const { isWorkersRuntime } = require('./runtimeConfig');
+const { decryptProtectedValue } = require('./protectedConfig');
 
 if (!isWorkersRuntime()) {
   require('dotenv').config();
@@ -75,6 +76,33 @@ function resolveFormProtectionSecret({ explicitSecret, formId, siteUrl, title })
     .digest('hex');
 }
 
+function resolveProtectedEnvValue({
+  envName,
+  encryptedEnvName,
+  explicitSecret,
+  purpose
+}) {
+  const plainValue = readTrimmedEnvValue(process.env[envName]);
+  if (plainValue) {
+    return plainValue;
+  }
+
+  const encryptedValue = readTrimmedEnvValue(process.env[encryptedEnvName]);
+  if (!encryptedValue) {
+    return '';
+  }
+
+  if (!(typeof explicitSecret === 'string' && explicitSecret.trim())) {
+    throw new Error(`要解密 ${encryptedEnvName}，必須顯式配置 FORM_PROTECTION_SECRET。`);
+  }
+
+  try {
+    return decryptProtectedValue(encryptedValue, explicitSecret, purpose);
+  } catch (error) {
+    throw new Error(`${encryptedEnvName} 解密失敗：${error.message}`);
+  }
+}
+
 // 所有运行时环境变量统一从这里读，避免业务代码四处直接碰 process.env。
 const debugMod = process.env.DEBUG_MOD || 'true';
 const maintenanceMode = parseBooleanEnv(process.env.MAINTENANCE_MODE, false);
@@ -85,9 +113,22 @@ const formDryRun = parseBooleanEnv(process.env.FORM_DRY_RUN, true);
 const pageReadRateLimitMax = parsePositiveInteger(process.env.PAGE_READ_RATE_LIMIT_MAX, 180);
 const mapReadRateLimitMax = parsePositiveInteger(process.env.MAP_READ_RATE_LIMIT_MAX, 60);
 const submitRateLimitMax = parsePositiveInteger(process.env.SUBMIT_RATE_LIMIT_MAX, 5);
-const formId = process.env.FORM_ID || '1FAIpQLScggjQgYutXQrjQDrutyxL0eLaFMktTMRKsFWPffQGavUFspA';
-const googleFormUrl = `https://docs.google.com/forms/d/e/${formId}/formResponse`;
-const googleScriptUrl = process.env.GOOGLE_SCRIPT_URL;
+const explicitFormProtectionSecret = readTrimmedEnvValue(process.env.FORM_PROTECTION_SECRET);
+const formId = resolveProtectedEnvValue({
+  envName: 'FORM_ID',
+  encryptedEnvName: 'FORM_ID_ENCRYPTED',
+  explicitSecret: explicitFormProtectionSecret,
+  purpose: 'form-id'
+});
+const googleFormUrl = formId
+  ? `https://docs.google.com/forms/d/e/${formId}/formResponse`
+  : '';
+const googleScriptUrl = resolveProtectedEnvValue({
+  envName: 'GOOGLE_SCRIPT_URL',
+  encryptedEnvName: 'GOOGLE_SCRIPT_URL_ENCRYPTED',
+  explicitSecret: explicitFormProtectionSecret,
+  purpose: 'google-script-url'
+});
 const appPort = parsePositiveInteger(process.env.PORT, 3000);
 const publicMapDataUrl = process.env.PUBLIC_MAP_DATA_URL || 'https://nct.hosinoeiji.workers.dev/api/map-data';
 const mapDataNodeTransportOverrides = parseBooleanEnv(process.env.MAP_DATA_NODE_TRANSPORT_OVERRIDES, false);
@@ -97,9 +138,9 @@ const apiUrl = '/api/map-data';
 const trustProxy = resolveTrustProxy(process.env.TRUST_PROXY || '1');
 const formProtectionMinFillMs = parsePositiveInteger(process.env.FORM_PROTECTION_MIN_FILL_MS, 3000);
 const formProtectionMaxAgeMs = parsePositiveInteger(process.env.FORM_PROTECTION_MAX_AGE_MS, 24 * 60 * 60 * 1000);
-const formProtectionSecretConfigured = Boolean(process.env.FORM_PROTECTION_SECRET && process.env.FORM_PROTECTION_SECRET.trim());
+const formProtectionSecretConfigured = Boolean(explicitFormProtectionSecret);
 const formProtectionSecret = resolveFormProtectionSecret({
-  explicitSecret: process.env.FORM_PROTECTION_SECRET,
+  explicitSecret: explicitFormProtectionSecret,
   formId,
   siteUrl,
   title

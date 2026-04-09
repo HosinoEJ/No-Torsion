@@ -27,6 +27,20 @@ function decodeConfirmationPayload(payload) {
   return Buffer.from(String(payload || '').trim(), 'base64url').toString('utf8');
 }
 
+function redactGoogleFormUrl(googleFormUrl) {
+  const normalizedUrl = String(googleFormUrl || '').trim();
+
+  if (!normalizedUrl) {
+    return '';
+  }
+
+  return normalizedUrl.replace(/\/d\/e\/([^/]+)\//, (_match, formId) => {
+    const visiblePrefix = formId.slice(0, 4);
+    const visibleSuffix = formId.slice(-4);
+    return `/d/e/${visiblePrefix}...${visibleSuffix}/`;
+  });
+}
+
 // 表單提交流程：限流 -> 校验 -> 干跑预览或确认页 -> 最终提交 -> 审计日志。
 function createFormRoutes({
   formDryRun,
@@ -107,7 +121,7 @@ function createFormRoutes({
         });
         return res.render('submit_preview', {
           title: req.t('pageTitles.submitPreview', { title }),
-          googleFormUrl,
+          googleFormUrl: redactGoogleFormUrl(googleFormUrl),
           fields,
           encodedPayload,
           pageRobots: sensitiveRobotsPolicy

@@ -19,6 +19,7 @@ function loadApp(envOverrides = {}) {
     MAINTENANCE_MODE: 'false',
     MAINTENANCE_NOTICE: '',
     MAP_DATA_NODE_TRANSPORT_OVERRIDES: 'false',
+    FORM_ID: 'test-form-id',
     ...envOverrides
   };
 
@@ -50,6 +51,7 @@ function loadAppWithPatchedFormService(envOverrides = {}, patchFormService) {
     MAINTENANCE_MODE: 'false',
     MAINTENANCE_NOTICE: '',
     MAP_DATA_NODE_TRANSPORT_OVERRIDES: 'false',
+    FORM_ID: 'test-form-id',
     ...envOverrides
   };
 
