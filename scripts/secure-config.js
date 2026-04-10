@@ -91,6 +91,7 @@ function loadEnvSource(envFile) {
   const parsedEnv = dotenv.parse(fileContent);
 
   return {
+    content: fileContent,
     envFilePath: resolvedPath,
     values: parsedEnv
   };
@@ -166,6 +167,106 @@ function printBootstrapConfig(config, options = {}) {
   }
 }
 
+function parseEnvAssignmentKey(line) {
+  const match = String(line || '').match(/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=/);
+  return match ? match[1] : '';
+}
+
+function formatEnvAssignment(key, value) {
+  return `${key}=${JSON.stringify(String(value))}`;
+}
+
+function updateEnvFileContent(fileContent, { removeKeys = [], setValues = {} } = {}) {
+  const normalizedContent = typeof fileContent === 'string' ? fileContent : '';
+  const newline = normalizedContent.includes('\r\n') ? '\r\n' : '\n';
+  const lines = normalizedContent.split(/\r?\n/);
+  const nextLines = [];
+  const removeKeySet = new Set(removeKeys.map((key) => String(key)));
+  const normalizedSetValues = Object.fromEntries(
+    Object.entries(setValues).filter(([, value]) => typeof value === 'string' && value)
+  );
+  const updatedKeys = new Set();
+
+  lines.forEach((line) => {
+    const assignmentKey = parseEnvAssignmentKey(line);
+
+    if (!assignmentKey) {
+      nextLines.push(line);
+      return;
+    }
+
+    if (removeKeySet.has(assignmentKey)) {
+      return;
+    }
+
+    if (Object.prototype.hasOwnProperty.call(normalizedSetValues, assignmentKey)) {
+      if (updatedKeys.has(assignmentKey)) {
+        return;
+      }
+
+      nextLines.push(formatEnvAssignment(assignmentKey, normalizedSetValues[assignmentKey]));
+      updatedKeys.add(assignmentKey);
+      return;
+    }
+
+    nextLines.push(line);
+  });
+
+  const missingKeys = Object.keys(normalizedSetValues).filter((key) => !updatedKeys.has(key));
+  if (missingKeys.length > 0) {
+    if (nextLines.length > 0 && nextLines[nextLines.length - 1] !== '') {
+      nextLines.push('');
+    }
+
+    missingKeys.forEach((key) => {
+      nextLines.push(formatEnvAssignment(key, normalizedSetValues[key]));
+    });
+  }
+
+  while (nextLines.length > 1 && nextLines[nextLines.length - 1] === '' && nextLines[nextLines.length - 2] === '') {
+    nextLines.pop();
+  }
+
+  return `${nextLines.join(newline)}${newline}`;
+}
+
+function writeBootstrapConfigToEnvSource({ config, envSource }) {
+  if (!envSource || !envSource.envFilePath) {
+    throw new Error('缺少 envSource.envFilePath，無法回寫環境變數檔案');
+  }
+
+  const setValues = {
+    FORM_PROTECTION_SECRET: config.formProtectionSecret
+  };
+  const removeKeys = [];
+
+  if (config.formIdEncrypted) {
+    setValues.FORM_ID_ENCRYPTED = config.formIdEncrypted;
+    removeKeys.push('FORM_ID');
+  }
+
+  if (config.googleScriptUrlEncrypted) {
+    setValues.GOOGLE_SCRIPT_URL_ENCRYPTED = config.googleScriptUrlEncrypted;
+    removeKeys.push('GOOGLE_SCRIPT_URL');
+  }
+
+  const originalContent = typeof envSource.content === 'string'
+    ? envSource.content
+    : fs.readFileSync(envSource.envFilePath, 'utf8');
+  const nextContent = updateEnvFileContent(originalContent, {
+    removeKeys,
+    setValues
+  });
+
+  fs.writeFileSync(envSource.envFilePath, nextContent, 'utf8');
+
+  return {
+    envFilePath: envSource.envFilePath,
+    removedKeys: removeKeys,
+    updatedKeys: Object.keys(setValues)
+  };
+}
+
 function main() {
   const [command, ...restArgs] = process.argv.slice(2);
 
@@ -199,10 +300,18 @@ function main() {
       envSource,
       secret: options.secret
     });
-
-    printBootstrapConfig(config, {
-      sourceLabel: envSource.envFilePath
+    const writeResult = writeBootstrapConfigToEnvSource({
+      config,
+      envSource
     });
+
+    console.log(`# Updated ${writeResult.envFilePath}`);
+    console.log(`# Wrote: ${writeResult.updatedKeys.join(', ')}`);
+
+    if (writeResult.removedKeys.length > 0) {
+      console.log(`# Removed plain-text keys: ${writeResult.removedKeys.join(', ')}`);
+    }
+
     return;
   }
 
@@ -232,8 +341,11 @@ module.exports = {
   loadEnvSource,
   main,
   parseArgs,
+  parseEnvAssignmentKey,
   printBootstrapConfig,
-  printUsage
+  printUsage,
+  updateEnvFileContent,
+  writeBootstrapConfigToEnvSource
 };
 
 if (require.main === module) {

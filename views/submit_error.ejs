@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="<%= lang %>">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="color-scheme" content="light dark">
+        <% if (typeof pageRobots !== 'undefined' && pageRobots) { %>
+        <meta name="robots" content="<%= pageRobots %>">
+        <% } %>
+        <title><%= title %></title>
+        <link rel="stylesheet" href="/css/main.css">
+        <script>
+            window.APP_LANG = "<%= lang %>";
+            window.I18N = <%- JSON.stringify(clientMessages) %>;
+        </script>
+        <style>
+            body {
+                padding: 2rem 1rem 4rem;
+            }
+            .submit-error-container {
+                width: min(100%, 960px);
+                margin: 0 auto;
+            }
+            .submit-error-card {
+                padding: 1.5rem;
+                border: 1px solid var(--panel-border);
+                border-radius: 16px;
+                background: var(--card-bg);
+                box-shadow: var(--shadow-soft);
+            }
+            .submit-error-note {
+                margin-top: 1rem;
+                color: var(--text-muted);
+            }
+            .submit-error-actions {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 0.75rem;
+                margin-top: 1.25rem;
+            }
+            .submit-error-url {
+                width: 100%;
+                min-height: 9rem;
+                margin-top: 1rem;
+                padding: 0.9rem;
+                border: 1px solid var(--panel-border);
+                border-radius: 12px;
+                background: var(--surface-soft);
+                color: var(--text);
+                resize: vertical;
+                box-sizing: border-box;
+                word-break: break-all;
+            }
+            .submit-error-actions a {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 2.75rem;
+                padding: 0.8rem 1rem;
+                border-radius: 12px;
+                border: 1px solid var(--panel-border);
+                box-sizing: border-box;
+                text-align: center;
+            }
+            .submit-error-actions a:first-child {
+                background: linear-gradient(135deg, rgba(52, 152, 219, 0.12), rgba(93, 173, 226, 0.22));
+            }
+            @media (max-width: 720px) {
+                body {
+                    padding: 1.25rem 0.75rem 2rem;
+                }
+                .submit-error-card {
+                    padding: 1rem;
+                }
+                .submit-error-actions {
+                    flex-direction: column;
+                }
+                .submit-error-actions a {
+                    width: 100%;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="submit-error-container">
+            <div class="submit-error-card">
+                <h1><%= t('submitError.title') %></h1>
+                <p><%= t('submitError.intro') %></p>
+
+                <% if (fallbackUrl) { %>
+                    <div class="submit-error-actions">
+                        <a href="<%= fallbackUrl %>" target="_blank" rel="noopener noreferrer"><%= t('submitError.openFallback') %></a>
+                        <a href="/form"><%= t('submitError.backForm') %></a>
+                    </div>
+                    <p class="submit-error-note"><%= t('submitError.privacyNote') %></p>
+                    <label for="fallbackUrlBox"><strong><%= t('submitError.urlLabel') %></strong></label>
+                    <textarea id="fallbackUrlBox" class="submit-error-url" readonly><%= fallbackUrl %></textarea>
+                <% } else { %>
+                    <div class="submit-error-actions">
+                        <a href="/form"><%= t('submitError.backForm') %></a>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+        <%- include('partials/foot') %>
+    </body>
+</html>

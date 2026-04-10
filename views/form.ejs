@@ -215,6 +215,17 @@
         return selectedInput ? selectedInput.value : '';
     }
 
+    function syncOtherSexInputState() {
+        const shouldEnableInput = sexSelect.value === OTHER_SEX_OPTION
+            && getSelectedOtherSexType() === CUSTOM_OTHER_SEX_OPTION;
+
+        otherSexInput.disabled = !shouldEnableInput;
+
+        if (!shouldEnableInput) {
+            clearValidity(otherSexInput);
+        }
+    }
+
     function getBirthFieldLabelText() {
         return isAgentMode() ? i18n.form.fields.victimBirthYear : i18n.form.fields.birthYear;
     }
@@ -275,15 +286,7 @@
             return;
         }
 
-        otherSexInput.disabled = false;
-    }
-
-    function selectOtherSexCustomInput() {
-        if (!otherSexCustomRadio || otherSexCustomRadio.disabled) {
-            return;
-        }
-
-        otherSexCustomRadio.checked = true;
+        syncOtherSexInputState();
     }
 
     function validateBirthField() {
@@ -356,21 +359,15 @@
             if (getSelectedOtherSexType() !== CUSTOM_OTHER_SEX_OPTION) {
                 otherSexInput.value = '';
             }
+            syncOtherSexInputState();
             validateCrossFields();
+
+            if (input.checked && input.value === CUSTOM_OTHER_SEX_OPTION && !otherSexInput.disabled) {
+                otherSexInput.focus();
+            }
         });
     });
-    otherSexInput.addEventListener('focus', () => {
-        selectOtherSexCustomInput();
-        validateCrossFields();
-    });
-    otherSexInput.addEventListener('click', () => {
-        selectOtherSexCustomInput();
-        validateCrossFields();
-    });
-    otherSexInput.addEventListener('input', () => {
-        selectOtherSexCustomInput();
-        validateCrossFields();
-    });
+    otherSexInput.addEventListener('input', validateCrossFields);
     otherSexInput.addEventListener('change', validateCrossFields);
     dateStartInput.addEventListener('change', validateCrossFields);
     dateEndInput.addEventListener('change', validateCrossFields);

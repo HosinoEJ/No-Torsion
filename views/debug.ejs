@@ -2,14 +2,46 @@
 <body>
     <a href="/" class="page-back-link">← <%= t('navigation.home') %></a>
 
-    <main class="container">
-        <h1><%= t('debug.title') %></h1>
-        <div class="div" style="width: 100%;">
-            <p><%= t('debug.intro') %></p>
-            <p><strong><%= t('debug.labels.language') %>:</strong> <code><%= lang %></code></p>
-            <p><strong><%= t('debug.labels.apiUrl') %>:</strong> <code><%= apiUrl %></code></p>
-            <p><strong><%= t('debug.labels.debugMode') %>:</strong> <code><%= debugMode %></code></p>
-        </div>
+    <main class="about-page debug-page">
+        <section class="div debug-hero">
+            <p class="debug-page__eyebrow"><%= t('debug.title') %></p>
+            <h1><%= t('debug.title') %></h1>
+            <p class="debug-page__intro"><%= t('debug.intro') %></p>
+        </section>
+
+        <% debugSections.forEach((section) => { %>
+            <section class="debug-section" aria-label="<%= section.title %>">
+                <h2 class="debug-section__title"><%= section.title %></h2>
+                <div class="debug-grid">
+                    <% section.items.forEach((item) => { %>
+                        <article class="div debug-card <%= item.wide ? 'debug-card--wide' : '' %>">
+                            <p class="debug-card__label"><%= item.label %></p>
+
+                            <% if (item.badgeTone) { %>
+                                <span class="debug-card__badge debug-card__badge--<%= item.badgeTone %>"><%= item.value %></span>
+                            <% } else { %>
+                                <code class="debug-card__value <%= item.multiline ? 'debug-card__value--multiline' : '' %>"><%= item.value %></code>
+                            <% } %>
+
+                            <% if (item.hint) { %>
+                                <p class="debug-card__hint"><%= item.hint %></p>
+                            <% } %>
+                        </article>
+                    <% }) %>
+                </div>
+            </section>
+        <% }) %>
+
+        <section class="debug-section" aria-label="<%= t('debug.sections.tools') %>">
+            <h2 class="debug-section__title"><%= t('debug.sections.tools') %></h2>
+            <div class="debug-grid">
+                <article class="div debug-card debug-card--wide">
+                    <p class="debug-card__label"><%= t('debug.links.submitErrorPreview') %></p>
+                    <a class="debug-card__link" href="<%= submitErrorPreviewUrl %>"><%= t('debug.links.submitErrorPreview') %></a>
+                    <p class="debug-card__hint"><%= submitErrorPreviewUrl %></p>
+                </article>
+            </div>
+        </section>
     </main>
 
     <%- include('partials/foot') %>

@@ -750,6 +750,37 @@ test('debug page renders when debug mode is enabled', async () => {
 
   assert.equal(response.statusCode, 200);
   assert.match(response.body, /调试|Debug/);
+  assert.match(response.body, /href="\/debug\/submit-error"/);
+  assert.match(response.body, /站点配置|Site Configuration/);
+});
+
+test('debug page redacts sensitive Google integration URLs', async () => {
+  const app = loadApp({
+    DEBUG_MOD: 'true',
+    FORM_ID: '1FAIpQLSabcdefghijklmnopqrstuvwxyz123456',
+    GOOGLE_SCRIPT_URL: 'https://script.google.com/macros/s/abcdefghijklmnopqrstuvwxyz1234567890/exec?foo=bar'
+  });
+  const response = await requestPath(app, '/debug');
+
+  assert.equal(response.statusCode, 200);
+  assert.match(response.body, /docs\.google\.com\/forms\/d\/e\/1FAI\.\.\.3456\/formResponse/);
+  assert.match(response.body, /script\.google\.com\/macros\/s\/abcd\.\.\.7890\/exec/);
+});
+
+test('standalone submit error preview is hidden when debug mode is disabled', async () => {
+  const app = loadApp({ DEBUG_MOD: 'false' });
+  const response = await requestPath(app, '/debug/submit-error');
+
+  assert.equal(response.statusCode, 404);
+});
+
+test('standalone submit error preview renders a prefilled Google Form link when debug mode is enabled', async () => {
+  const app = loadApp({ DEBUG_MOD: 'true' });
+  const response = await requestPath(app, '/debug/submit-error');
+
+  assert.equal(response.statusCode, 200);
+  assert.match(response.body, /viewform\?usp=pp_url&amp;entry\.842223433=11/);
+  assert.match(response.body, /entry\.1422578992=%E7%94%B7/);
 });
 
 test('about page renders localized friend descriptions in english mode', async () => {
@@ -1702,6 +1733,65 @@ test('submit confirm route sends the reviewed payload to Google Form in normal m
     assert.match(capturedCalls[0][1], /entry\.5034928=/);
     assert.match(decodeURIComponent(capturedCalls[0][1]), /测试机构/);
     assert.match(confirmResponse.body, /提交成功/);
+    restore();
+  } finally {
+    clearProjectModules();
+  }
+});
+
+test('submit confirm route renders a prefilled Google Form fallback link when upstream submission fails', { concurrency: false }, async () => {
+  clearProjectModules();
+
+  try {
+    const { issueFormProtectionToken } = require(path.join(projectRoot, 'app/services/formProtectionService'));
+    const { app, restore } = loadAppWithPatchedFormService({
+      DEBUG_MOD: 'false',
+      FORM_DRY_RUN: 'false',
+      FORM_PROTECTION_SECRET: 'test-form-protection-secret',
+      FORM_PROTECTION_MIN_FILL_MS: '3000'
+    }, (formService) => {
+      const originalSubmitToGoogleForm = formService.submitToGoogleForm;
+      formService.submitToGoogleForm = async () => {
+        throw new Error('google form unavailable');
+      };
+
+      return () => {
+        formService.submitToGoogleForm = originalSubmitToGoogleForm;
+      };
+    });
+    const reviewResponse = await requestApp(app, {
+      path: '/submit',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: buildValidSubmissionBody({
+        form_token: issueFormProtectionToken({
+          secret: 'test-form-protection-secret',
+          issuedAt: Date.now() - 5000
+        })
+      })
+    });
+
+    const confirmationTokenMatch = responseBodyMatch(reviewResponse.body, /name="confirmation_token" value="([^"]+)"/);
+    const confirmationPayloadMatch = responseBodyMatch(reviewResponse.body, /<textarea name="confirmation_payload" hidden>([^<]*)<\/textarea>/);
+    const confirmResponse = await requestApp(app, {
+      path: '/submit/confirm',
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams({
+        confirmation_token: confirmationTokenMatch[1],
+        confirmation_payload: confirmationPayloadMatch[1]
+      }).toString()
+    });
+
+    assert.equal(confirmResponse.statusCode, 500);
+    assert.match(confirmResponse.body, /打开 Google Form 继续提交|Open Google Form to Continue/);
+    assert.match(confirmResponse.body, /viewform\?usp=pp_url&amp;entry\.842223433=/);
+    assert.match(confirmResponse.body, /entry\.5034928=%E6%B5%8B%E8%AF%95%E6%9C%BA%E6%9E%84/);
+    assert.match(confirmResponse.body, /entry\.500021634=%E5%8F%97%E5%AE%B3%E8%80%85%E6%9C%AC%E4%BA%BA/);
     restore();
   } finally {
     clearProjectModules();

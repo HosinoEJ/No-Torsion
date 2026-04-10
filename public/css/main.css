@@ -214,6 +214,176 @@ h3 {
     margin: 0;
 }
 
+.debug-page {
+    width: min(980px, calc(100vw - 2rem));
+}
+
+.debug-hero {
+    margin: 0;
+    padding: 1.7rem 1.8rem;
+    text-align: center;
+    background:
+        radial-gradient(circle at top right, rgba(52, 152, 219, 0.16), transparent 34%),
+        linear-gradient(180deg, var(--surface-elevated), var(--surface-soft));
+}
+
+.debug-hero h1 {
+    margin: 0;
+}
+
+.debug-page__eyebrow {
+    margin: 0 0 0.7rem;
+    text-align: center;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--primary);
+}
+
+.debug-page__intro {
+    max-width: 62ch;
+    margin: 0.9rem auto 0;
+    color: var(--text-muted);
+}
+
+.debug-section + .debug-section {
+    margin-top: 1rem;
+}
+
+.debug-section__title {
+    margin: 0 0 0.75rem;
+    padding-left: 0.15rem;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+}
+
+.debug-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.debug-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.78rem;
+    margin: 0;
+    padding: 1.15rem 1.2rem;
+}
+
+.debug-card--wide {
+    grid-column: 1 / -1;
+}
+
+.debug-card__label {
+    margin: 0;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--primary);
+}
+
+.debug-card__value {
+    display: block;
+    margin: 0;
+    padding: 0.9rem 1rem;
+    border-radius: 14px;
+    border: 1px solid var(--panel-border);
+    background: linear-gradient(180deg, var(--surface-elevated), var(--surface-soft));
+    color: var(--text);
+    box-sizing: border-box;
+    font-family: ui-monospace, SFMono-Regular, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    font-size: 0.96rem;
+    line-height: 1.5;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.debug-card__value--multiline {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.debug-card__badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    max-width: 100%;
+    min-height: 2.4rem;
+    padding: 0.58rem 0.8rem;
+    border-radius: 999px;
+    border: 1px solid var(--panel-border);
+    font-size: 0.92rem;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.debug-card__badge--positive {
+    background: rgba(46, 204, 113, 0.14);
+    border-color: rgba(46, 204, 113, 0.28);
+    color: #167a45;
+}
+
+.debug-card__badge--caution {
+    background: rgba(241, 196, 15, 0.16);
+    border-color: rgba(241, 196, 15, 0.28);
+    color: #8a5c00;
+}
+
+.debug-card__badge--neutral {
+    background: linear-gradient(180deg, var(--surface-elevated), var(--surface-soft));
+    color: var(--text);
+}
+
+.debug-card__link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: fit-content;
+    max-width: 100%;
+    min-height: 2.9rem;
+    padding: 0.85rem 1.15rem;
+    border-radius: 14px;
+    border: 1px solid var(--secondary-button-border);
+    background: linear-gradient(135deg, var(--secondary-button-bg-start), var(--secondary-button-bg-end));
+    color: var(--secondary-button-text);
+    box-shadow:
+        0 12px 24px var(--secondary-button-shadow),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    transition:
+        transform 0.18s ease,
+        border-color 0.18s ease,
+        box-shadow 0.18s ease,
+        background 0.18s ease,
+        color 0.18s ease;
+}
+
+.debug-card__link:hover {
+    opacity: 1;
+    text-decoration: none;
+    transform: translateY(-1px);
+    border-color: var(--secondary-button-hover-border);
+    background: linear-gradient(135deg, var(--secondary-button-hover-bg-start), var(--secondary-button-hover-bg-end));
+    box-shadow:
+        0 16px 30px var(--secondary-button-shadow),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.debug-card__hint {
+    margin: 0;
+    color: var(--text-muted);
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
 .privacy-page__intro {
     max-width: 78ch;
     margin: 0 auto 1.25rem;
@@ -2166,6 +2336,25 @@ hr {
     .about-page {
         width: min(100%, calc(100vw - 1rem));
         padding: 5.25rem 0 2rem;
+    }
+
+    .debug-grid {
+        grid-template-columns: 1fr;
+        gap: 0.85rem;
+    }
+
+    .debug-hero,
+    .debug-card {
+        padding: 1rem;
+    }
+
+    .debug-section__title {
+        font-size: 0.95rem;
+        margin-bottom: 0.65rem;
+    }
+
+    .debug-card__link {
+        width: 100%;
     }
 
     .about-page__section + .about-page__section {

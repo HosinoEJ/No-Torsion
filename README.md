@@ -31,6 +31,7 @@
 - [保护敏感配置](#保护敏感配置)
 - [表单隐私说明](#表单隐私说明)
 - [部署到 Cloudflare Workers](#部署到-cloudflare-workers)
+- [路由总览](#路由总览)
 - [相关文件](#相关文件)
 - [公开 API](#公开-api)
 - [贡献](#贡献)
@@ -193,7 +194,7 @@ npm run dev:workers
 | `npm run dev:workers` | 使用 Wrangler 本地调试 Workers 版本 |
 | `npm test` | 运行测试 |
 | `npm run build` | 做一次启动级别的构建检查 |
-| `npm run secure-config -- bootstrap-env --env-file ".env"` | 从现有环境文件读取 `FORM_ID` / `GOOGLE_SCRIPT_URL` 并生成密文 |
+| `npm run secure-config -- bootstrap-env --env-file ".env"` | 从现有环境文件读取明文值，回写密文，并删除对应的明文变量 |
 | `npm run secure-config -- bootstrap --form-id "..." --google-script-url "..."` | 一次性生成 `FORM_PROTECTION_SECRET` 与对应密文 |
 | `npm run secure-config -- generate-secret` | 生成高强度 `FORM_PROTECTION_SECRET` |
 
@@ -227,17 +228,18 @@ README 只保留最常用配置；完整变量说明请查看 [`.env.example`](.
 
 如果你不想把 `FORM_ID` 或 `GOOGLE_SCRIPT_URL` 以明文形式放在普通环境变量里，可以改用密文配置。
 
-如果你已经把 `FORM_ID` 与 `GOOGLE_SCRIPT_URL` 写进 `.env` 或 `.dev.vars`，最省事的方式是直接从文件读取并生成：
+如果你已经把 `FORM_ID` 与 `GOOGLE_SCRIPT_URL` 写进 `.env` 或 `.dev.vars`，最省事的方式是直接从文件读取并原地转换：
 
 ```bash
 npm run secure-config -- bootstrap-env --env-file ".env"
 ```
 
-它会直接输出：
+它会直接更新目标环境文件：
 
-- `FORM_PROTECTION_SECRET`
-- `FORM_ID_ENCRYPTED`
-- `GOOGLE_SCRIPT_URL_ENCRYPTED`
+- 写入 `FORM_PROTECTION_SECRET`
+- 写入 `FORM_ID_ENCRYPTED`
+- 写入 `GOOGLE_SCRIPT_URL_ENCRYPTED`
+- 删除对应的 `FORM_ID` / `GOOGLE_SCRIPT_URL` 明文项
 
 Workers 本地调试时，也可以改读 `.dev.vars`：
 
@@ -371,6 +373,22 @@ A: 目前不需要。Workers Builds 的 `Build command` 一般留空即可。
 
 **Q: 为什么 `Deploy command` 用的是 `npm run deploy:workers`？**<br>
 A: 因为它会调用 `npx wrangler deploy`，并且与本仓库的 `package.json` 保持一致。
+
+## 路由总览
+
+默认情况下，所有页面路由都会经过 i18n 中间件，因此都支持通过 `?lang=zh-CN`、`?lang=zh-TW`、`?lang=en` 切换界面语言。若开启维护模式，页面与 API 还会先经过维护拦截。
+
+| 路径 | 说明 | 备注 |
+| --- | --- | --- |
+| `/` | 站点首页，提供表单、地图、文库等入口 | 对应 `views/index.ejs` |
+| `/form` | 匿名表单页，下发地区选项、前端校验规则与防刷 token | 会附带敏感页面响应头，禁止索引 |
+| `/map` | 地图总览页，展示机构分布、统计与公开数据列表 | 支持 `?inputType=` 预设筛选 |
+| `/aboutus` | 关于页，展示项目说明与友链/致谢信息 | 会读取 `friends.json` |
+| `/privacy` | 隐私政策与 Cookie 说明页 | 用于公开说明数据使用边界 |
+| `/blog` | 文库列表页，展示博客文章与标签筛选 | 支持 `?tag=<tagId>` |
+| `/port/:id` | 单篇文章详情页 | `:id` 会严格限制在 `blog/` 目录内解析，防止路径穿越 |
+| `/debug` | 调试页，展示当前语言、API 地址、调试模式等信息 | 仅 `DEBUG_MOD=true` 时可访问 |
+| `/debug/submit-error` | 提交失败页预览，方便单独查看错误页样式与预填 Google Form 链接 | 仅 `DEBUG_MOD=true` 时可访问 |
 
 ## 相关文件
 

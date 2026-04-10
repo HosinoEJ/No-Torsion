@@ -15,7 +15,7 @@ SUBMIT_RATE_LIMIT_MAX="5"
 
 # Recommended form protection secret
 # Quick start:
-# npm run secure-config -- bootstrap-env --env-file ".dev.vars"
+# npm run secure-config -- bootstrap-env --env-file ".dev.vars"  # rewrites this file and removes plain FORM_ID / GOOGLE_SCRIPT_URL
 # npm run secure-config -- bootstrap --form-id "your-Google-Form-ID" --google-script-url "your-Google-Script-URL"
 FORM_PROTECTION_SECRET="replace-this-with-a-long-random-secret"
 

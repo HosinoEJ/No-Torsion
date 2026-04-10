@@ -89,3 +89,59 @@ test('secure-config bootstrap-env reads plaintext values from an env file', () =
     'https://script.google.com/macros/s/from-env/exec'
   );
 });
+
+test('secure-config bootstrap-env rewrites the env file with encrypted values and removes plaintext keys', () => {
+  const {
+    buildBootstrapConfigFromEnvSource,
+    loadEnvSource,
+    writeBootstrapConfigToEnvSource
+  } = require(path.join(projectRoot, 'scripts/secure-config'));
+  const { decryptProtectedValue } = require(path.join(projectRoot, 'config/protectedConfig'));
+  const dotenv = require('dotenv');
+
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'secure-config-write-'));
+  const envFilePath = path.join(tempDir, '.env');
+  fs.writeFileSync(
+    envFilePath,
+    [
+      'SITE_URL="https://example.com"',
+      'FORM_PROTECTION_SECRET="existing-secret"',
+      'FORM_ID="env-form-123"',
+      'GOOGLE_SCRIPT_URL="https://script.google.com/macros/s/from-file/exec"',
+      'DEBUG_MOD="true"'
+    ].join('\n'),
+    'utf8'
+  );
+
+  const envSource = loadEnvSource(envFilePath);
+  const config = buildBootstrapConfigFromEnvSource({ envSource });
+  const writeResult = writeBootstrapConfigToEnvSource({
+    config,
+    envSource
+  });
+  const nextContent = fs.readFileSync(envFilePath, 'utf8');
+  const parsedNextEnv = dotenv.parse(nextContent);
+
+  assert.equal(writeResult.envFilePath, envFilePath);
+  assert.deepEqual(writeResult.removedKeys.sort(), ['FORM_ID', 'GOOGLE_SCRIPT_URL']);
+  assert.ok(writeResult.updatedKeys.includes('FORM_PROTECTION_SECRET'));
+  assert.ok(writeResult.updatedKeys.includes('FORM_ID_ENCRYPTED'));
+  assert.ok(writeResult.updatedKeys.includes('GOOGLE_SCRIPT_URL_ENCRYPTED'));
+  assert.doesNotMatch(nextContent, /^FORM_ID=/m);
+  assert.doesNotMatch(nextContent, /^GOOGLE_SCRIPT_URL=/m);
+  assert.equal(parsedNextEnv.FORM_PROTECTION_SECRET, 'existing-secret');
+  assert.equal(parsedNextEnv.SITE_URL, 'https://example.com');
+  assert.equal(parsedNextEnv.DEBUG_MOD, 'true');
+  assert.equal(
+    decryptProtectedValue(parsedNextEnv.FORM_ID_ENCRYPTED, parsedNextEnv.FORM_PROTECTION_SECRET, 'form-id'),
+    'env-form-123'
+  );
+  assert.equal(
+    decryptProtectedValue(
+      parsedNextEnv.GOOGLE_SCRIPT_URL_ENCRYPTED,
+      parsedNextEnv.FORM_PROTECTION_SECRET,
+      'google-script-url'
+    ),
+    'https://script.google.com/macros/s/from-file/exec'
+  );
+});

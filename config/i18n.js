@@ -42,6 +42,7 @@ const messages = {
       privacy: '隐私政策与 Cookie 说明|{title}',
       submitPreview: '提交预览|{title}',
       submitConfirm: '提交确认|{title}',
+      submitError: '提交失败|{title}',
       blog: '文库|{title}',
       article: '{articleTitle}|{title}',
       debug: '调试|{title}',
@@ -379,6 +380,14 @@ const messages = {
       confirming: '提交中...',
       backForm: '返回表单'
     },
+    submitError: {
+      title: '提交失败',
+      intro: '站内提交没有成功。你可以打开下面这个已预填内容的 Google Form 链接继续提交。',
+      privacyNote: '注意：下面这个链接包含你刚刚填写的表单内容，请不要随意分享。',
+      openFallback: '打开 Google Form 继续提交',
+      urlLabel: '带预填内容的 Google Form 链接',
+      backForm: '返回表单'
+    },
     maintenance: {
       badge: '站点维护中',
       title: '网站正在维护中',
@@ -453,10 +462,58 @@ const messages = {
     debug: {
       title: '调试',
       intro: '此页面仅在 DEBUG_MOD=true 时可用。',
+      sections: {
+        request: '请求与运行时',
+        site: '站点配置',
+        integrations: '集成状态',
+        limits: '限流与表单参数',
+        tools: '调试工具'
+      },
       labels: {
         language: '语言',
+        requestPath: '当前路径',
+        runtime: '运行时',
+        assetVersion: '资源版本',
+        siteTitle: '站点标题',
+        siteUrl: '站点地址',
         apiUrl: 'API 地址',
-        debugMode: '调试模式'
+        debugMode: '调试模式',
+        formDryRun: '表单干跑',
+        maintenanceMode: '维护模式',
+        maintenanceRetryAfter: '维护重试时间',
+        trustProxy: 'Trust Proxy',
+        mapNodeTransport: 'Node 地图传输覆写',
+        googleForm: 'Google Form 提交地址',
+        googleScript: '私有地图上游',
+        publicMapDataUrl: '公开地图回退源',
+        translationProvider: '翻译服务',
+        redisRateLimit: 'Redis 限流存储',
+        formProtectionSecret: '表单保护 Secret',
+        pageReadLimit: '页面读取限流',
+        mapReadLimit: '地图读取限流',
+        submitRateLimit: '提交限流',
+        mapUpstreamTimeout: '地图上游超时',
+        translationTimeout: '翻译服务超时',
+        minFillMs: '最短填写时长',
+        maxAgeMs: '表单 Token 有效期'
+      },
+      values: {
+        enabled: '已启用',
+        disabled: '未启用',
+        configured: '已配置',
+        missing: '未配置',
+        explicit: '显式配置',
+        derived: '派生值',
+        memoryOnly: '仅内存模式',
+        publicFallbackOnly: '仅公开回退',
+        node: 'Node.js',
+        workers: 'Cloudflare Workers',
+        limitWindow: '每 {minutes} 分钟 {count} 次',
+        milliseconds: '{count} ms',
+        seconds: '{count} s'
+      },
+      links: {
+        submitErrorPreview: '查看提交失败页预览'
       }
     },
     data: {
@@ -490,6 +547,7 @@ const messages = {
       privacy: '隱私政策與 Cookie 說明|{title}',
       submitPreview: '提交預覽|{title}',
       submitConfirm: '提交確認|{title}',
+      submitError: '提交失敗|{title}',
       blog: '文庫|{title}',
       article: '{articleTitle}|{title}',
       debug: '調試|{title}',
@@ -827,6 +885,14 @@ const messages = {
       confirming: '提交中...',
       backForm: '返回表單'
     },
+    submitError: {
+      title: '提交失敗',
+      intro: '站內提交沒有成功。你可以打開下面這個已預填內容的 Google Form 連結繼續提交。',
+      privacyNote: '注意：下面這個連結包含你剛剛填寫的表單內容，請不要隨意分享。',
+      openFallback: '打開 Google Form 繼續提交',
+      urlLabel: '帶預填內容的 Google Form 連結',
+      backForm: '返回表單'
+    },
     maintenance: {
       badge: '站點維護中',
       title: '網站正在維護中',
@@ -901,10 +967,58 @@ const messages = {
     debug: {
       title: '調試',
       intro: '此頁面僅在 DEBUG_MOD=true 時可用。',
+      sections: {
+        request: '請求與運行時',
+        site: '站點配置',
+        integrations: '整合狀態',
+        limits: '限流與表單參數',
+        tools: '調試工具'
+      },
       labels: {
         language: '語言',
+        requestPath: '目前路徑',
+        runtime: '運行時',
+        assetVersion: '資源版本',
+        siteTitle: '站點標題',
+        siteUrl: '站點位址',
         apiUrl: 'API 位址',
-        debugMode: '調試模式'
+        debugMode: '調試模式',
+        formDryRun: '表單 Dry Run',
+        maintenanceMode: '維護模式',
+        maintenanceRetryAfter: '維護重試時間',
+        trustProxy: 'Trust Proxy',
+        mapNodeTransport: 'Node 地圖傳輸覆寫',
+        googleForm: 'Google Form 提交位址',
+        googleScript: '私有地圖上游',
+        publicMapDataUrl: '公開地圖回退源',
+        translationProvider: '翻譯服務',
+        redisRateLimit: 'Redis 限流儲存',
+        formProtectionSecret: '表單保護 Secret',
+        pageReadLimit: '頁面讀取限流',
+        mapReadLimit: '地圖讀取限流',
+        submitRateLimit: '提交限流',
+        mapUpstreamTimeout: '地圖上游逾時',
+        translationTimeout: '翻譯服務逾時',
+        minFillMs: '最短填寫時長',
+        maxAgeMs: '表單 Token 有效期'
+      },
+      values: {
+        enabled: '已啟用',
+        disabled: '未啟用',
+        configured: '已配置',
+        missing: '未配置',
+        explicit: '顯式配置',
+        derived: '派生值',
+        memoryOnly: '僅記憶體模式',
+        publicFallbackOnly: '僅公開回退',
+        node: 'Node.js',
+        workers: 'Cloudflare Workers',
+        limitWindow: '每 {minutes} 分鐘 {count} 次',
+        milliseconds: '{count} ms',
+        seconds: '{count} s'
+      },
+      links: {
+        submitErrorPreview: '查看提交失敗頁預覽'
       }
     },
     data: {
@@ -938,6 +1052,7 @@ const messages = {
       privacy: 'Privacy & Cookie Notice | {title}',
       submitPreview: 'Submission Preview | {title}',
       submitConfirm: 'Submission Confirmation | {title}',
+      submitError: 'Submission Failed | {title}',
       blog: 'Library | {title}',
       article: '{articleTitle} | {title}',
       debug: 'Debug | {title}',
@@ -1275,6 +1390,14 @@ const messages = {
       confirming: 'Submitting...',
       backForm: 'Back to Form'
     },
+    submitError: {
+      title: 'Submission Failed',
+      intro: 'The in-site submission did not complete successfully. You can continue by opening the Google Form link below with your data prefilled.',
+      privacyNote: 'Note: the link below contains the form content you just entered, so please do not share it casually.',
+      openFallback: 'Open Google Form to Continue',
+      urlLabel: 'Prefilled Google Form Link',
+      backForm: 'Back to Form'
+    },
     maintenance: {
       badge: 'Site Maintenance',
       title: 'We are performing a short maintenance',
@@ -1349,10 +1472,58 @@ const messages = {
     debug: {
       title: 'Debug',
       intro: 'This page is only available when DEBUG_MOD=true.',
+      sections: {
+        request: 'Request & Runtime',
+        site: 'Site Configuration',
+        integrations: 'Integration Status',
+        limits: 'Limits & Form Settings',
+        tools: 'Debug Tools'
+      },
       labels: {
         language: 'Language',
+        requestPath: 'Request Path',
+        runtime: 'Runtime',
+        assetVersion: 'Asset Version',
+        siteTitle: 'Site Title',
+        siteUrl: 'Site URL',
         apiUrl: 'API URL',
-        debugMode: 'Debug Mode'
+        debugMode: 'Debug Mode',
+        formDryRun: 'Form Dry Run',
+        maintenanceMode: 'Maintenance Mode',
+        maintenanceRetryAfter: 'Maintenance Retry-After',
+        trustProxy: 'Trust Proxy',
+        mapNodeTransport: 'Node Map Transport Override',
+        googleForm: 'Google Form Submit URL',
+        googleScript: 'Private Map Upstream',
+        publicMapDataUrl: 'Public Map Fallback URL',
+        translationProvider: 'Translation Provider',
+        redisRateLimit: 'Redis Rate Limit Store',
+        formProtectionSecret: 'Form Protection Secret',
+        pageReadLimit: 'Page Read Limit',
+        mapReadLimit: 'Map Read Limit',
+        submitRateLimit: 'Submit Rate Limit',
+        mapUpstreamTimeout: 'Map Upstream Timeout',
+        translationTimeout: 'Translation Provider Timeout',
+        minFillMs: 'Minimum Fill Time',
+        maxAgeMs: 'Form Token Max Age'
+      },
+      values: {
+        enabled: 'Enabled',
+        disabled: 'Disabled',
+        configured: 'Configured',
+        missing: 'Missing',
+        explicit: 'Explicit',
+        derived: 'Derived',
+        memoryOnly: 'Memory Only',
+        publicFallbackOnly: 'Public Fallback Only',
+        node: 'Node.js',
+        workers: 'Cloudflare Workers',
+        limitWindow: '{count} per {minutes} min',
+        milliseconds: '{count} ms',
+        seconds: '{count} s'
+      },
+      links: {
+        submitErrorPreview: 'Open submission error preview'
       }
     },
     data: {

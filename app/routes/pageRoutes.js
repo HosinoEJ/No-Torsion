@@ -21,6 +21,7 @@ const {
   createRateLimiter,
   sensitiveRobotsPolicy
 } = require('../../config/security');
+const { buildGoogleFormPrefillUrl } = require('../services/formService');
 
 function translateWithFallback(t, key, fallbackValue = '') {
   if (typeof t !== 'function') {
@@ -103,15 +104,267 @@ function resolveMarkdownPath(blogDirectory, articleId) {
   return markdownPath;
 }
 
+function buildDebugSubmitErrorPreviewUrl(googleFormUrl) {
+  const samplePayload = new URLSearchParams({
+    'entry.842223433': '11',
+    'entry.1422578992': '男',
+    'entry.1766160152': '福建',
+    'entry.402227428': '區，縣',
+    'entry.5034928': '學校',
+    'entry.1390240202': '地址',
+    'entry.1344969670': '2026-04-21',
+    'entry.129670533': '2026-04-25',
+    'entry.578287646': '經歷',
+    'entry.1533497153': '校長',
+    'entry.883193772': '聯繫方式',
+    'entry.1400127416': '醜聞',
+    'entry.2022959936': '其他',
+    'entry.500021634': '受害者本人'
+  }).toString();
+
+  return buildGoogleFormPrefillUrl(googleFormUrl, samplePayload);
+}
+
+function redactGoogleFormUrlForDebug(googleFormUrl) {
+  const normalizedUrl = String(googleFormUrl || '').trim();
+
+  if (!normalizedUrl) {
+    return '';
+  }
+
+  return normalizedUrl.replace(/\/d\/e\/([^/]+)\//, (_match, formId) => {
+    const visiblePrefix = formId.slice(0, 4);
+    const visibleSuffix = formId.slice(-4);
+    return `/d/e/${visiblePrefix}...${visibleSuffix}/`;
+  });
+}
+
+function redactGoogleScriptUrlForDebug(googleScriptUrl) {
+  const normalizedUrl = String(googleScriptUrl || '').trim();
+
+  if (!normalizedUrl) {
+    return '';
+  }
+
+  try {
+    const parsedUrl = new URL(normalizedUrl);
+    const redactedPathname = parsedUrl.pathname.replace(/\/s\/([^/]+)\/exec/i, (_match, deploymentId) => {
+      const visiblePrefix = deploymentId.slice(0, 4);
+      const visibleSuffix = deploymentId.slice(-4);
+      return `/s/${visiblePrefix}...${visibleSuffix}/exec`;
+    });
+
+    return `${parsedUrl.origin}${redactedPathname}`;
+  } catch (_error) {
+    return normalizedUrl.replace(/\/s\/([^/]+)\/exec/i, (_match, deploymentId) => {
+      const visiblePrefix = deploymentId.slice(0, 4);
+      const visibleSuffix = deploymentId.slice(-4);
+      return `/s/${visiblePrefix}...${visibleSuffix}/exec`;
+    });
+  }
+}
+
+function redactRedisUrlForDebug(redisUrl) {
+  const normalizedUrl = String(redisUrl || '').trim();
+
+  if (!normalizedUrl) {
+    return '';
+  }
+
+  try {
+    const parsedUrl = new URL(normalizedUrl);
+    const host = parsedUrl.hostname || '';
+    const port = parsedUrl.port ? `:${parsedUrl.port}` : '';
+    const pathname = parsedUrl.pathname || '';
+    return `${parsedUrl.protocol}//${host}${port}${pathname}`;
+  } catch (_error) {
+    return normalizedUrl.replace(/\/\/[^@/]+@/, '//');
+  }
+}
+
+function buildDebugSections({
+  apiUrl,
+  assetVersion,
+  debugMod,
+  formDryRun,
+  formProtectionMaxAgeMs,
+  formProtectionMinFillMs,
+  formProtectionSecretConfigured,
+  googleFormUrl,
+  googleScriptUrl,
+  isWorkersRuntime,
+  maintenanceMode,
+  maintenanceRetryAfterSeconds,
+  mapDataNodeTransportOverrides,
+  mapDataUpstreamTimeoutMs,
+  mapReadRateLimitMax,
+  pageReadRateLimitMax,
+  publicMapDataUrl,
+  rateLimitRedisUrl,
+  requestPath,
+  siteUrl,
+  submitRateLimitMax,
+  t,
+  title,
+  translationProviderConfigured,
+  translationProviderTimeoutMs,
+  trustProxy
+}) {
+  const statusValue = {
+    configured: t('debug.values.configured'),
+    derived: t('debug.values.derived'),
+    disabled: t('debug.values.disabled'),
+    enabled: t('debug.values.enabled'),
+    explicit: t('debug.values.explicit'),
+    memoryOnly: t('debug.values.memoryOnly'),
+    missing: t('debug.values.missing'),
+    node: t('debug.values.node'),
+    publicFallbackOnly: t('debug.values.publicFallbackOnly'),
+    workers: t('debug.values.workers')
+  };
+
+  return [
+    {
+      title: t('debug.sections.request'),
+      items: [
+        { label: t('debug.labels.language'), value: requestPath.language },
+        { label: t('debug.labels.requestPath'), value: requestPath.path, multiline: true },
+        { label: t('debug.labels.runtime'), value: isWorkersRuntime ? statusValue.workers : statusValue.node },
+        { label: t('debug.labels.assetVersion'), value: assetVersion || 'unknown' }
+      ]
+    },
+    {
+      title: t('debug.sections.site'),
+      items: [
+        { label: t('debug.labels.siteTitle'), value: title },
+        { label: t('debug.labels.siteUrl'), value: siteUrl, wide: true, multiline: true },
+        { label: t('debug.labels.apiUrl'), value: apiUrl },
+        { label: t('debug.labels.trustProxy'), value: String(trustProxy) },
+        {
+          label: t('debug.labels.debugMode'),
+          value: debugMod === 'true' ? statusValue.enabled : statusValue.disabled,
+          badgeTone: debugMod === 'true' ? 'positive' : 'neutral'
+        },
+        {
+          label: t('debug.labels.formDryRun'),
+          value: formDryRun ? statusValue.enabled : statusValue.disabled,
+          badgeTone: formDryRun ? 'positive' : 'neutral'
+        },
+        {
+          label: t('debug.labels.maintenanceMode'),
+          value: maintenanceMode ? statusValue.enabled : statusValue.disabled,
+          badgeTone: maintenanceMode ? 'caution' : 'neutral',
+          hint: t('debug.values.seconds', { count: maintenanceRetryAfterSeconds })
+        },
+        {
+          label: t('debug.labels.mapNodeTransport'),
+          value: mapDataNodeTransportOverrides ? statusValue.enabled : statusValue.disabled,
+          badgeTone: mapDataNodeTransportOverrides ? 'positive' : 'neutral'
+        }
+      ]
+    },
+    {
+      title: t('debug.sections.integrations'),
+      items: [
+        {
+          label: t('debug.labels.googleForm'),
+          value: googleFormUrl ? statusValue.configured : statusValue.missing,
+          badgeTone: googleFormUrl ? 'positive' : 'caution',
+          hint: redactGoogleFormUrlForDebug(googleFormUrl)
+        },
+        {
+          label: t('debug.labels.googleScript'),
+          value: googleScriptUrl ? statusValue.configured : statusValue.publicFallbackOnly,
+          badgeTone: googleScriptUrl ? 'positive' : 'caution',
+          hint: googleScriptUrl ? redactGoogleScriptUrlForDebug(googleScriptUrl) : ''
+        },
+        {
+          label: t('debug.labels.publicMapDataUrl'),
+          value: publicMapDataUrl,
+          wide: true,
+          multiline: true
+        },
+        {
+          label: t('debug.labels.translationProvider'),
+          value: translationProviderConfigured ? statusValue.configured : statusValue.missing,
+          badgeTone: translationProviderConfigured ? 'positive' : 'caution',
+          hint: t('debug.values.milliseconds', { count: translationProviderTimeoutMs })
+        },
+        {
+          label: t('debug.labels.redisRateLimit'),
+          value: rateLimitRedisUrl ? statusValue.configured : statusValue.memoryOnly,
+          badgeTone: rateLimitRedisUrl ? 'positive' : 'caution',
+          hint: redactRedisUrlForDebug(rateLimitRedisUrl)
+        },
+        {
+          label: t('debug.labels.formProtectionSecret'),
+          value: formProtectionSecretConfigured ? statusValue.explicit : statusValue.derived,
+          badgeTone: formProtectionSecretConfigured ? 'positive' : 'caution'
+        }
+      ]
+    },
+    {
+      title: t('debug.sections.limits'),
+      items: [
+        {
+          label: t('debug.labels.pageReadLimit'),
+          value: t('debug.values.limitWindow', { count: pageReadRateLimitMax, minutes: 5 })
+        },
+        {
+          label: t('debug.labels.mapReadLimit'),
+          value: t('debug.values.limitWindow', { count: mapReadRateLimitMax, minutes: 5 })
+        },
+        {
+          label: t('debug.labels.submitRateLimit'),
+          value: t('debug.values.limitWindow', { count: submitRateLimitMax, minutes: 15 })
+        },
+        {
+          label: t('debug.labels.mapUpstreamTimeout'),
+          value: t('debug.values.milliseconds', { count: mapDataUpstreamTimeoutMs })
+        },
+        {
+          label: t('debug.labels.translationTimeout'),
+          value: t('debug.values.milliseconds', { count: translationProviderTimeoutMs })
+        },
+        {
+          label: t('debug.labels.minFillMs'),
+          value: t('debug.values.milliseconds', { count: formProtectionMinFillMs })
+        },
+        {
+          label: t('debug.labels.maxAgeMs'),
+          value: t('debug.values.milliseconds', { count: formProtectionMaxAgeMs })
+        }
+      ]
+    }
+  ];
+}
+
 // 页面路由只负责渲染模板，不承载表单提交或 API 逻辑。
 function createPageRoutes({
   apiUrl,
   debugMod,
+  formDryRun,
+  formProtectionMaxAgeMs,
+  formProtectionMinFillMs,
   formProtectionSecret,
+  formProtectionSecretConfigured,
+  googleFormUrl,
+  googleScriptUrl,
+  isWorkersRuntime,
+  maintenanceMode,
+  maintenanceRetryAfterSeconds,
+  mapDataNodeTransportOverrides,
+  mapDataUpstreamTimeoutMs,
+  mapReadRateLimitMax,
   pageReadRateLimitMax,
+  publicMapDataUrl,
   rateLimitRedisUrl,
   siteUrl,
-  title
+  submitRateLimitMax,
+  title,
+  translationProviderConfigured,
+  translationProviderTimeoutMs,
+  trustProxy
 }) {
   const router = express.Router();
   const pageReadLimiter = createRateLimiter({
@@ -211,8 +464,53 @@ function createPageRoutes({
 
     res.render('debug', {
       apiUrl,
+      debugSections: buildDebugSections({
+        apiUrl,
+        assetVersion: req.app.locals.assetVersion,
+        debugMod,
+        formDryRun,
+        formProtectionMaxAgeMs,
+        formProtectionMinFillMs,
+        formProtectionSecretConfigured,
+        googleFormUrl,
+        googleScriptUrl,
+        isWorkersRuntime,
+        maintenanceMode,
+        maintenanceRetryAfterSeconds,
+        mapDataNodeTransportOverrides,
+        mapDataUpstreamTimeoutMs,
+        mapReadRateLimitMax,
+        pageReadRateLimitMax,
+        publicMapDataUrl,
+        rateLimitRedisUrl,
+        requestPath: {
+          language: req.lang,
+          path: req.originalUrl
+        },
+        siteUrl,
+        submitRateLimitMax,
+        t: req.t,
+        title,
+        translationProviderConfigured,
+        translationProviderTimeoutMs,
+        trustProxy
+      }),
       debugMode: debugMod,
+      submitErrorPreviewUrl: '/debug/submit-error',
       title: req.t('pageTitles.debug', { title })
+    });
+  });
+
+  router.get('/debug/submit-error', pageReadLimiter, (req, res) => {
+    if (debugMod !== 'true') {
+      return res.status(404).send(req.t('common.notFound'));
+    }
+
+    applySensitivePageHeaders(res);
+    res.render('submit_error', {
+      fallbackUrl: buildDebugSubmitErrorPreviewUrl(googleFormUrl),
+      pageRobots: sensitiveRobotsPolicy,
+      title: req.t('pageTitles.submitError', { title })
     });
   });
 

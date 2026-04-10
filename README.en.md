@@ -31,6 +31,7 @@
 - [Protecting Sensitive Configuration](#protecting-sensitive-configuration)
 - [Form Privacy Notice](#form-privacy-notice)
 - [Deploying to Cloudflare Workers](#deploying-to-cloudflare-workers)
+- [Route Overview](#route-overview)
 - [Related Files](#related-files)
 - [Public API](#public-api)
 - [Contributing](#contributing)
@@ -193,7 +194,7 @@ Recommendations:
 | `npm run dev:workers` | Run the Workers version locally with Wrangler |
 | `npm test` | Run the test suite |
 | `npm run build` | Run a startup-level build sanity check |
-| `npm run secure-config -- bootstrap-env --env-file ".env"` | Read `FORM_ID` / `GOOGLE_SCRIPT_URL` from an env file and generate encrypted values |
+| `npm run secure-config -- bootstrap-env --env-file ".env"` | Read plain-text values from an env file, write encrypted replacements back, and remove the plain-text keys |
 | `npm run secure-config -- bootstrap --form-id "..." --google-script-url "..."` | Generate `FORM_PROTECTION_SECRET` and encrypted values in one step |
 | `npm run secure-config -- generate-secret` | Generate a strong `FORM_PROTECTION_SECRET` |
 
@@ -227,17 +228,18 @@ Configuration rules:
 
 If you do not want to expose `FORM_ID` or `GOOGLE_SCRIPT_URL` in plain text environment variables, you can switch to encrypted config values.
 
-If those values already exist in `.env` or `.dev.vars`, the easiest path is to read them from the file and generate encrypted replacements:
+If those values already exist in `.env` or `.dev.vars`, the easiest path is to read them from the file and convert them in place:
 
 ```bash
 npm run secure-config -- bootstrap-env --env-file ".env"
 ```
 
-This prints:
+This updates the target env file directly:
 
-- `FORM_PROTECTION_SECRET`
-- `FORM_ID_ENCRYPTED`
-- `GOOGLE_SCRIPT_URL_ENCRYPTED`
+- writes `FORM_PROTECTION_SECRET`
+- writes `FORM_ID_ENCRYPTED`
+- writes `GOOGLE_SCRIPT_URL_ENCRYPTED`
+- removes the corresponding plain-text `FORM_ID` / `GOOGLE_SCRIPT_URL` entries
 
 For local Workers development, you can also read from `.dev.vars`:
 
@@ -371,6 +373,22 @@ A: Not currently. In most cases the Workers Builds `Build command` can stay empt
 
 **Q: Why is the `Deploy command` `npm run deploy:workers`?**<br>
 A: Because it calls `npx wrangler deploy` and stays aligned with this repository's `package.json`.
+
+## Route Overview
+
+By default, every page route passes through the i18n middleware, so the UI language can be switched with `?lang=zh-CN`, `?lang=zh-TW`, or `?lang=en`. If maintenance mode is enabled, both pages and APIs are intercepted by the maintenance layer first.
+
+| Path | Description | Notes |
+| --- | --- | --- |
+| `/` | Home page with links to the form, map, and library | Renders `views/index.ejs` |
+| `/form` | Anonymous form page that injects area options, frontend validation rules, and anti-abuse tokens | Sends sensitive-page headers and is excluded from indexing |
+| `/map` | Map overview page showing institution distribution, statistics, and the public data list | Supports `?inputType=` preset filtering |
+| `/aboutus` | About page with project information and acknowledgements / friend links | Reads `friends.json` |
+| `/privacy` | Privacy and Cookie Notice page | Explains public-facing data handling boundaries |
+| `/blog` | Library index page with blog entries and tag filtering | Supports `?tag=<tagId>` |
+| `/port/:id` | Single article detail page | `:id` is strictly resolved inside the `blog/` directory to prevent path traversal |
+| `/debug` | Debug page showing the current language, API URL, debug mode, and related runtime details | Only available when `DEBUG_MOD=true` |
+| `/debug/submit-error` | Standalone preview of the submission error page with a prefilled Google Form fallback link | Only available when `DEBUG_MOD=true` |
 
 ## Related Files
 

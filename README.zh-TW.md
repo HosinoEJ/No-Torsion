@@ -31,6 +31,7 @@
 - [保護敏感配置](#保護敏感配置)
 - [表單隱私說明](#表單隱私說明)
 - [部署到 Cloudflare Workers](#部署到-cloudflare-workers)
+- [路由總覽](#路由總覽)
 - [相關檔案](#相關檔案)
 - [公開 API](#公開-api)
 - [貢獻](#貢獻)
@@ -193,7 +194,7 @@ npm run dev:workers
 | `npm run dev:workers` | 使用 Wrangler 本地調試 Workers 版本 |
 | `npm test` | 執行測試 |
 | `npm run build` | 做一次啟動級別的構建檢查 |
-| `npm run secure-config -- bootstrap-env --env-file ".env"` | 從現有環境檔讀取 `FORM_ID` / `GOOGLE_SCRIPT_URL` 並生成密文 |
+| `npm run secure-config -- bootstrap-env --env-file ".env"` | 從現有環境檔讀取明文值，回寫密文，並刪除對應的明文變數 |
 | `npm run secure-config -- bootstrap --form-id "..." --google-script-url "..."` | 一次性生成 `FORM_PROTECTION_SECRET` 與對應密文 |
 | `npm run secure-config -- generate-secret` | 生成高強度 `FORM_PROTECTION_SECRET` |
 
@@ -227,17 +228,18 @@ README 只保留最常用配置；完整變數說明請查看 [`.env.example`](.
 
 如果你不想把 `FORM_ID` 或 `GOOGLE_SCRIPT_URL` 以明文形式放在普通環境變數裡，可以改用密文配置。
 
-如果你已經把 `FORM_ID` 與 `GOOGLE_SCRIPT_URL` 寫進 `.env` 或 `.dev.vars`，最省事的方式是直接從檔案讀取並生成：
+如果你已經把 `FORM_ID` 與 `GOOGLE_SCRIPT_URL` 寫進 `.env` 或 `.dev.vars`，最省事的方式是直接從檔案讀取並原地轉換：
 
 ```bash
 npm run secure-config -- bootstrap-env --env-file ".env"
 ```
 
-它會直接輸出：
+它會直接更新目標環境檔：
 
-- `FORM_PROTECTION_SECRET`
-- `FORM_ID_ENCRYPTED`
-- `GOOGLE_SCRIPT_URL_ENCRYPTED`
+- 寫入 `FORM_PROTECTION_SECRET`
+- 寫入 `FORM_ID_ENCRYPTED`
+- 寫入 `GOOGLE_SCRIPT_URL_ENCRYPTED`
+- 刪除對應的 `FORM_ID` / `GOOGLE_SCRIPT_URL` 明文項
 
 Workers 本地調試時，也可以改讀 `.dev.vars`：
 
@@ -371,6 +373,22 @@ A: 目前不需要。Workers Builds 的 `Build command` 一般留空即可。
 
 **Q: 為什麼 `Deploy command` 用的是 `npm run deploy:workers`？**<br>
 A: 因為它會呼叫 `npx wrangler deploy`，並且與本倉庫的 `package.json` 保持一致。
+
+## 路由總覽
+
+預設情況下，所有頁面路由都會經過 i18n 中介層，因此都支援透過 `?lang=zh-CN`、`?lang=zh-TW`、`?lang=en` 切換介面語言。若開啟維護模式，頁面與 API 還會先經過維護攔截。
+
+| 路徑 | 說明 | 備註 |
+| --- | --- | --- |
+| `/` | 站點首頁，提供表單、地圖、文庫等入口 | 對應 `views/index.ejs` |
+| `/form` | 匿名表單頁，下發地區選項、前端校驗規則與防刷 token | 會附帶敏感頁面回應標頭，禁止索引 |
+| `/map` | 地圖總覽頁，展示機構分布、統計與公開資料列表 | 支援 `?inputType=` 預設篩選 |
+| `/aboutus` | 關於頁，展示專案說明與友鏈／致謝資訊 | 會讀取 `friends.json` |
+| `/privacy` | 隱私政策與 Cookie 說明頁 | 用於公開說明資料使用邊界 |
+| `/blog` | 文庫列表頁，展示部落格文章與標籤篩選 | 支援 `?tag=<tagId>` |
+| `/port/:id` | 單篇文章詳情頁 | `:id` 會嚴格限制在 `blog/` 目錄內解析，防止路徑穿越 |
+| `/debug` | 調試頁，展示目前語言、API 位址、調試模式等資訊 | 僅 `DEBUG_MOD=true` 時可訪問 |
+| `/debug/submit-error` | 提交失敗頁預覽，方便單獨查看錯誤頁樣式與預填 Google Form 連結 | 僅 `DEBUG_MOD=true` 時可訪問 |
 
 ## 相關檔案
 

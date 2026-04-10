@@ -10,8 +10,10 @@ const {
   formProtectionMaxAgeMs,
   formProtectionMinFillMs,
   formProtectionSecret,
+  formProtectionSecretConfigured,
   googleFormUrl,
   googleScriptUrl,
+  isWorkersRuntime,
   maintenanceMode,
   maintenanceNotice,
   maintenanceRetryAfterSeconds,
@@ -24,6 +26,8 @@ const {
   siteUrl,
   submitRateLimitMax,
   title,
+  translationProviderConfigured,
+  translationProviderTimeoutMs,
   trustProxy
 } = require('../config/appConfig');
 const { paths } = require('../config/fileConfig');
@@ -110,10 +114,27 @@ app.use(express.json({ limit: requestBodyLimits.json }));
 app.use(createPageRoutes({
   apiUrl,
   debugMod,
+  formDryRun,
+  formProtectionMaxAgeMs,
+  formProtectionMinFillMs,
   formProtectionSecret,
+  formProtectionSecretConfigured,
+  googleFormUrl,
+  googleScriptUrl,
+  isWorkersRuntime,
+  maintenanceMode,
+  maintenanceRetryAfterSeconds,
+  mapDataNodeTransportOverrides,
+  mapDataUpstreamTimeoutMs,
+  mapReadRateLimitMax,
   pageReadRateLimitMax,
+  publicMapDataUrl,
   rateLimitRedisUrl,
   siteUrl,
+  submitRateLimitMax,
+  translationProviderConfigured,
+  translationProviderTimeoutMs,
+  trustProxy,
   title
 }));
 app.use(createFormRoutes({

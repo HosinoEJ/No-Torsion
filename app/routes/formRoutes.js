@@ -6,6 +6,7 @@ const {
   sensitiveRobotsPolicy
 } = require('../../config/security');
 const {
+  buildGoogleFormPrefillUrl,
   buildConfirmationFields,
   buildGoogleFormFields,
   encodeGoogleFormFields,
@@ -39,6 +40,20 @@ function redactGoogleFormUrl(googleFormUrl) {
     const visiblePrefix = formId.slice(0, 4);
     const visibleSuffix = formId.slice(-4);
     return `/d/e/${visiblePrefix}...${visibleSuffix}/`;
+  });
+}
+
+function renderSubmitFailurePage({
+  encodedPayload,
+  googleFormUrl,
+  req,
+  res,
+  title
+}) {
+  return res.status(500).render('submit_error', {
+    fallbackUrl: buildGoogleFormPrefillUrl(googleFormUrl, encodedPayload),
+    pageRobots: sensitiveRobotsPolicy,
+    title: req.t('pageTitles.submitError', { title })
   });
 }
 
@@ -99,6 +114,8 @@ function createFormRoutes({
       return res.status(400).send(req.t('server.invalidFormSubmission'));
     }
 
+    let encodedPayload = '';
+
     try {
       // 先把请求体校验并规范化成 Google Form 需要的值。
       const { errors, values } = validateSubmission(req.body, req.t);
@@ -112,7 +129,7 @@ function createFormRoutes({
 
       const fields = buildGoogleFormFields(values, req.t);
       const confirmationFields = buildConfirmationFields(values, req.t);
-      const encodedPayload = encodeGoogleFormFields(fields);
+      encodedPayload = encodeGoogleFormFields(fields);
 
       // 干跑模式下直接渲染预览页，不真正请求 Google。
       if (formDryRun) {
@@ -153,7 +170,13 @@ function createFormRoutes({
       });
       // 详细错误保留在服务端日志里，对外仍返回统一失败文案。
       console.error('Submission Error:', error.response ? error.response.data : error.message);
-      return res.status(500).send(req.t('server.submitFailed'));
+      return renderSubmitFailurePage({
+        encodedPayload,
+        googleFormUrl,
+        req,
+        res,
+        title
+      });
     }
   });
 
@@ -180,8 +203,10 @@ function createFormRoutes({
       return res.status(400).send(req.t('server.invalidFormSubmission'));
     }
 
+    let encodedPayload = '';
+
     try {
-      const encodedPayload = decodeConfirmationPayload(confirmationPayload);
+      encodedPayload = decodeConfirmationPayload(confirmationPayload);
       await submitToGoogleForm(googleFormUrl, encodedPayload);
       logAuditEvent(req, 'submit_succeeded', {
         status: 200
@@ -196,7 +221,13 @@ function createFormRoutes({
         status: 500
       });
       console.error('Submission Error:', error.response ? error.response.data : error.message);
-      return res.status(500).send(req.t('server.submitFailed'));
+      return renderSubmitFailurePage({
+        encodedPayload,
+        googleFormUrl,
+        req,
+        res,
+        title
+      });
     }
   });
 

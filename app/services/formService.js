@@ -381,6 +381,24 @@ function encodeGoogleFormFields(fields) {
   return params.toString();
 }
 
+function buildGoogleFormPrefillUrl(googleFormUrl, encodedPayload) {
+  const normalizedUrl = getTrimmedString(googleFormUrl);
+
+  if (!normalizedUrl) {
+    return '';
+  }
+
+  const viewFormUrl = normalizedUrl.replace(/\/formResponse(?:\?.*)?$/i, '/viewform');
+  const prefillParams = new URLSearchParams();
+  prefillParams.set('usp', 'pp_url');
+
+  new URLSearchParams(String(encodedPayload || '')).forEach((value, key) => {
+    prefillParams.append(key, value);
+  });
+
+  return `${viewFormUrl}?${prefillParams.toString()}`;
+}
+
 // 真正发往 Google Form 的 HTTP 请求。
 async function submitToGoogleForm(googleFormUrl, encodedPayload) {
   if (!getTrimmedString(googleFormUrl)) {
@@ -408,6 +426,7 @@ async function submitToGoogleForm(googleFormUrl, encodedPayload) {
 }
 
 module.exports = {
+  buildGoogleFormPrefillUrl,
   buildConfirmationFields,
   buildGoogleFormFields,
   encodeGoogleFormFields,
