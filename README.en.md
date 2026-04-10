@@ -2,7 +2,7 @@
 
 <div align="center">
   <p><strong>NO CONVERSION THERAPY</strong></p>
-  <p>A multilingual site for documenting, organizing, and publishing information related to conversion therapy institutions and lived experiences.</p>
+  <p>A multilingual site for documenting, organizing, and publicly presenting information about conversion therapy institutions and lived experiences. by: VICTIMS UNION</p>
   <p>
     <a href="./README.md">简体中文</a> ·
     <a href="./README.zh-TW.md">繁體中文</a> ·
@@ -32,10 +32,26 @@
 - [Form Privacy Notice](#form-privacy-notice)
 - [Deploying to Cloudflare Workers](#deploying-to-cloudflare-workers)
 - [Related Files](#related-files)
+- [Public API](#public-api)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Overview
 
-N·C·T is a site for documenting, organizing, and publicly presenting information about conversion therapy institutions and experiences. It includes an anonymous form flow, a public map, blog pages, a multilingual interface, and dual-runtime deployment support for both Node.js and Cloudflare Workers.
+N·C·T is a site for documenting, organizing, and publicly presenting information about conversion therapy institutions and lived experiences. It includes an anonymous form flow, a public map, blog pages, a multilingual interface, and dual-runtime deployment support for both Node.js and Cloudflare Workers.
+
+- Home page: https://victimsunion.org
+- Anonymous form: https://victimsunion.org/form
+- Public map: https://victimsunion.org/map
+- Original Google Form: https://forms.gle/eHwkmNCZtmZhLjzh7
+
+**Historical names and domains**
+
+- NO TORSION
+- https://no-torsion.hosinoneko.me
+- https://nct.hosinoneko.me
+
+> We commit to not proactively collecting unnecessary personal information for any reason.
 
 ## Live Links
 
@@ -142,8 +158,8 @@ Notes:
 ### 1. Install dependencies
 
 ```bash
-git clone https://github.com/HosinoEJ/No-Torsion.git
-cd No-Torsion
+git clone https://github.com/NO-CONVERSION-THERAPY/NCT.git
+cd NCT
 npm install
 ```
 
@@ -228,6 +244,8 @@ For local Workers development, you can also read from `.dev.vars`:
 ```bash
 npm run secure-config -- bootstrap-env --env-file ".dev.vars"
 ```
+
+> Note: if your local runtime is in mainland China, real submissions to Google Form may be affected by network conditions. During development, it is safer to keep `FORM_DRY_RUN="true"` first.
 
 If you prefer a step-by-step flow, generate a secret first and then encrypt each value:
 
@@ -322,6 +340,38 @@ If you do not want to use `*.workers.dev`, add a custom domain in `Settings -> D
 - `SITE_URL`
 - `PUBLIC_MAP_DATA_URL`
 
+### 6. Post-launch checklist
+
+After production deployment, it is a good idea to manually verify at least these paths:
+
+- `/`
+- `/map`
+- `/form`
+- `/blog`
+- `/api/map-data`
+- `/sitemap.xml`
+- `/robots.txt`
+
+If `FORM_DRY_RUN="false"`, also perform a real form submission test to confirm that data reaches Google Form successfully.
+
+### 7. Known differences on Workers
+
+- Templates, blog Markdown, and JSON files are read from the Workers `/bundle`.
+- The translation service no longer uses a `curl` subprocess fallback and now always uses Google Cloud Translation API directly.
+- On Workers, `sitemap.xml` prefers each article's `CreationDate` metadata as `lastmod`.
+- If shared Redis is not configured, rate limiting falls back to single-instance memory mode, so cross-instance consistency is weaker.
+
+### 8. FAQ
+
+**Q: Will local `npm start` conflict with the Workers version?**<br>
+A: No. They are simply two different local entry points.
+
+**Q: Does this project need an extra frontend build step?**<br>
+A: Not currently. In most cases the Workers Builds `Build command` can stay empty.
+
+**Q: Why is the `Deploy command` `npm run deploy:workers`?**<br>
+A: Because it calls `npx wrangler deploy` and stays aligned with this repository's `package.json`.
+
 ## Related Files
 
 - [`.env.example`](./.env.example): example environment variables for Node mode
@@ -331,3 +381,95 @@ If you do not want to use `*.workers.dev`, add a custom domain in `Settings -> D
 - [`worker.mjs`](./worker.mjs): Cloudflare Workers entry
 
 If you change public fields, the submission flow, or upstream data sources, review this README together with [`/privacy`](https://www.victimsunion.org/privacy) and the form notice text so that public-facing documentation stays aligned with actual behavior.
+
+---
+
+## Public API
+
+### `GET /api/map-data`
+
+Public endpoint:
+
+```text
+https://nct.hosinoeiji.workers.dev/api/map-data
+```
+
+If you deploy it yourself, use your own domain instead, for example:
+
+```text
+https://your-domain.example/api/map-data
+```
+
+Example response:
+
+```json
+{
+  "avg_age": 17,
+  "last_synced": 1774925078387,
+  "statistics": [
+    { "province": "Henan", "count": 12 },
+    { "province": "Hubei", "count": 66 }
+  ],
+  "data": [
+    {
+      "name": "School name",
+      "addr": "School address",
+      "province": "Province",
+      "prov": "District / County",
+      "else": "Additional notes",
+      "lat": 36.62728,
+      "lng": 118.58882,
+      "experience": "Experience description",
+      "HMaster": "Principal / Head name",
+      "scandal": "Known scandals",
+      "contact": "School contact information",
+      "inputType": "Victim"
+    }
+  ]
+}
+```
+
+Field notes:
+
+- `lat` / `lng`: latitude and longitude
+- `last_synced`: Unix timestamp in milliseconds
+- The actual institution list is inside the `data` field
+
+### Simplest usage example
+
+```html
+<script>
+  fetch('https://nct.hosinoeiji.workers.dev/api/map-data')
+    .then((res) => res.json())
+    .then((payload) => {
+      console.log(payload.data);
+    });
+</script>
+```
+
+If you want to turn the data into a map, you can use it directly with frontend mapping libraries such as [Leaflet](https://leafletjs.com). This project's own `/map` page is a complete example.
+
+---
+
+## Contributing
+
+Issues, pull requests, and self-hosted forks are all welcome.
+
+Before submitting changes, it is recommended to at least confirm:
+
+```bash
+npm test
+```
+
+If your changes affect deployment, environment variables, or the form flow, it is also a good idea to verify:
+
+- `/form`
+- `/submit`
+- `/api/map-data`
+- `/blog`
+
+---
+
+## License
+
+See [LICENSE](./LICENSE) for this project's license information.

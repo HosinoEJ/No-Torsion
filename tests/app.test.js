@@ -1458,6 +1458,7 @@ test('submit route rejects submissions that arrive too quickly', async () => {
 test('submit route still accepts a valid protected form in dry run mode', async () => {
   clearProjectModules();
   const { issueFormProtectionToken } = require(path.join(projectRoot, 'app/services/formProtectionService'));
+  const expectedAge = new Date().getUTCFullYear() - 2008;
   const app = loadApp({
     DEBUG_MOD: 'false',
     FORM_DRY_RUN: 'true',
@@ -1485,19 +1486,18 @@ test('submit route still accepts a valid protected form in dry run mode', async 
   assert.match(response.body, /<meta name="robots" content="noindex, nofollow, noarchive, nosnippet">/);
   assert.match(response.body, /entry\.5034928/);
   assert.match(response.body, /测试机构/);
-  assert.match(response.body, /entry\.842223433_year/);
-  assert.match(response.body, /entry\.842223433_month/);
-  assert.match(response.body, /entry\.842223433_day/);
-  assert.match(response.body, />2008</);
-  assert.match(response.body, /entry\.842223433_month<\/code><\/td>\s*<td>出生月份<\/td>\s*<td>1<\/td>/);
-  assert.match(response.body, /entry\.842223433_day<\/code><\/td>\s*<td>出生日期<\/td>\s*<td>1<\/td>/);
-  assert.doesNotMatch(response.body, /entry\.842223433<\/code>/);
+  assert.match(response.body, new RegExp(`entry\\.842223433</code></td>\\s*<td>出生年份</td>\\s*<td>${expectedAge}</td>`));
+  assert.match(response.body, /entry\.1422578992<\/code><\/td>\s*<td>性别<\/td>\s*<td>男<\/td>/);
+  assert.doesNotMatch(response.body, /entry\.842223433_year/);
+  assert.doesNotMatch(response.body, /entry\.842223433_month/);
+  assert.doesNotMatch(response.body, /entry\.842223433_day/);
   clearProjectModules();
 });
 
 test('submit route accepts agent submissions with MtF selected for other gender identity in dry run mode', async () => {
   clearProjectModules();
   const { issueFormProtectionToken } = require(path.join(projectRoot, 'app/services/formProtectionService'));
+  const expectedAge = new Date().getUTCFullYear() - 2008;
   const app = loadApp({
     DEBUG_MOD: 'false',
     FORM_DRY_RUN: 'true',
@@ -1523,7 +1523,7 @@ test('submit route accepts agent submissions with MtF selected for other gender 
   });
 
   assert.equal(response.statusCode, 200);
-  assert.match(response.body, /entry\.842223433_year<\/code><\/td>\s*<td>受害者出生年份<\/td>\s*<td>2008<\/td>/);
+  assert.match(response.body, new RegExp(`entry\\.842223433</code></td>\\s*<td>受害者出生年份</td>\\s*<td>${expectedAge}</td>`));
   assert.match(response.body, /entry\.1422578992<\/code><\/td>\s*<td>受害者性别<\/td>\s*<td>MtF<\/td>/);
   clearProjectModules();
 });
@@ -1555,7 +1555,8 @@ test('submit route accepts custom other gender identity text in dry run mode', a
   });
 
   assert.equal(response.statusCode, 200);
-  assert.match(response.body, /entry\.1422578992<\/code><\/td>\s*<td>性别<\/td>\s*<td>非二元<\/td>/);
+  assert.match(response.body, /entry\.1422578992<\/code><\/td>\s*<td>性别<\/td>\s*<td>__other_option__<\/td>/);
+  assert.match(response.body, /entry\.1422578992\.other_option_response<\/code><\/td>\s*<td>性别<\/td>\s*<td>非二元<\/td>/);
   clearProjectModules();
 });
 
@@ -1585,7 +1586,8 @@ test('submit route accepts Queer selected for other gender identity in dry run m
   });
 
   assert.equal(response.statusCode, 200);
-  assert.match(response.body, /entry\.1422578992<\/code><\/td>\s*<td>性别<\/td>\s*<td>Queer<\/td>/);
+  assert.match(response.body, /entry\.1422578992<\/code><\/td>\s*<td>性别<\/td>\s*<td>__other_option__<\/td>/);
+  assert.match(response.body, /entry\.1422578992\.other_option_response<\/code><\/td>\s*<td>性别<\/td>\s*<td>Queer<\/td>/);
   clearProjectModules();
 });
 
@@ -1808,28 +1810,83 @@ test('submit route rejects invalid victim birth year values for agent submission
 });
 
 test('submitToGoogleForm stops at redirect responses instead of following them', { concurrency: false }, async () => {
-  clearProjectModules();
-  const axios = require('axios');
-  const originalPost = axios.post;
-  const capturedCalls = [];
-
-  axios.post = async (...args) => {
-    capturedCalls.push(args);
-    return { status: 302 };
-  };
-
-  try {
-    const { submitToGoogleForm } = require(path.join(projectRoot, 'app/services/formService'));
-    await submitToGoogleForm('https://docs.google.com/forms/d/e/test/formResponse', 'entry.1=value');
-
-    assert.equal(capturedCalls.length, 1);
-    assert.equal(capturedCalls[0][2].maxRedirects, 0);
-    assert.equal(capturedCalls[0][2].validateStatus(302), true);
-    assert.equal(capturedCalls[0][2].validateStatus(400), false);
-  } finally {
-    axios.post = originalPost;
+  await withEnvOverrides(getNoProxyEnv(), async () => {
     clearProjectModules();
-  }
+    const axios = require('axios');
+    const originalPost = axios.post;
+    const capturedCalls = [];
+
+    axios.post = async (...args) => {
+      capturedCalls.push(args);
+      return { status: 302 };
+    };
+
+    try {
+      const { submitToGoogleForm } = require(path.join(projectRoot, 'app/services/formService'));
+      await submitToGoogleForm('https://docs.google.com/forms/d/e/test/formResponse', 'entry.1=value');
+
+      assert.equal(capturedCalls.length, 1);
+      assert.equal(capturedCalls[0][2].maxRedirects, 0);
+      assert.equal(capturedCalls[0][2].validateStatus(302), true);
+      assert.equal(capturedCalls[0][2].validateStatus(400), false);
+    } finally {
+      axios.post = originalPost;
+      clearProjectModules();
+    }
+  });
+});
+
+test('submitToGoogleForm uses ProxyAgent when proxy env is configured', { concurrency: false }, async () => {
+  await withEnvOverrides({
+    ...getNoProxyEnv(),
+    HTTP_PROXY: 'http://proxy.example:8080',
+    HTTPS_PROXY: 'http://proxy.example:8080',
+    ALL_PROXY: 'socks5://proxy.example:1080',
+    http_proxy: 'http://proxy.example:8080',
+    https_proxy: 'http://proxy.example:8080',
+    all_proxy: 'socks5://proxy.example:1080'
+  }, async () => {
+    clearProjectModules();
+    const axios = require('axios');
+    const proxyAgentModulePath = require.resolve('proxy-agent');
+    const originalProxyAgentModule = require.cache[proxyAgentModulePath];
+    const originalPost = axios.post;
+    const capturedCalls = [];
+
+    class FakeProxyAgent {}
+
+    require.cache[proxyAgentModulePath] = {
+      id: proxyAgentModulePath,
+      filename: proxyAgentModulePath,
+      loaded: true,
+      exports: {
+        ProxyAgent: FakeProxyAgent
+      }
+    };
+
+    axios.post = async (...args) => {
+      capturedCalls.push(args);
+      return { status: 200 };
+    };
+
+    try {
+      const { submitToGoogleForm } = require(path.join(projectRoot, 'app/services/formService'));
+      await submitToGoogleForm('https://docs.google.com/forms/d/e/test/formResponse', 'entry.1=value');
+
+      assert.equal(capturedCalls.length, 1);
+      assert.equal(capturedCalls[0][2].proxy, false);
+      assert.ok(capturedCalls[0][2].httpAgent instanceof FakeProxyAgent);
+      assert.ok(capturedCalls[0][2].httpsAgent instanceof FakeProxyAgent);
+    } finally {
+      axios.post = originalPost;
+      if (originalProxyAgentModule) {
+        require.cache[proxyAgentModulePath] = originalProxyAgentModule;
+      } else {
+        delete require.cache[proxyAgentModulePath];
+      }
+      clearProjectModules();
+    }
+  });
 });
 
 test('map data service can bypass in-memory cache on force refresh', async () => {
