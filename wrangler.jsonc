@@ -17,6 +17,15 @@
     // .dev.vars instead of being checked in here.
     "RUNTIME_TARGET": "workers"
   },
+  // To enable the institution correction form with D1 on Workers, uncomment and fill:
+  // "d1_databases": [
+  //   {
+  //     "binding": "DB",
+  //     "database_name": "nct",
+  //     "database_id": "<your-d1-database-id>",
+  //     "migrations_dir": "migrations"
+  //   }
+  // ],
   "find_additional_modules": true,
   "base_dir": ".",
   "preserve_file_names": true,

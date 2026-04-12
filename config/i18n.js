@@ -37,6 +37,8 @@ const messages = {
     pageTitles: {
       home: '首页|{title}',
       form: '填写表单|{title}',
+      institutionCorrection: '机构信息补充 / 修正|{title}',
+      institutionCorrectionSuccess: '补充 / 修正已提交|{title}',
       map: '地图|{title}',
       mapRecord: '提交详情|{title}',
       about: '关于我们|{title}',
@@ -157,7 +159,9 @@ const messages = {
       },
       buttons: {
         openMap: '点击可直接在地图上选点',
+        getCurrentLocation: '获取当前位置',
         submit: '确认并提交信息',
+        locating: '定位中...',
         submitting: '提交中...'
       },
       hints: {
@@ -166,6 +170,14 @@ const messages = {
         experience: '若描述别人经历请在“其他补充”中填写',
         otherSex: '请选择 MtF / FtM / X / Queer，或点击输入框填写其它性别认同或补充说明',
         selectedPoint: '选取点: {lat}, {lng}'
+      },
+      location: {
+        filled: '已获取当前位置: {lat}, {lng}',
+        unsupported: '当前环境不支持定位，请使用 HTTPS 打开网页，或手动填写经纬度 / 在地图上选点。',
+        permissionDenied: '定位权限已被拒绝，请允许访问位置信息后重试。',
+        positionUnavailable: '暂时无法获取当前位置，请稍后重试。',
+        timeout: '获取当前位置超时，请稍后重试。',
+        failed: '获取当前位置失败，请稍后重试。'
       },
       validation: {
         selectIdentity: '请选择填写身份',
@@ -184,6 +196,73 @@ const messages = {
         specifyOtherSex: '请选择 MtF / FtM / X / Queer，或选择输入框填写其它性别认同或补充说明',
         fillOtherSex: '请输入其它性别认同或补充说明',
         endDateBeforeStart: '离开日期不能早于首次被送入日期'
+      }
+    },
+    institutionCorrection: {
+      title: '机构信息补充 / 修正',
+      subtitle: '如果地图中的机构信息需要补充、修正或更新，可以在这里提交。',
+      privacyNotice: '隐私说明：此表单会将补充 / 修正请求保存到站点数据库；当网站部署在 Cloudflare Workers 上时，会写入 D1 数据库。请尽量只填写机构公开信息，不要提交与此无关的个人敏感信息。',
+      backToMap: '返回地图',
+      sections: {
+        institution: '机构信息',
+        correction: '补充 / 修正说明'
+      },
+      fields: {
+        schoolName: '机构名称',
+        province: '机构所在省份',
+        city: '机构所在城市 / 区县',
+        county: '机构所在县区',
+        schoolAddress: '机构地址',
+        contactInformation: '机构联系方式',
+        headmasterName: '负责人/校长姓名',
+        correctionContent: '补充修正内容'
+      },
+      placeholders: {
+        province: '可选：选择机构所在省份',
+        city: '可选：请先选择机构所在省份',
+        countyInitial: '可选：请先选择机构所在城市 / 区县',
+        county: '可选：选择机构所在县区',
+        countyUnavailable: '可选：当前机构所在城市无县区可选',
+        schoolName: '请填写需要补充或修正的机构名称',
+        schoolAddress: '可选：填写最新地址，或直接在地图上选点 / 获取当前位置',
+        contactInformation: '可选：电话、邮箱或其它公开联系方式',
+        headmasterName: '可选：负责人 / 校长姓名',
+        correctionContent: '请说明需要补充或修正的内容'
+      },
+      buttons: {
+        openMap: '点击可直接在地图上选点',
+        getCurrentLocation: '获取当前位置',
+        submit: '提交补充/修正',
+        locating: '定位中...',
+        submitting: '提交中...'
+      },
+      hints: {
+        selectedPoint: '选取点: {lat}, {lng}',
+        correctionContent: '例如：地址搬迁、联系方式变更、负责人信息补充、地图坐标修正等。'
+      },
+      location: {
+        filled: '已获取当前位置: {lat}, {lng}',
+        unsupported: '当前环境不支持定位，请使用 HTTPS 打开网页，或手动填写经纬度 / 在地图上选点。',
+        permissionDenied: '定位权限已被拒绝，请允许访问位置信息后重试。',
+        positionUnavailable: '暂时无法获取当前位置，请稍后重试。',
+        timeout: '获取当前位置超时，请稍后重试。',
+        failed: '获取当前位置失败，请稍后重试。'
+      },
+      validation: {
+        fillSchoolName: '请填写机构名称',
+        invalidProvince: '请选择有效的机构所在省份',
+        provinceCityMismatch: '所选机构所在省份与城市 / 区县不匹配',
+        cityCountyMismatch: '所选机构所在城市 / 区县与县区不匹配'
+      },
+      success: {
+        title: '补充 / 修正请求已收到',
+        message: '感谢你的补充。我们会在核实后处理这条机构信息修正请求。',
+        backToMap: '返回地图'
+      },
+      errors: {
+        submitFailedPrefix: '提交失败：',
+        storageUnavailable: '机构信息补充 / 修正功能暂时不可用，请稍后再试。',
+        submitFailed: '提交失败，请稍后再试。'
       }
     },
     map: {
@@ -267,7 +346,9 @@ const messages = {
         opinionTitle: '我们的看法：',
         opinionBody: '我们很希望你们使用这个 API 并接入到你们的网站上。即使网站被封禁，资料仍然可以透过 API 在不同网络中继续传播。这也是一种去中心化。',
         cta: '知道了这些，你就可以使用我们的 API 了。欢迎把它接入到你们的网站。',
-        link: '获取 API 数据源'
+        link: '获取 API 数据源',
+        correctionHint: '如果你发现地图中的机构资料需要补充或修正，也可以通过下面的表单告诉我们。',
+        correctionButton: '机构信息补充/修正'
       }
     },
     about: {
@@ -561,6 +642,8 @@ const messages = {
     pageTitles: {
       home: '主頁|{title}',
       form: '填寫表單|{title}',
+      institutionCorrection: '機構資訊補充 / 修正|{title}',
+      institutionCorrectionSuccess: '補充 / 修正已提交|{title}',
       map: '地圖|{title}',
       mapRecord: '提交詳情|{title}',
       about: '關於我們|{title}',
@@ -681,7 +764,9 @@ const messages = {
       },
       buttons: {
         openMap: '點擊可直接在地圖上選點',
+        getCurrentLocation: '獲取目前位置',
         submit: '確認並提交信息',
+        locating: '定位中...',
         submitting: '提交中...'
       },
       hints: {
@@ -690,6 +775,14 @@ const messages = {
         experience: '若描述別人經歷請在「其他補充」中填寫',
         otherSex: '請選擇 MtF / FtM / X / Queer，或點擊輸入框填寫其他性別認同或補充說明',
         selectedPoint: '選取點: {lat}, {lng}'
+      },
+      location: {
+        filled: '已獲取目前位置: {lat}, {lng}',
+        unsupported: '目前環境不支援定位，請使用 HTTPS 開啟網頁，或手動填寫經緯度 / 在地圖上選點。',
+        permissionDenied: '定位權限已被拒絕，請允許存取位置信息後再試。',
+        positionUnavailable: '暫時無法獲取目前位置，請稍後再試。',
+        timeout: '獲取目前位置逾時，請稍後再試。',
+        failed: '獲取目前位置失敗，請稍後再試。'
       },
       validation: {
         selectIdentity: '請選擇填寫身份',
@@ -708,6 +801,73 @@ const messages = {
         specifyOtherSex: '請選擇 MtF / FtM / X / Queer，或選擇輸入框填寫其他性別認同或補充說明',
         fillOtherSex: '請輸入其他性別認同或補充說明',
         endDateBeforeStart: '離開日期不能早於首次被送入日期'
+      }
+    },
+    institutionCorrection: {
+      title: '機構資訊補充 / 修正',
+      subtitle: '如果地圖中的機構資訊需要補充、修正或更新，可以在這裡提交。',
+      privacyNotice: '隱私說明：此表單會將補充 / 修正請求保存到站點資料庫；當網站部署在 Cloudflare Workers 上時，會寫入 D1 資料庫。請盡量只填寫機構公開資訊，不要提交與此無關的個人敏感資訊。',
+      backToMap: '返回地圖',
+      sections: {
+        institution: '機構資訊',
+        correction: '補充 / 修正說明'
+      },
+      fields: {
+        schoolName: '機構名稱',
+        province: '機構所在省份',
+        city: '機構所在城市 / 區縣',
+        county: '機構所在縣區',
+        schoolAddress: '機構地址',
+        contactInformation: '機構聯繫方式',
+        headmasterName: '負責人/校長姓名',
+        correctionContent: '補充修正內容'
+      },
+      placeholders: {
+        province: '可選：選擇機構所在省份',
+        city: '可選：請先選擇機構所在省份',
+        countyInitial: '可選：請先選擇機構所在城市 / 區縣',
+        county: '可選：選擇機構所在縣區',
+        countyUnavailable: '可選：當前機構所在城市無縣區可選',
+        schoolName: '請填寫需要補充或修正的機構名稱',
+        schoolAddress: '可選：填寫最新地址，或直接在地圖上選點 / 取得目前位置',
+        contactInformation: '可選：電話、郵箱或其他公開聯繫方式',
+        headmasterName: '可選：負責人 / 校長姓名',
+        correctionContent: '請說明需要補充或修正的內容'
+      },
+      buttons: {
+        openMap: '點擊可直接在地圖上選點',
+        getCurrentLocation: '獲取目前位置',
+        submit: '提交補充/修正',
+        locating: '定位中...',
+        submitting: '提交中...'
+      },
+      hints: {
+        selectedPoint: '選取點: {lat}, {lng}',
+        correctionContent: '例如：地址搬遷、聯繫方式變更、負責人資訊補充、地圖座標修正等。'
+      },
+      location: {
+        filled: '已獲取目前位置: {lat}, {lng}',
+        unsupported: '目前環境不支援定位，請使用 HTTPS 開啟網頁，或手動填寫經緯度 / 在地圖上選點。',
+        permissionDenied: '定位權限已被拒絕，請允許存取位置信息後再試。',
+        positionUnavailable: '暫時無法獲取目前位置，請稍後再試。',
+        timeout: '獲取目前位置逾時，請稍後再試。',
+        failed: '獲取目前位置失敗，請稍後再試。'
+      },
+      validation: {
+        fillSchoolName: '請填寫機構名稱',
+        invalidProvince: '請選擇有效的機構所在省份',
+        provinceCityMismatch: '所選機構所在省份與城市 / 區縣不匹配',
+        cityCountyMismatch: '所選機構所在城市 / 區縣與縣區不匹配'
+      },
+      success: {
+        title: '補充 / 修正請求已收到',
+        message: '感謝你的補充。我們會在核實後處理這條機構資訊修正請求。',
+        backToMap: '返回地圖'
+      },
+      errors: {
+        submitFailedPrefix: '提交失敗：',
+        storageUnavailable: '機構資訊補充 / 修正功能暫時不可用，請稍後再試。',
+        submitFailed: '提交失敗，請稍後再試。'
       }
     },
     map: {
@@ -791,7 +951,9 @@ const messages = {
         opinionTitle: '我們的看法：',
         opinionBody: '我們很希望你們使用這個 API 並接入到你們的網站上。即使網站被封禁，資料仍然可以透過 API 在不同網絡中繼續傳播。這也是一種去中心化。',
         cta: '知道了這些，你就可以使用我們的 API 了。歡迎把它接入到你們的網站。',
-        link: '獲取 API 數據源'
+        link: '獲取 API 數據源',
+        correctionHint: '如果你發現地圖中的機構資料需要補充或修正，也可以透過下面的表單告訴我們。',
+        correctionButton: '機構資訊補充/修正'
       }
     },
     about: {
@@ -1085,6 +1247,8 @@ const messages = {
     pageTitles: {
       home: 'Home | {title}',
       form: 'Form | {title}',
+      institutionCorrection: 'Institution Correction | {title}',
+      institutionCorrectionSuccess: 'Correction Submitted | {title}',
       map: 'Map | {title}',
       mapRecord: 'Submission Detail | {title}',
       about: 'About | {title}',
@@ -1205,7 +1369,9 @@ const messages = {
       },
       buttons: {
         openMap: 'Pick a point directly on the map',
+        getCurrentLocation: 'Use current location',
         submit: 'Confirm and Submit',
+        locating: 'Locating...',
         submitting: 'Submitting...'
       },
       hints: {
@@ -1214,6 +1380,14 @@ const messages = {
         experience: 'If you are describing someone else’s experience, please add that in "Other Notes".',
         otherSex: 'Choose MtF / FtM / X / Queer, or use the text field for another gender identity or additional notes.',
         selectedPoint: 'Selected point: {lat}, {lng}'
+      },
+      location: {
+        filled: 'Current location captured: {lat}, {lng}',
+        unsupported: 'Location is not available in this environment. Please open the page over HTTPS, or enter coordinates manually / pick a point on the map.',
+        permissionDenied: 'Location permission was denied. Please allow access to your location and try again.',
+        positionUnavailable: 'Your current location is temporarily unavailable. Please try again later.',
+        timeout: 'Getting your current location timed out. Please try again.',
+        failed: 'Failed to get your current location. Please try again.'
       },
       validation: {
         selectIdentity: 'Please choose your submission role',
@@ -1232,6 +1406,73 @@ const messages = {
         specifyOtherSex: 'Please choose MtF / FtM / X / Queer, or choose the text field and enter another gender identity or additional notes',
         fillOtherSex: 'Please enter another gender identity or additional notes',
         endDateBeforeStart: 'Departure date cannot be earlier than the first date sent there'
+      }
+    },
+    institutionCorrection: {
+      title: 'Institution Information Correction',
+      subtitle: 'Use this form if an institution shown on the map needs additional details, corrections, or updates.',
+      privacyNotice: 'Privacy notice: this form stores correction requests in the site database. When deployed on Cloudflare Workers, submissions can be written to D1. Please provide institution-facing public information only, and avoid unrelated personal sensitive information.',
+      backToMap: 'Back to Map',
+      sections: {
+        institution: 'Institution Information',
+        correction: 'Correction Details'
+      },
+      fields: {
+        schoolName: 'Institution Name',
+        province: 'Institution Province',
+        city: 'Institution City / District',
+        county: 'Institution County / District',
+        schoolAddress: 'Institution Address',
+        contactInformation: 'Institution Contact Information',
+        headmasterName: 'Principal / Person in Charge',
+        correctionContent: 'Correction Details'
+      },
+      placeholders: {
+        province: 'Optional: select the institution province',
+        city: 'Optional: select the institution province first',
+        countyInitial: 'Optional: select the institution city / district first',
+        county: 'Optional: select the institution county / district',
+        countyUnavailable: 'Optional: no county / district is available for the selected city',
+        schoolName: 'Enter the institution name that needs correction or supplementation',
+        schoolAddress: 'Optional: provide an updated address, or pick a point on the map / use the current location',
+        contactInformation: 'Optional: phone, email, or another public contact method',
+        headmasterName: 'Optional: principal / person in charge',
+        correctionContent: 'Describe what should be corrected or added'
+      },
+      buttons: {
+        openMap: 'Pick a point directly on the map',
+        getCurrentLocation: 'Use current location',
+        submit: 'Submit Correction',
+        locating: 'Locating...',
+        submitting: 'Submitting...'
+      },
+      hints: {
+        selectedPoint: 'Selected point: {lat}, {lng}',
+        correctionContent: 'Examples: relocation, updated contacts, added principal information, corrected map coordinates.'
+      },
+      location: {
+        filled: 'Current location captured: {lat}, {lng}',
+        unsupported: 'Location is not available in this environment. Please open the page over HTTPS, or enter coordinates manually / pick a point on the map.',
+        permissionDenied: 'Location permission was denied. Please allow access to your location and try again.',
+        positionUnavailable: 'Your current location is temporarily unavailable. Please try again later.',
+        timeout: 'Getting your current location timed out. Please try again.',
+        failed: 'Failed to get your current location. Please try again.'
+      },
+      validation: {
+        fillSchoolName: 'Please enter the institution name',
+        invalidProvince: 'Please choose a valid institution province',
+        provinceCityMismatch: 'The selected institution province and city / district do not match',
+        cityCountyMismatch: 'The selected institution city / district and county / district do not match'
+      },
+      success: {
+        title: 'Correction request received',
+        message: 'Thank you for the update. We will review this institution correction request and process it after verification.',
+        backToMap: 'Back to Map'
+      },
+      errors: {
+        submitFailedPrefix: 'Submission failed: ',
+        storageUnavailable: 'The institution correction form is temporarily unavailable. Please try again later.',
+        submitFailed: 'Submission failed. Please try again later.'
       }
     },
     map: {
@@ -1315,7 +1556,9 @@ const messages = {
         opinionTitle: 'Why we want this used:',
         opinionBody: 'We genuinely hope you will use this API and integrate it into your own websites. Even if the main site is blocked, the data can continue to circulate through the API. That is one form of decentralization.',
         cta: 'Now that you know how it works, feel free to use the API and integrate it into your site.',
-        link: 'Get the API data source'
+        link: 'Get the API data source',
+        correctionHint: 'If any institution information on the map needs to be supplemented or corrected, you can also tell us through the form below.',
+        correctionButton: 'Institution Correction'
       }
     },
     about: {

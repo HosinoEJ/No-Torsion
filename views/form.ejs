@@ -129,7 +129,11 @@
                 <input type="text" name="school_address" placeholder="<%= t('form.placeholders.schoolAddress') %>" id="addr" maxlength="<%= formRules.schoolAddress.maxLength %>" autocomplete="off">
                 <div id="address_results_list" class="autocomplete-results" hidden></div>
             </div>
-            <button id="openMapButton" type="button"><%= t('form.buttons.openMap') %></button>
+            <div class="form-location-actions">
+                <button id="openMapButton" class="form-location-action" type="button"><%= t('form.buttons.openMap') %></button>
+                <button id="getCurrentLocationButton" class="form-location-action" type="button"><%= t('form.buttons.getCurrentLocation') %></button>
+            </div>
+            <div id="locationStatus" class="hint form-location-status" role="status" aria-live="polite" aria-atomic="true"></div>
             <div id="map" style="display: none; width: 100%; height: 20em;"></div>
         </div>
 

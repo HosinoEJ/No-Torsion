@@ -2,6 +2,7 @@
   // 省市县选项不直接整包内联到页面，而是按需请求，减轻首屏 HTML 体积。
   const areaSelectorData = window.AREA_SELECTOR_DATA || { provinces: [] };
   const i18n = window.I18N;
+  const formI18n = window.FORM_UI_TEXT || i18n.form || { fields: {}, placeholders: {} };
   const provinceSelect = document.getElementById('provinceSelect');
   const citySelect = document.getElementById('citySelect');
   const countySelect = document.getElementById('countySelect');
@@ -49,7 +50,7 @@
     const currentRequestId = ++cityRequestId;
 
     citySelect.disabled = true;
-    renderOptions(citySelect, [], provinceCode ? i18n.common.loading : i18n.form.placeholders.city);
+    renderOptions(citySelect, [], provinceCode ? i18n.common.loading : formI18n.placeholders.city);
     await updateCountyOptions('');
 
     if (!provinceCode) {
@@ -67,7 +68,7 @@
       renderOptions(
         citySelect,
         cityOptions,
-        cityOptions.length === 0 ? i18n.form.placeholders.city : i18n.form.fields.city
+        cityOptions.length === 0 ? formI18n.placeholders.city : formI18n.fields.city
       );
     } catch (_error) {
       if (currentRequestId !== cityRequestId) {
@@ -75,7 +76,7 @@
       }
 
       citySelect.disabled = true;
-      renderOptions(citySelect, [], i18n.form.placeholders.city);
+      renderOptions(citySelect, [], formI18n.placeholders.city);
     }
   }
 
@@ -88,7 +89,7 @@
 
     if (!cityCode) {
       countySelect.disabled = true;
-      renderOptions(countySelect, [], i18n.form.placeholders.countyInitial);
+      renderOptions(countySelect, [], formI18n.placeholders.countyInitial);
       return;
     }
 
@@ -106,7 +107,7 @@
       renderOptions(
         countySelect,
         countyOptions,
-        countyOptions.length === 0 ? i18n.form.placeholders.countyUnavailable : i18n.form.placeholders.county
+        countyOptions.length === 0 ? formI18n.placeholders.countyUnavailable : formI18n.placeholders.county
       );
     } catch (_error) {
       if (currentRequestId !== countyRequestId) {
@@ -114,16 +115,16 @@
       }
 
       countySelect.disabled = true;
-      renderOptions(countySelect, [], i18n.form.placeholders.countyInitial);
+      renderOptions(countySelect, [], formI18n.placeholders.countyInitial);
     }
   }
 
   if (provinceSelect && citySelect) {
-    renderOptions(provinceSelect, areaSelectorData.provinces || [], i18n.form.placeholders.province);
+    renderOptions(provinceSelect, areaSelectorData.provinces || [], formI18n.placeholders.province);
     citySelect.disabled = true;
     if (countySelect) {
       countySelect.disabled = true;
-      renderOptions(countySelect, [], i18n.form.placeholders.countyInitial);
+      renderOptions(countySelect, [], formI18n.placeholders.countyInitial);
     }
 
     provinceSelect.addEventListener('change', () => {

@@ -5,6 +5,7 @@
     let formMapTileLayer = null;
     let leafletAssetsPromise = null;
     const i18n = window.I18N;
+    const formI18n = window.FORM_UI_TEXT || i18n.form || { buttons: {}, hints: {}, location: {} };
     const LEAFLET_CSS_URL = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
     const LEAFLET_CSS_INTEGRITY = 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';
     const LEAFLET_JS_URL = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
@@ -54,11 +55,43 @@
             }
         ]
     };
+    const addressInput = document.getElementById('addr');
+    const addressResultsList = document.getElementById('address_results_list');
     const openMapButton = document.getElementById('openMapButton');
+    const getCurrentLocationButton = document.getElementById('getCurrentLocationButton');
+    const locationStatus = document.getElementById('locationStatus');
     const themeMediaQuery = typeof window.matchMedia === 'function'
         ? window.matchMedia('(prefers-color-scheme: dark)')
         : null;
+    const defaultCurrentLocationButtonText = getCurrentLocationButton
+        ? getCurrentLocationButton.textContent
+        : '';
+    const CURRENT_LOCATION_OPTIONS = {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 30000
+    };
     let formMapTileProviderIndex = 0;
+
+    function formatMessage(template, variables = {}) {
+        return String(template || '').replace(/\{(\w+)\}/g, (_, key) => (
+            Object.prototype.hasOwnProperty.call(variables, key) ? String(variables[key]) : `{${key}}`
+        ));
+    }
+
+    function setLocationStatus(message = '', state = '') {
+        if (!locationStatus) {
+            return;
+        }
+
+        locationStatus.textContent = String(message || '');
+
+        if (state) {
+            locationStatus.dataset.state = state;
+        } else {
+            delete locationStatus.dataset.state;
+        }
+    }
 
     function isDarkMode() {
         return Boolean(themeMediaQuery && themeMediaQuery.matches);
@@ -203,6 +236,80 @@
         formMapTileLayer.addTo(formMap);
     }
 
+    function updateSelectedPoint(lat, lng, { centerMap = false } = {}) {
+        if (!formMap || typeof L === 'undefined') {
+            return;
+        }
+
+        if (currentMarker !== null) {
+            formMap.removeLayer(currentMarker);
+        }
+
+        currentMarker = L.marker([lat, lng]).addTo(formMap)
+            .bindPopup(
+                formatMessage(formI18n.hints.selectedPoint, { lat, lng })
+            )
+            .openPopup();
+
+        if (centerMap) {
+            formMap.setView([lat, lng], Math.max(formMap.getZoom(), 15));
+        }
+    }
+
+    function fillAddressWithCoordinates(latitude, longitude, statusTemplate) {
+        const lat = Number(latitude).toFixed(6);
+        const lng = Number(longitude).toFixed(6);
+
+        if (addressInput) {
+            // 后端 Apps Script 会识别 latlng 前缀并直接写入经纬度，不再重复地理编码。
+            addressInput.value = `latlng${lat},${lng}`;
+            addressInput.setCustomValidity('');
+            if (addressResultsList) {
+                addressResultsList.hidden = true;
+                addressResultsList.innerHTML = '';
+            }
+        }
+
+        setLocationStatus(formatMessage(statusTemplate, { lat, lng }), 'success');
+
+        return { lat, lng };
+    }
+
+    function resolveCurrentLocationErrorMessage(error) {
+        const locationMessages = formI18n.location || {};
+
+        if (error && error.message === 'unsupported') {
+            return locationMessages.unsupported || '';
+        }
+
+        if (error && typeof error.code === 'number') {
+            if (error.code === 1) {
+                return locationMessages.permissionDenied || locationMessages.failed || '';
+            }
+
+            if (error.code === 2) {
+                return locationMessages.positionUnavailable || locationMessages.failed || '';
+            }
+
+            if (error.code === 3) {
+                return locationMessages.timeout || locationMessages.failed || '';
+            }
+        }
+
+        return locationMessages.failed || '';
+    }
+
+    function requestCurrentPosition() {
+        return new Promise((resolve, reject) => {
+            if (typeof navigator === 'undefined' || !navigator.geolocation) {
+                reject(new Error('unsupported'));
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(resolve, reject, CURRENT_LOCATION_OPTIONS);
+        });
+    }
+
     async function ensureFormMap() {
         if (formMap) {
             return formMap;
@@ -219,26 +326,13 @@
         mountFormMapTileLayer();
 
         formMap.on('click', function(e) {
-            const lat = e.latlng.lat.toFixed(6);
-            const lng = e.latlng.lng.toFixed(6);
+            const { lat, lng } = fillAddressWithCoordinates(
+                e.latlng.lat,
+                e.latlng.lng,
+                formI18n.hints.selectedPoint
+            );
 
-            if (currentMarker !== null) {
-                formMap.removeLayer(currentMarker);
-            }
-
-            const addressInput = document.getElementById('addr');
-            if (addressInput) {
-                // 后端 Apps Script 会识别 latlng 前缀并直接写入经纬度，不再重复地理编码。
-                addressInput.value = `latlng${lat},${lng}`;
-            }
-
-            currentMarker = L.marker([lat, lng]).addTo(formMap)
-                .bindPopup(
-                    i18n.form.hints.selectedPoint
-                        .replace('{lat}', lat)
-                        .replace('{lng}', lng)
-                )
-                .openPopup();
+            updateSelectedPoint(lat, lng);
         });
 
         return formMap;
@@ -281,8 +375,44 @@
         }, 100);
     };
 
+    async function getCurrentLocation() {
+        if (!getCurrentLocationButton) {
+            return;
+        }
+
+        setLocationStatus('', '');
+        getCurrentLocationButton.disabled = true;
+        getCurrentLocationButton.textContent = formI18n.buttons.locating || i18n.common.loading;
+
+        try {
+            const position = await requestCurrentPosition();
+            const { lat, lng } = fillAddressWithCoordinates(
+                position.coords.latitude,
+                position.coords.longitude,
+                (formI18n.location && formI18n.location.filled) || formI18n.hints.selectedPoint
+            );
+
+            if (formMap) {
+                const mapContainer = document.getElementById('map');
+                updateSelectedPoint(lat, lng, {
+                    centerMap: Boolean(mapContainer && mapContainer.style.display === 'block')
+                });
+            }
+        } catch (error) {
+            console.warn('获取当前位置失败:', error);
+            setLocationStatus(resolveCurrentLocationErrorMessage(error), 'error');
+        } finally {
+            getCurrentLocationButton.disabled = false;
+            getCurrentLocationButton.textContent = defaultCurrentLocationButtonText;
+        }
+    }
+
     if (openMapButton) {
         openMapButton.addEventListener('click', window.openMap);
+    }
+
+    if (getCurrentLocationButton) {
+        getCurrentLocationButton.addEventListener('click', getCurrentLocation);
     }
 
     if (themeMediaQuery) {

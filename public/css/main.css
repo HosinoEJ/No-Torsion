@@ -1073,14 +1073,21 @@ button {
 
 button:hover { background: var(--button-hover); }
 
-#openMapButton {
+.form-location-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.85rem;
+}
+
+.form-location-action {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    flex: 1 1 0;
     width: auto;
-    max-width: 100%;
     min-height: 3rem;
-    margin-top: 0.85rem;
+    margin-top: 0;
     padding: 0.9rem 1.2rem;
     border: 1px solid var(--secondary-button-border);
     border-radius: 14px;
@@ -1102,7 +1109,7 @@ button:hover { background: var(--button-hover); }
     -webkit-backdrop-filter: blur(10px);
 }
 
-#openMapButton:hover {
+.form-location-action:hover {
     background: linear-gradient(135deg, var(--secondary-button-hover-bg-start), var(--secondary-button-hover-bg-end));
     border-color: var(--secondary-button-hover-border);
     color: var(--text);
@@ -1112,7 +1119,7 @@ button:hover { background: var(--button-hover); }
         inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
-#openMapButton:focus-visible {
+.form-location-action:focus-visible {
     outline: none;
     border-color: var(--secondary-button-hover-border);
     box-shadow:
@@ -1120,10 +1127,23 @@ button:hover { background: var(--button-hover); }
         0 16px 30px var(--secondary-button-shadow);
 }
 
-#openMapButton:disabled {
+.form-location-action:disabled {
     cursor: wait;
     opacity: 0.78;
     transform: none;
+}
+
+.form-location-status {
+    margin-top: 0.65rem;
+    min-height: 1.2rem;
+}
+
+.form-location-status[data-state="success"] {
+    color: var(--primary);
+}
+
+.form-location-status[data-state="error"] {
+    color: var(--accent-color);
 }
 
 @media (max-width: 640px) {
@@ -1131,7 +1151,11 @@ button:hover { background: var(--button-hover); }
         grid-template-columns: 1fr;
     }
 
-    #openMapButton {
+    .form-location-action {
+        width: 100%;
+    }
+
+    .map-api-secondary-link {
         width: 100%;
     }
 }
@@ -2163,6 +2187,39 @@ summary::before {
     -webkit-text-fill-color: transparent;
     font-weight: bold;
     animation: pulse 2s infinite;
+}
+
+.map-api-note {
+    margin: 0.85rem 0 0;
+    color: var(--text-muted);
+}
+
+.map-api-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.85rem;
+    margin-top: 0.9rem;
+}
+
+.map-api-secondary-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2.75rem;
+    padding: 0.8rem 1.1rem;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #1f5f8f, #2b7ab7);
+    color: #fff;
+    font-weight: 700;
+    box-shadow: 0 14px 30px rgba(31, 95, 143, 0.18);
+}
+
+.map-api-secondary-link:hover {
+    opacity: 1;
+    color: #fff;
+    text-decoration: none;
+    transform: translateY(-1px);
 }
 
 .map-page #map {

@@ -37,6 +37,7 @@ const { createI18nMiddleware } = require('./middleware/i18n');
 const { createMaintenanceMiddleware } = require('./middleware/maintenance');
 const createApiRoutes = require('./routes/apiRoutes');
 const createFormRoutes = require('./routes/formRoutes');
+const createInstitutionCorrectionRoutes = require('./routes/institutionCorrectionRoutes');
 const createPageRoutes = require('./routes/pageRoutes');
 const configuredAssetVersion = String(process.env.ASSET_VERSION || '').trim();
 const assetVersion = configuredAssetVersion && configuredAssetVersion !== '0'
@@ -150,6 +151,14 @@ app.use(createFormRoutes({
   formProtectionMinFillMs,
   formProtectionSecret,
   googleFormUrl,
+  rateLimitRedisUrl,
+  submitRateLimitMax,
+  title
+}));
+app.use(createInstitutionCorrectionRoutes({
+  formProtectionMaxAgeMs,
+  formProtectionMinFillMs,
+  formProtectionSecret,
   rateLimitRedisUrl,
   submitRateLimitMax,
   title

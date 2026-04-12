@@ -664,6 +664,11 @@ test('form page includes school name and address autocomplete hooks', async () =
   assert.match(response.body, /机构所在城市 \/ 区县/);
   assert.match(response.body, /机构所在县区/);
   assert.match(response.body, /机构地址/);
+  assert.match(response.body, /id="openMapButton"/);
+  assert.match(response.body, /点击可直接在地图上选点/);
+  assert.match(response.body, /id="getCurrentLocationButton"/);
+  assert.match(response.body, /获取当前位置/);
+  assert.match(response.body, /id="locationStatus"/);
   assert.match(response.body, /机构联系方式/);
   assert.match(response.body, /丑闻及暴力行为详细描述/);
   assert.match(response.body, /首次被送入日期/);

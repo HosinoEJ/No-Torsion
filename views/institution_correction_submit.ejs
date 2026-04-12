@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="<%= lang %>">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="color-scheme" content="light dark">
+        <% if (typeof pageRobots !== 'undefined' && pageRobots) { %>
+        <meta name="robots" content="<%= pageRobots %>">
+        <% } %>
+        <title><%= title %></title>
+        <link rel="stylesheet" href="/css/index.css?v=<%= assetVersion %>">
+        <script>
+            window.APP_LANG = "<%= lang %>";
+            window.I18N = <%- JSON.stringify(clientMessages) %>;
+        </script>
+    </head>
+    <body class="submit-page">
+        <div class="hero">
+            <h1><%= t('institutionCorrection.success.title') %></h1>
+            <p><%= t('institutionCorrection.success.message') %></p>
+            <div class="hero__actions submit-page__actions">
+                <a href="/map?lang=<%= lang %>" class="btn"><%= t('institutionCorrection.success.backToMap') %></a>
+                <a href="/" class="btn"><%= t('submitSuccess.backHome') %></a>
+            </div>
+        </div>
+
+        <%- include('partials/foot') %>
+    </body>
+</html>

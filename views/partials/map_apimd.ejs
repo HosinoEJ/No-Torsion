@@ -10,8 +10,12 @@
         <%= t('map.api.opinionTitle') %><br>
         <%= t('map.api.opinionBody') %><br>
         <%= t('map.api.cta') %><br>
-        <a href="https://www.victimsunion.org/api/map-data" class="api-link-highlight" target="_blank">
-            🔗 <%= t('map.api.link') %>
-        </a>
+        <p class="map-api-note"><%= t('map.api.correctionHint') %></p>
+        <div class="map-api-actions">
+            <a href="https://www.victimsunion.org/api/map-data" class="api-link-highlight" target="_blank">
+                🔗 <%= t('map.api.link') %>
+            </a>
+            <a href="/map/correction?lang=<%= lang %>" class="map-api-secondary-link"><%= t('map.api.correctionButton') %></a>
+        </div>
     </div>
 </details>

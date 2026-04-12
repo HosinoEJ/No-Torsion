@@ -1,0 +1,174 @@
+<%- include('partials/head') %>
+<body class="form-page correction-form-page">
+<a href="/map?lang=<%= lang %>" class="page-back-link">← <%= t('institutionCorrection.backToMap') %></a>
+
+<div class="container">
+    <h1><%= t('institutionCorrection.title') %></h1>
+    <p class="form-subtitle"><%= t('institutionCorrection.subtitle') %></p>
+
+    <form action="/map/correction/submit" method="POST" id="institutionCorrectionForm">
+        <div class="form-honeypot" aria-hidden="true">
+            <label for="website">Website</label>
+            <input type="text" name="website" id="website" tabindex="-1" autocomplete="off" spellcheck="false">
+        </div>
+        <input type="hidden" name="form_token" value="<%= formProtectionToken %>">
+
+        <p class="form-privacy-note"><%= t('institutionCorrection.privacyNotice') %></p>
+
+        <h3><%= t('institutionCorrection.sections.institution') %></h3>
+
+        <div class="form-group">
+            <label class="required" for="school_input"><%= t('institutionCorrection.fields.schoolName') %></label>
+            <div class="autocomplete-field">
+                <input
+                    type="text"
+                    name="school_name"
+                    id="school_input"
+                    placeholder="<%= t('institutionCorrection.placeholders.schoolName') %>"
+                    maxlength="<%= institutionCorrectionRules.schoolName.maxLength %>"
+                    autocomplete="off"
+                    required
+                >
+                <div id="school_results_list" class="autocomplete-results" hidden></div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="provinceSelect"><%= t('institutionCorrection.fields.province') %></label>
+            <select name="provinceCode" id="provinceSelect">
+                <option value="" selected><%= t('institutionCorrection.placeholders.province') %></option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="citySelect"><%= t('institutionCorrection.fields.city') %></label>
+            <select name="cityCode" id="citySelect" disabled>
+                <option value="" selected><%= t('institutionCorrection.placeholders.city') %></option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="countySelect"><%= t('institutionCorrection.fields.county') %></label>
+            <select name="countyCode" id="countySelect" disabled>
+                <option value="" selected><%= t('institutionCorrection.placeholders.countyInitial') %></option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="addr"><%= t('institutionCorrection.fields.schoolAddress') %></label>
+            <div class="autocomplete-field">
+                <input
+                    type="text"
+                    name="school_address"
+                    id="addr"
+                    placeholder="<%= t('institutionCorrection.placeholders.schoolAddress') %>"
+                    maxlength="<%= institutionCorrectionRules.schoolAddress.maxLength %>"
+                    autocomplete="off"
+                >
+                <div id="address_results_list" class="autocomplete-results" hidden></div>
+            </div>
+            <div class="form-location-actions">
+                <button id="openMapButton" class="form-location-action" type="button"><%= t('institutionCorrection.buttons.openMap') %></button>
+                <button id="getCurrentLocationButton" class="form-location-action" type="button"><%= t('institutionCorrection.buttons.getCurrentLocation') %></button>
+            </div>
+            <div id="locationStatus" class="hint form-location-status" role="status" aria-live="polite" aria-atomic="true"></div>
+            <div id="map" style="display: none; width: 100%; height: 20em;"></div>
+        </div>
+
+        <div class="form-group">
+            <label for="contactInformationInput"><%= t('institutionCorrection.fields.contactInformation') %></label>
+            <input
+                type="text"
+                id="contactInformationInput"
+                name="contact_information"
+                placeholder="<%= t('institutionCorrection.placeholders.contactInformation') %>"
+                maxlength="<%= institutionCorrectionRules.contactInformation.maxLength %>"
+            >
+        </div>
+
+        <div class="form-group">
+            <label for="headmasterNameInput"><%= t('institutionCorrection.fields.headmasterName') %></label>
+            <input
+                type="text"
+                id="headmasterNameInput"
+                name="headmaster_name"
+                placeholder="<%= t('institutionCorrection.placeholders.headmasterName') %>"
+                maxlength="<%= institutionCorrectionRules.headmasterName.maxLength %>"
+            >
+        </div>
+
+        <h3><%= t('institutionCorrection.sections.correction') %></h3>
+
+        <div class="form-group">
+            <label for="correctionContentInput"><%= t('institutionCorrection.fields.correctionContent') %></label>
+            <textarea
+                name="correction_content"
+                id="correctionContentInput"
+                rows="6"
+                placeholder="<%= t('institutionCorrection.placeholders.correctionContent') %>"
+                maxlength="<%= institutionCorrectionRules.correctionContent.maxLength %>"
+            ></textarea>
+            <div class="hint"><%= t('institutionCorrection.hints.correctionContent') %></div>
+        </div>
+
+        <button type="submit"><%= t('institutionCorrection.buttons.submit') %></button>
+    </form>
+</div>
+
+<script src="/js/map_data_store.js?v=<%= assetVersion %>"></script>
+<script src="/js/form_api.js?v=<%= assetVersion %>"></script>
+<script>
+    window.AREA_SELECTOR_DATA = <%- JSON.stringify(areaOptions) %>;
+    window.FORM_UI_TEXT = window.I18N.institutionCorrection;
+    window.INSTITUTION_CORRECTION_RULES = <%- JSON.stringify(institutionCorrectionRules) %>;
+</script>
+<script src="/js/form_areaSelect.js?v=<%= assetVersion %>"></script>
+<script>
+    const correctionFormI18n = window.FORM_UI_TEXT;
+    const institutionCorrectionForm = document.getElementById('institutionCorrectionForm');
+    const correctionSchoolNameInput = document.getElementById('school_input');
+    const correctionSubmitButton = institutionCorrectionForm.querySelector('button[type="submit"]');
+
+    function clearValidity(input) {
+        if (input) {
+            input.setCustomValidity('');
+        }
+    }
+
+    function bindRequiredMessage(input, message) {
+        input.addEventListener('invalid', () => {
+            if (input.validity.valueMissing) {
+                input.setCustomValidity(message);
+            } else {
+                clearValidity(input);
+            }
+        });
+        input.addEventListener('input', () => clearValidity(input));
+        input.addEventListener('change', () => clearValidity(input));
+    }
+
+    bindRequiredMessage(correctionSchoolNameInput, correctionFormI18n.validation.fillSchoolName);
+
+    institutionCorrectionForm.addEventListener('submit', (event) => {
+        correctionSchoolNameInput.value = correctionSchoolNameInput.value.trim();
+
+        if (!correctionSchoolNameInput.value) {
+            correctionSchoolNameInput.setCustomValidity(correctionFormI18n.validation.fillSchoolName);
+        }
+
+        if (!institutionCorrectionForm.checkValidity()) {
+            event.preventDefault();
+            institutionCorrectionForm.reportValidity();
+            return;
+        }
+
+        if (correctionSubmitButton) {
+            correctionSubmitButton.disabled = true;
+            correctionSubmitButton.textContent = correctionFormI18n.buttons.submitting || window.I18N.common.loading;
+        }
+    });
+</script>
+<script src="/js/form_mapChoose.js?v=<%= assetVersion %>"></script>
+<%- include('partials/foot') %>
+</body>
+</html>

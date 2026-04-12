@@ -1,6 +1,7 @@
 import { httpServerHandler } from 'cloudflare:node'
 import { readFileSync } from 'node:fs'
 import app from './app/server.js'
+import runtimeContext from './app/services/runtimeContext.js'
 import { rebuildResponseWithHeaders } from './app/services/workerResponse.mjs'
 
 // Workers 入口主要做两件额外工作：
@@ -18,6 +19,10 @@ let chinaGeoJsonBytes = null
 app.listen(3000)
 
 const nodeHandler = httpServerHandler({ port: 3000 })
+
+function fetchWithRuntimeContext(request, env, ctx) {
+  return runtimeContext.runWithRuntimeContext({ env, ctx }, () => nodeHandler.fetch(request, env, ctx))
+}
 
 function getChinaGeoJsonPayload() {
   if (chinaGeoJsonPayload === null) {
@@ -69,7 +74,7 @@ export default {
     }
 
     if (requestUrl.pathname === MAP_DATA_API_PATH) {
-      const response = await nodeHandler.fetch(request, env, ctx)
+      const response = await fetchWithRuntimeContext(request, env, ctx)
 
       return rebuildResponseWithHeaders(response, {
         // 对大 JSON 接口显式禁用中间链路变形，避免 Workers 侧再次截断或改写 body。
@@ -79,6 +84,6 @@ export default {
       })
     }
 
-    return nodeHandler.fetch(request, env, ctx)
+    return fetchWithRuntimeContext(request, env, ctx)
   }
 }

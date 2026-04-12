@@ -6,6 +6,7 @@ function generateRobotsTxt(siteUrl) {
     'Allow: /',
     'Disallow: /api/',
     'Disallow: /form',
+    'Disallow: /map/correction',
     'Disallow: /submit',
     'Disallow: /debug',
     'Crawl-delay: 5',

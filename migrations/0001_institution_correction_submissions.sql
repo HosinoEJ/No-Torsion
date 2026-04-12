@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS institution_correction_submissions (
+  id TEXT PRIMARY KEY,
+  school_name TEXT NOT NULL,
+  province_code TEXT,
+  province_name TEXT,
+  city_code TEXT,
+  city_name TEXT,
+  county_code TEXT,
+  county_name TEXT,
+  school_address TEXT,
+  contact_information TEXT,
+  headmaster_name TEXT,
+  correction_content TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  lang TEXT NOT NULL,
+  source_path TEXT NOT NULL,
+  client_ip_hash TEXT,
+  user_agent TEXT,
+  created_at TEXT NOT NULL
+);

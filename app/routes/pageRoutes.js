@@ -2,6 +2,7 @@ const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const { getAreaOptions } = require('../../config/areaSelector');
+const { getLocalizedInstitutionCorrectionRules } = require('../../config/institutionCorrectionConfig');
 const { getClientProvinceMetadata } = require('../../config/provinceMetadata');
 const {
   getLocalizedFormRules,
@@ -423,6 +424,21 @@ function createPageRoutes({
       otherSexTypeOptions: getLocalizedOtherSexTypeOptions(t),
       pageRobots: sensitiveRobotsPolicy,
       sexOptions: getLocalizedSexOptions(t)
+    });
+  });
+
+  router.get('/map/correction', pageReadLimiter, (req, res) => {
+    const t = req.t;
+    const { provinces } = getAreaOptions(req.lang);
+
+    applySensitivePageHeaders(res);
+    res.render('institution_correction', {
+      title: t('pageTitles.institutionCorrection', { title }),
+      apiUrl,
+      areaOptions: { provinces },
+      formProtectionToken: issueFormProtectionToken({ secret: formProtectionSecret }),
+      institutionCorrectionRules: getLocalizedInstitutionCorrectionRules(t),
+      pageRobots: sensitiveRobotsPolicy
     });
   });
 
