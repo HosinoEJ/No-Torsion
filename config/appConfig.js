@@ -66,14 +66,93 @@ function parseBooleanEnv(value, fallback) {
   return fallback;
 }
 
-function resolveFormSubmitTarget(value) {
+function resolveSubmitTarget(value, fallback = 'both') {
   const normalizedValue = readTrimmedEnvValue(value).toLowerCase();
 
   if (normalizedValue === 'd1' || normalizedValue === 'both' || normalizedValue === 'google') {
     return normalizedValue;
   }
 
-  return 'both';
+  return fallback;
+}
+
+function normalizeGoogleFormSubmitUrl(url) {
+  const normalizedUrl = readTrimmedEnvValue(url);
+
+  if (!normalizedUrl) {
+    return '';
+  }
+
+  return normalizedUrl
+    .replace(/\/viewform(?:\?.*)?$/i, '/formResponse')
+    .replace(/\/formResponse(?:\?.*)?$/i, '/formResponse');
+}
+
+function extractGoogleFormIdFromUrl(url) {
+  const normalizedUrl = readTrimmedEnvValue(url);
+
+  if (!normalizedUrl) {
+    return '';
+  }
+
+  try {
+    const parsedUrl = new URL(normalizedUrl);
+    const match = parsedUrl.pathname.match(/\/d\/e\/([^/]+)\/(?:viewform|formResponse)/i);
+    return match ? match[1] : '';
+  } catch (_error) {
+    return '';
+  }
+}
+
+function buildGoogleFormUrlsFromConfig({
+  defaultFormId = '',
+  defaultFormIdSuffix = '',
+  formId,
+  fullUrl
+}) {
+  const configuredUrl = readTrimmedEnvValue(fullUrl);
+
+  if (configuredUrl) {
+    const extractedFormId = extractGoogleFormIdFromUrl(configuredUrl);
+    const submitUrl = normalizeGoogleFormSubmitUrl(configuredUrl);
+    return {
+      formId: extractedFormId,
+      submitUrl,
+      viewUrl: submitUrl ? submitUrl.replace(/\/formResponse(?:\?.*)?$/i, '/viewform') : ''
+    };
+  }
+
+  let resolvedFormId = readTrimmedEnvValue(formId) || defaultFormId;
+
+  if (!resolvedFormId) {
+    return {
+      formId: '',
+      submitUrl: '',
+      viewUrl: ''
+    };
+  }
+
+  if (/^https?:\/\//i.test(resolvedFormId)) {
+    return buildGoogleFormUrlsFromConfig({
+      fullUrl: resolvedFormId
+    });
+  }
+
+  if (
+    defaultFormId
+    && defaultFormIdSuffix
+    && resolvedFormId === defaultFormId
+    && !resolvedFormId.endsWith(defaultFormIdSuffix)
+  ) {
+    resolvedFormId = `${resolvedFormId}${defaultFormIdSuffix}`;
+  }
+
+  const submitUrl = `https://docs.google.com/forms/d/e/${resolvedFormId}/formResponse`;
+  return {
+    formId: resolvedFormId,
+    submitUrl,
+    viewUrl: submitUrl.replace(/\/formResponse(?:\?.*)?$/i, '/viewform')
+  };
 }
 
 function resolveFormProtectionSecret({ explicitSecret, formId, siteUrl, title }) {
@@ -124,7 +203,13 @@ const maintenanceNotice = readTrimmedEnvValue(process.env.MAINTENANCE_NOTICE);
 const maintenanceRetryAfterSeconds = parsePositiveInteger(process.env.MAINTENANCE_RETRY_AFTER_SECONDS, 1800);
 const title = process.env.TITLE || 'N·C·T';
 const formDryRun = parseBooleanEnv(process.env.FORM_DRY_RUN, true);
-const formSubmitTarget = resolveFormSubmitTarget(process.env.FORM_SUBMIT_TARGET || process.env.FORM_SUBMISSION_TARGET);
+const formSubmitTarget = resolveSubmitTarget(process.env.FORM_SUBMIT_TARGET || process.env.FORM_SUBMISSION_TARGET, 'both');
+const correctionSubmitTarget = resolveSubmitTarget(
+  process.env.CORRECTION_SUBMIT_TARGET
+  || process.env.CORRECTION_FORM_SUBMIT_TARGET
+  || process.env.INSTITUTION_CORRECTION_SUBMIT_TARGET,
+  'd1'
+);
 const pageReadRateLimitMax = parsePositiveInteger(process.env.PAGE_READ_RATE_LIMIT_MAX, 180);
 const mapReadRateLimitMax = parsePositiveInteger(process.env.MAP_READ_RATE_LIMIT_MAX, 60);
 const submitRateLimitMax = parsePositiveInteger(process.env.SUBMIT_RATE_LIMIT_MAX, 5);
@@ -138,6 +223,22 @@ const formId = resolveProtectedEnvValue({
 const googleFormUrl = formId
   ? `https://docs.google.com/forms/d/e/${formId}/formResponse`
   : '';
+const correctionGoogleFormConfig = buildGoogleFormUrlsFromConfig({
+  defaultFormId: '1FAIpQLSfiXdpt8CgOGZQhvsJTc1koQbvXFo6eWfnigQ329r1',
+  defaultFormIdSuffix: '-3DniNA',
+  formId: readTrimmedEnvValue(
+    process.env.CORRECTION_FORM_ID,
+    process.env.CORRECTION_GOOGLE_FORM_ID,
+    process.env.INSTITUTION_CORRECTION_FORM_ID
+  ),
+  fullUrl: readTrimmedEnvValue(
+    process.env.CORRECTION_GOOGLE_FORM_URL,
+    process.env.CORRECTION_FORM_URL,
+    process.env.INSTITUTION_CORRECTION_GOOGLE_FORM_URL
+  )
+});
+const correctionGoogleFormUrl = correctionGoogleFormConfig.submitUrl;
+const correctionGoogleFormViewUrl = correctionGoogleFormConfig.viewUrl;
 const googleScriptUrl = resolveProtectedEnvValue({
   envName: 'GOOGLE_SCRIPT_URL',
   encryptedEnvName: 'GOOGLE_SCRIPT_URL_ENCRYPTED',
@@ -169,6 +270,9 @@ const translationProviderConfigured = Boolean(googleCloudTranslationApiKey);
 module.exports = {
   appPort,
   apiUrl,
+  correctionGoogleFormUrl,
+  correctionGoogleFormViewUrl,
+  correctionSubmitTarget,
   debugMod,
   formDryRun,
   formSubmitTarget,

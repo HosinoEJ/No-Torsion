@@ -10,7 +10,7 @@ const {
   startServer
 } = require('./helpers/appHarness');
 
-function loadAppWithPatchedInstitutionCorrectionService(envOverrides = {}, patchInstitutionCorrectionService) {
+function loadAppWithPatchedInstitutionCorrectionService(envOverrides = {}, patchers) {
   const effectiveEnvOverrides = {
     MAINTENANCE_MODE: 'false',
     MAINTENANCE_NOTICE: '',
@@ -29,9 +29,30 @@ function loadAppWithPatchedInstitutionCorrectionService(envOverrides = {}, patch
 
   clearProjectModules();
   const institutionCorrectionService = require(path.join(projectRoot, 'app/services/institutionCorrectionService'));
-  const restorePatch = typeof patchInstitutionCorrectionService === 'function'
-    ? patchInstitutionCorrectionService(institutionCorrectionService)
-    : null;
+  const formService = require(path.join(projectRoot, 'app/services/formService'));
+  const restoreCallbacks = [];
+
+  if (typeof patchers === 'function') {
+    const restorePatch = patchers(institutionCorrectionService);
+    if (typeof restorePatch === 'function') {
+      restoreCallbacks.push(restorePatch);
+    }
+  } else if (patchers && typeof patchers === 'object') {
+    if (typeof patchers.institutionCorrectionService === 'function') {
+      const restoreInstitutionCorrectionPatch = patchers.institutionCorrectionService(institutionCorrectionService);
+      if (typeof restoreInstitutionCorrectionPatch === 'function') {
+        restoreCallbacks.push(restoreInstitutionCorrectionPatch);
+      }
+    }
+
+    if (typeof patchers.formService === 'function') {
+      const restoreFormServicePatch = patchers.formService(formService);
+      if (typeof restoreFormServicePatch === 'function') {
+        restoreCallbacks.push(restoreFormServicePatch);
+      }
+    }
+  }
+
   const app = require(path.join(projectRoot, 'app/server'));
 
   Object.entries(originalValues).forEach(([key, value]) => {
@@ -46,9 +67,7 @@ function loadAppWithPatchedInstitutionCorrectionService(envOverrides = {}, patch
   return {
     app,
     restore() {
-      if (typeof restorePatch === 'function') {
-        restorePatch();
-      }
+      restoreCallbacks.reverse().forEach((restorePatch) => restorePatch());
     }
   };
 }
@@ -122,6 +141,18 @@ test('institution correction page pre-fills school name from the map record card
   clearProjectModules();
 });
 
+test('correction alias renders the same page and uses the alias submit path', async () => {
+  const app = loadApp({ DEBUG_MOD: 'false' });
+  const response = await requestPath(app, '/correction?lang=zh-CN&school_name=%E5%90%AF%E6%98%8E%E5%AD%A6%E9%99%A2');
+
+  assert.equal(response.statusCode, 200);
+  assert.match(response.body, /机构信息补充 \/ 修正/);
+  assert.match(response.body, /action="\/correction\/submit"/);
+  assert.match(response.body, /<input[^>]+name="school_name"[^>]+value="启明学院"[^>]*required/);
+
+  clearProjectModules();
+});
+
 test('robots.txt allows institution correction pages to be crawled', async () => {
   const app = loadApp({ DEBUG_MOD: 'false' });
   const response = await requestPath(app, '/robots.txt');
@@ -181,6 +212,107 @@ test('institution correction submit accepts school name only and renders success
   }
 });
 
+test('institution correction submit can send to the configured Google Form target', async () => {
+  const googleCalls = [];
+  const { app, restore } = loadAppWithPatchedInstitutionCorrectionService(
+    {
+      DEBUG_MOD: 'false',
+      FORM_PROTECTION_MIN_FILL_MS: '1',
+      CORRECTION_SUBMIT_TARGET: 'google'
+    },
+    {
+      institutionCorrectionService(institutionCorrectionService) {
+        const originalSave = institutionCorrectionService.saveInstitutionCorrectionSubmission;
+
+        institutionCorrectionService.saveInstitutionCorrectionSubmission = async () => {
+          throw new Error('D1 should not be called for google-only correction submissions.');
+        };
+
+        return () => {
+          institutionCorrectionService.saveInstitutionCorrectionSubmission = originalSave;
+        };
+      },
+      formService(formService) {
+        const originalSubmitToGoogleForm = formService.submitToGoogleForm;
+
+        formService.submitToGoogleForm = async (url, payload) => {
+          googleCalls.push({ url, payload });
+        };
+
+        return () => {
+          formService.submitToGoogleForm = originalSubmitToGoogleForm;
+        };
+      }
+    }
+  );
+
+  try {
+    const response = await postUrlEncodedForm(app, '/correction/submit', {
+      website: '',
+      form_token: issueInstitutionCorrectionToken(),
+      school_name: '晨星成长中心',
+      provinceCode: '110000',
+      cityCode: '110101',
+      correction_content: '请补充最新地址和联系方式。'
+    });
+    const body = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(body, /补充 \/ 修正请求已收到/);
+    assert.equal(googleCalls.length, 1);
+    assert.match(googleCalls[0].url, /1FAIpQLSfiXdpt8CgOGZQhvsJTc1koQbvXFo6eWfnigQ329r1-3DniNA\/formResponse$/);
+    assert.match(googleCalls[0].payload, /entry\.270706445=%E6%99%A8%E6%98%9F%E6%88%90%E9%95%BF%E4%B8%AD%E5%BF%83/);
+    assert.match(googleCalls[0].payload, /entry\.1237975400=%E5%8C%97%E4%BA%AC%E5%B8%82/);
+    assert.match(googleCalls[0].payload, /entry\.1335981183=%E4%B8%9C%E5%9F%8E%E5%8C%BA/);
+    assert.match(googleCalls[0].payload, /entry\.302336209=%E8%AF%B7%E8%A1%A5%E5%85%85%E6%9C%80%E6%96%B0%E5%9C%B0%E5%9D%80%E5%92%8C%E8%81%94%E7%B3%BB%E6%96%B9%E5%BC%8F%E3%80%82/);
+  } finally {
+    restore();
+    clearProjectModules();
+  }
+});
+
+test('institution correction submit renders a fallback page when Google Form submission fails', async () => {
+  const { app, restore } = loadAppWithPatchedInstitutionCorrectionService(
+    {
+      DEBUG_MOD: 'false',
+      FORM_PROTECTION_MIN_FILL_MS: '1',
+      CORRECTION_SUBMIT_TARGET: 'google'
+    },
+    {
+      formService(formService) {
+        const originalSubmitToGoogleForm = formService.submitToGoogleForm;
+
+        formService.submitToGoogleForm = async () => {
+          throw new Error('Google correction submit is unavailable.');
+        };
+
+        return () => {
+          formService.submitToGoogleForm = originalSubmitToGoogleForm;
+        };
+      }
+    }
+  );
+
+  try {
+    const response = await postUrlEncodedForm(app, '/map/correction/submit', {
+      website: '',
+      form_token: issueInstitutionCorrectionToken(),
+      school_name: '启明学院',
+      correction_content: '请修正机构地图坐标。'
+    });
+    const body = await response.text();
+
+    assert.equal(response.status, 500);
+    assert.match(body, /补充 \/ 修正提交失败/);
+    assert.match(body, /Google Form 继续提交/);
+    assert.match(body, /viewform\?usp=pp_url&amp;entry\.270706445=%E5%90%AF%E6%98%8E%E5%AD%A6%E9%99%A2/);
+    assert.match(body, /entry\.302336209=%E8%AF%B7%E4%BF%AE%E6%AD%A3%E6%9C%BA%E6%9E%84%E5%9C%B0%E5%9B%BE%E5%9D%90%E6%A0%87%E3%80%82/);
+  } finally {
+    restore();
+    clearProjectModules();
+  }
+});
+
 test('institution correction submit returns 503 when D1 storage is unavailable', async () => {
   const app = loadApp({
     DEBUG_MOD: 'false',
@@ -194,7 +326,9 @@ test('institution correction submit returns 503 when D1 storage is unavailable',
   const body = await response.text();
 
   assert.equal(response.status, 503);
+  assert.match(body, /补充 \/ 修正提交失败/);
   assert.match(body, /机构信息补充 \/ 修正功能暂时不可用/);
+  assert.match(body, /返回补充 \/ 修正表单/);
 
   clearProjectModules();
 });

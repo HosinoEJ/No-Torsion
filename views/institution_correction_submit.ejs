@@ -18,11 +18,54 @@
         <div class="hero">
             <h1><%= t('institutionCorrection.success.title') %></h1>
             <p><%= t('institutionCorrection.success.message') %></p>
+            <% if (showSubmissionDiagnostics && submissionDiagnostics) { %>
+                <div class="submit-status-card">
+                    <h2><%= t('submitStatus.title') %></h2>
+                    <p><strong><%= t('submitStatus.mode') %></strong> <%= submissionDiagnostics.attemptedTargets.map((target) => target.label).join(' / ') %></p>
+                    <p><strong><%= t('submitStatus.successfulTargets') %></strong> <%= submissionDiagnostics.successfulTargets.length > 0 ? submissionDiagnostics.successfulTargets.map((target) => target.label).join(' / ') : t('submitStatus.none') %></p>
+                    <p><strong><%= t('submitStatus.failedTargets') %></strong> <%= submissionDiagnostics.failedTargets.length > 0 ? submissionDiagnostics.failedTargets.map((target) => target.label).join(' / ') : t('submitStatus.none') %></p>
+                    <% if (submissionDiagnostics.failedTargets.length > 0) { %>
+                        <div class="submit-status-card__errors">
+                            <% submissionDiagnostics.failedTargets.forEach((target) => { %>
+                                <p><strong><%= target.label %></strong> <%= t('submitStatus.error') %><%= target.error %></p>
+                            <% }) %>
+                        </div>
+                    <% } %>
+                </div>
+            <% } %>
             <div class="hero__actions submit-page__actions">
                 <a href="/map?lang=<%= lang %>" class="btn"><%= t('institutionCorrection.success.backToMap') %></a>
                 <a href="/" class="btn"><%= t('submitSuccess.backHome') %></a>
             </div>
         </div>
+
+        <style>
+            .submit-status-card {
+                width: min(100%, 760px);
+                margin: 1.5rem auto 0;
+                padding: 1rem 1.15rem;
+                border: 1px solid var(--panel-border);
+                border-radius: 16px;
+                background: var(--card-bg);
+                box-shadow: var(--shadow-soft);
+                box-sizing: border-box;
+                text-align: left;
+                overflow-wrap: anywhere;
+            }
+            .submit-status-card h2 {
+                margin-top: 0;
+            }
+            .submit-status-card p {
+                overflow-wrap: anywhere;
+            }
+            .submit-status-card p:last-child {
+                margin-bottom: 0;
+            }
+            .submit-status-card__errors {
+                margin-top: 0.8rem;
+                color: var(--text-muted);
+            }
+        </style>
 
         <%- include('partials/foot') %>
     </body>

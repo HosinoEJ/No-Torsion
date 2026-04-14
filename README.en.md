@@ -68,7 +68,7 @@ N·C·T is a site for documenting, organizing, and publicly presenting informati
 | Area | Description |
 | --- | --- |
 | Anonymous submission | Anonymous form flow with anti-abuse protection, rate limiting, and audit logging |
-| Institution correction | Provides the `/map/correction` supplement / correction flow and stores submissions in D1 |
+| Institution correction | Provides `/map/correction` and `/correction` supplement / correction flows and can write to Google Form, D1, or both depending on config |
 | Public map | Public institution map plus `GET /api/map-data` for downstream reuse |
 | Blog content | Blog index, article pages, and Markdown rendering |
 | Multilingual UI | Simplified Chinese, Traditional Chinese, English, plus selective dynamic translation |
@@ -243,8 +243,10 @@ This README only lists the most important variables. For the full set, see [`.de
 | `SITE_URL` | Canonical site URL for sitemap, robots, and canonical outputs |
 | `FORM_DRY_RUN` | When `true`, submissions are previewed but not sent to the configured live target |
 | `FORM_SUBMIT_TARGET` | `/form` submission target: `google`, `d1`, or `both`; defaults to `both` |
+| `CORRECTION_SUBMIT_TARGET` | `/map/correction` and `/correction` submission target: `google`, `d1`, or `both`; defaults to `d1` |
 | `FORM_PROTECTION_SECRET` | Core secret for form protection and encrypted config decryption; when empty, the app derives one automatically |
 | `FORM_ID` / `FORM_ID_ENCRYPTED` | Google Form ID, choose one |
+| `CORRECTION_FORM_ID` / `CORRECTION_GOOGLE_FORM_URL` | Google Form used by institution correction; accepts a Form ID or full URL and falls back to the built-in default when omitted |
 | `GOOGLE_SCRIPT_URL` / `GOOGLE_SCRIPT_URL_ENCRYPTED` | Private Apps Script data source, choose one |
 | `PUBLIC_MAP_DATA_URL` | Public fallback source when the private source is slow or unavailable |
 | `GOOGLE_CLOUD_TRANSLATION_API_KEY` | Required when translation features are enabled |
@@ -258,8 +260,11 @@ Configuration rules:
 - Choose only one of `FORM_ID` and `FORM_ID_ENCRYPTED`.
 - Choose only one of `GOOGLE_SCRIPT_URL` and `GOOGLE_SCRIPT_URL_ENCRYPTED`.
 - `FORM_SUBMIT_TARGET` accepts `google`, `d1`, and `both`, with `both` as the default.
+- `CORRECTION_SUBMIT_TARGET` accepts `google`, `d1`, and `both`, with `d1` as the default.
 - If `FORM_SUBMIT_TARGET` includes `google`, you still need `FORM_ID` or `FORM_ID_ENCRYPTED`.
+- If `CORRECTION_SUBMIT_TARGET` includes `google`, configure `CORRECTION_FORM_ID` or `CORRECTION_GOOGLE_FORM_URL`, or let the app use the built-in default correction form.
 - If `FORM_SUBMIT_TARGET` includes `d1`, make sure your Worker has a D1 binding; if the binding name is not `NCT_DB` or `DB`, also set `D1_BINDING_NAME`.
+- If `CORRECTION_SUBMIT_TARGET` includes `d1`, the same D1 binding requirement applies.
 - If you use `FORM_ID_ENCRYPTED` or `GOOGLE_SCRIPT_URL_ENCRYPTED`, `FORM_PROTECTION_SECRET` must still be explicitly configured.
 - In production Workers deployments, keep sensitive values in Cloudflare Variables and Secrets instead of committing them or placing them in `wrangler.jsonc`.
 - If you do not use encrypted config yet, at minimum store `FORM_ID` and `GOOGLE_SCRIPT_URL` as Secrets; `FORM_PROTECTION_SECRET` can be set explicitly or left empty so the app derives one automatically.
@@ -569,7 +574,7 @@ By default, every page route passes through the i18n middleware, so the UI langu
 | --- | --- | --- |
 | `POST /submit` | Entry point for anonymous form submissions | Returns a preview page when `FORM_DRY_RUN=true`, otherwise moves to the confirmation step |
 | `POST /submit/confirm` | Final submission step after confirmation | Writes to Google Form, D1, or both depending on `FORM_SUBMIT_TARGET` |
-| `POST /map/correction/submit` | Entry point for institution supplement / correction submissions | Writes to D1 only; returns 503 if no usable binding is available |
+| `POST /map/correction/submit` / `POST /correction/submit` | Entry point for institution supplement / correction submissions | Writes to Google Form, D1, or both based on `CORRECTION_SUBMIT_TARGET`; any successful target counts as success, and the failure page is shown only when every target fails |
 
 ### API and Static Data Routes
 

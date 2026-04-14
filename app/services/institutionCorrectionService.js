@@ -288,6 +288,19 @@ function validateInstitutionCorrectionSubmission(body, t) {
   };
 }
 
+function buildInstitutionCorrectionGoogleFormFields(values, t) {
+  return [
+    { entryId: 'entry.270706445', label: t('institutionCorrection.fields.schoolName'), value: values.schoolName },
+    { entryId: 'entry.1237975400', label: t('institutionCorrection.fields.province'), value: values.province },
+    { entryId: 'entry.1335981183', label: t('institutionCorrection.fields.city'), value: values.city },
+    { entryId: 'entry.1939582367', label: t('institutionCorrection.fields.county'), value: values.county },
+    { entryId: 'entry.1986759404', label: t('institutionCorrection.fields.schoolAddress'), value: values.schoolAddress },
+    { entryId: 'entry.1979228646', label: t('institutionCorrection.fields.contactInformation'), value: values.contactInformation },
+    { entryId: 'entry.1490111424', label: t('institutionCorrection.fields.headmasterName'), value: values.headmasterName },
+    { entryId: 'entry.302336209', label: t('institutionCorrection.fields.correctionContent'), value: values.correctionContent }
+  ];
+}
+
 async function saveInstitutionCorrectionSubmission({ req, values }) {
   const { binding, bindingName } = getInstitutionCorrectionDatabaseBinding();
   if (!binding) {
@@ -353,6 +366,7 @@ async function saveInstitutionCorrectionSubmission({ req, values }) {
 }
 
 module.exports = {
+  buildInstitutionCorrectionGoogleFormFields,
   CREATE_TABLE_STATEMENT,
   InstitutionCorrectionStorageUnavailableError,
   TABLE_NAME,

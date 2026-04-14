@@ -125,11 +125,21 @@ test('app config no longer ships with a built-in default FORM_ID', () => {
 
   assert.equal(config.formId, '');
   assert.equal(config.googleFormUrl, '');
+  assert.equal(config.correctionSubmitTarget, 'd1');
+  assert.match(
+    config.correctionGoogleFormUrl,
+    /1FAIpQLSfiXdpt8CgOGZQhvsJTc1koQbvXFo6eWfnigQ329r1-3DniNA\/formResponse$/
+  );
+  assert.match(
+    config.correctionGoogleFormViewUrl,
+    /1FAIpQLSfiXdpt8CgOGZQhvsJTc1koQbvXFo6eWfnigQ329r1-3DniNA\/viewform$/
+  );
 });
 
 test('app config defaults FORM_SUBMIT_TARGET to both and derives a form protection secret when omitted', () => {
   const config = loadAppConfig({
     FORM_SUBMIT_TARGET: '',
+    CORRECTION_SUBMIT_TARGET: '',
     FORM_PROTECTION_SECRET: '',
     FORM_ID: '',
     FORM_ID_ENCRYPTED: '',
@@ -139,6 +149,7 @@ test('app config defaults FORM_SUBMIT_TARGET to both and derives a form protecti
   });
 
   assert.equal(config.formSubmitTarget, 'both');
+  assert.equal(config.correctionSubmitTarget, 'd1');
   assert.equal(config.formProtectionSecretConfigured, false);
   assert.match(config.formProtectionSecret, /^[0-9a-f]{64}$/);
   assert.equal(config.rateLimitRedisUrl, '');

@@ -68,7 +68,7 @@ N·C·T 是一个用来记录、整理、公开展示“扭转治疗”相关机
 | 模块 | 说明 |
 | --- | --- |
 | 匿名表单 | 支持匿名提交，带基础防刷、限流与审计日志 |
-| 机构修正 | 提供 `/map/correction` 补充 / 修正提交通道，并写入 D1 |
+| 机构修正 | 提供 `/map/correction` 与 `/correction` 补充 / 修正提交通道，可按配置写入 Google Form、D1 或两者 |
 | 公开地图 | 对外展示机构数据，并提供 `GET /api/map-data` 接口 |
 | 博客内容 | 支持博客列表、文章详情与 Markdown 渲染 |
 | 多语言界面 | 支持简体中文、繁体中文、英文，以及部分动态翻译 |
@@ -243,8 +243,10 @@ README 只保留最常用配置；完整变量说明请查看 [`.dev.vars.exampl
 | `SITE_URL` | 站点正式网址，用于 sitemap、robots 与 canonical 输出 |
 | `FORM_DRY_RUN` | `true` 时只预览提交，不真正发往已配置的提交目标 |
 | `FORM_SUBMIT_TARGET` | `/form` 提交目标，可选 `google`、`d1`、`both`，默认 `both` |
+| `CORRECTION_SUBMIT_TARGET` | `/map/correction` 与 `/correction` 的提交目标，可选 `google`、`d1`、`both`，默认 `d1` |
 | `FORM_PROTECTION_SECRET` | 表单保护与密文解密的核心 secret；留空时会自动生成派生密钥 |
 | `FORM_ID` / `FORM_ID_ENCRYPTED` | Google Form ID，二选一 |
+| `CORRECTION_FORM_ID` / `CORRECTION_GOOGLE_FORM_URL` | 机构补充 / 修正使用的 Google Form；可填 Form ID 或完整 URL，留空时会回退到内置默认表单 |
 | `GOOGLE_SCRIPT_URL` / `GOOGLE_SCRIPT_URL_ENCRYPTED` | 私有 Apps Script 数据源，二选一 |
 | `PUBLIC_MAP_DATA_URL` | 公开地图回退源，私有源慢或暂时不可用时会先顶上 |
 | `GOOGLE_CLOUD_TRANSLATION_API_KEY` | 启用翻译能力时必填 |
@@ -258,8 +260,11 @@ README 只保留最常用配置；完整变量说明请查看 [`.dev.vars.exampl
 - `FORM_ID` 与 `FORM_ID_ENCRYPTED` 只选一个。
 - `GOOGLE_SCRIPT_URL` 与 `GOOGLE_SCRIPT_URL_ENCRYPTED` 只选一个。
 - `FORM_SUBMIT_TARGET` 支持 `google`、`d1`、`both`，默认值为 `both`。
+- `CORRECTION_SUBMIT_TARGET` 支持 `google`、`d1`、`both`，默认值为 `d1`。
 - 如果 `FORM_SUBMIT_TARGET` 包含 `google`，仍需配置 `FORM_ID` 或 `FORM_ID_ENCRYPTED`。
+- 如果 `CORRECTION_SUBMIT_TARGET` 包含 `google`，可配置 `CORRECTION_FORM_ID` 或 `CORRECTION_GOOGLE_FORM_URL`；留空时会使用内置默认表单地址。
 - 如果 `FORM_SUBMIT_TARGET` 包含 `d1`，请确保 Workers 已连接 D1；若绑定名不是 `NCT_DB` 或 `DB`，再额外设置 `D1_BINDING_NAME`。
+- 如果 `CORRECTION_SUBMIT_TARGET` 包含 `d1`，同样请确保 Workers 已连接 D1；若绑定名不是 `NCT_DB` 或 `DB`，再额外设置 `D1_BINDING_NAME`。
 - 如果使用 `FORM_ID_ENCRYPTED` 或 `GOOGLE_SCRIPT_URL_ENCRYPTED`，仍必须显式配置 `FORM_PROTECTION_SECRET`。
 - Workers 正式部署时，敏感值请放到 Cloudflare `Variables and Secrets`，不要写进仓库或 `wrangler.jsonc`。
 - 如果暂时不使用密文配置，至少请把 `FORM_ID` 与 `GOOGLE_SCRIPT_URL` 设为 Secret；`FORM_PROTECTION_SECRET` 可显式设置，也可留空让系统自动生成派生密钥。
@@ -520,7 +525,7 @@ A: 因为它会调用 `npx wrangler deploy`，并且与本仓库的 `package.jso
 | `/sitemap.xml` | 自动生成站点地图 | 会读取 `blog/` 与 `data.json` |
 | `/` | 站点首页，提供表单、地图、文库等入口 | 对应 `views/index.ejs` |
 | `/form` | 匿名表单页，下发地区选项、前端校验规则与防刷 token | 会附带敏感页面响应头，禁止索引 |
-| `/map/correction` | 机构信息补充 / 修正页 | 提交到 `POST /map/correction/submit`；实际写入时需要可用 D1 绑定 |
+| `/map/correction` / `/correction` | 机构信息补充 / 修正页 | 提交到对应的 `POST .../submit`；按 `CORRECTION_SUBMIT_TARGET` 写入 Google Form、D1，或同时写入两者 |
 | `/map` | 地图总览页，展示机构分布、统计与公开数据列表 | 支持 `?inputType=` 预设筛选 |
 | `/map/record/:recordSlug` | 地图提交详情页，独立展示单条提交内容并支持同机构记录上下翻页 | 从 `/map` 的“查看详情页”进入，对应 `views/map_record.ejs` |
 | `/aboutus` | 关于页，展示项目说明与友链 / 致谢信息 | 会读取 `friends.json` |
@@ -536,7 +541,7 @@ A: 因为它会调用 `npx wrangler deploy`，并且与本仓库的 `package.jso
 | --- | --- | --- |
 | `POST /submit` | 匿名表单提交入口 | `FORM_DRY_RUN=true` 时返回预览页，否则进入确认页 |
 | `POST /submit/confirm` | 匿名表单确认后的最终提交入口 | 按 `FORM_SUBMIT_TARGET` 写入 Google Form、D1，或同时写入两者 |
-| `POST /map/correction/submit` | 机构补充 / 修正提交入口 | 仅写入 D1；未配置可用绑定时会返回 503 |
+| `POST /map/correction/submit` / `POST /correction/submit` | 机构补充 / 修正提交入口 | 按 `CORRECTION_SUBMIT_TARGET` 写入 Google Form、D1，或同时写入两者；任一目标成功即视为成功，全部失败时返回失败页 |
 
 ### API 与静态数据路由
 

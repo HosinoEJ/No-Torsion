@@ -5,6 +5,8 @@ const nodePath = require('path');
 const helmet = require('helmet');
 const {
   apiUrl,
+  correctionGoogleFormUrl,
+  correctionSubmitTarget,
   debugMod,
   formDryRun,
   formSubmitTarget,
@@ -125,6 +127,8 @@ app.use(createPageRoutes({
   debugMod,
   formDryRun,
   formSubmitTarget,
+  correctionGoogleFormUrl,
+  correctionSubmitTarget,
   formProtectionMaxAgeMs,
   formProtectionMinFillMs,
   formProtectionSecret,
@@ -160,6 +164,9 @@ app.use(createFormRoutes({
   title
 }));
 app.use(createInstitutionCorrectionRoutes({
+  correctionGoogleFormUrl,
+  correctionSubmitTarget,
+  debugMod,
   formProtectionMaxAgeMs,
   formProtectionMinFillMs,
   formProtectionSecret,

@@ -865,6 +865,8 @@ test('debug page renders when debug mode is enabled', async () => {
   assert.match(response.body, /href="\/debug\/submit-error"/);
   assert.match(response.body, /href="\/debug\/submit-preview"/);
   assert.match(response.body, /href="\/debug\/submit-confirm"/);
+  assert.match(response.body, /href="\/debug\/correction-submit-success"/);
+  assert.match(response.body, /href="\/debug\/correction-submit-error"/);
   assert.match(response.body, /站点配置|Site Configuration/);
 });
 
@@ -880,6 +882,8 @@ test('debug page respects explicit language selection', async () => {
   assert.match(englishResponse.body, /Open submission error preview/);
   assert.match(englishResponse.body, /Open submission preview/);
   assert.match(englishResponse.body, /Open submission confirmation/);
+  assert.match(englishResponse.body, /Open correction success preview/);
+  assert.match(englishResponse.body, /Open correction error preview/);
   assert.match(String(englishResponse.headers['set-cookie']), /lang=en/);
 
   assert.equal(traditionalChineseResponse.statusCode, 200);
@@ -889,6 +893,8 @@ test('debug page respects explicit language selection', async () => {
   assert.match(traditionalChineseResponse.body, /查看提交失敗頁預覽/);
   assert.match(traditionalChineseResponse.body, /查看提交預覽頁/);
   assert.match(traditionalChineseResponse.body, /查看提交確認頁/);
+  assert.match(traditionalChineseResponse.body, /查看補充 \/ 修正成功頁預覽/);
+  assert.match(traditionalChineseResponse.body, /查看補充 \/ 修正失敗頁預覽/);
   assert.match(String(traditionalChineseResponse.headers['set-cookie']), /lang=zh-TW/);
 });
 
@@ -921,6 +927,15 @@ test('standalone submit preview and confirmation debug routes are hidden when de
   assert.equal(confirmResponse.statusCode, 404);
 });
 
+test('correction success and error debug routes are hidden when debug mode is disabled', async () => {
+  const app = loadApp({ DEBUG_MOD: 'false' });
+  const successResponse = await requestPath(app, '/debug/correction-submit-success');
+  const errorResponse = await requestPath(app, '/debug/correction-submit-error');
+
+  assert.equal(successResponse.statusCode, 404);
+  assert.equal(errorResponse.statusCode, 404);
+});
+
 test('standalone submit error preview renders a prefilled Google Form link when debug mode is enabled', async () => {
   const app = loadApp({ DEBUG_MOD: 'true' });
   const response = await requestPath(app, '/debug/submit-error');
@@ -937,7 +952,7 @@ test('standalone submit preview debug route renders mock preview data when debug
 
   assert.equal(response.statusCode, 200);
   assert.match(response.body, /提交预览|Submission Preview/);
-  assert.match(response.body, /Debug Preview Academy/);
+  assert.match(response.body, /调试预览学院|Debug Preview Academy|調試預覽學院/);
   assert.match(response.body, /debug-preview@example\.com/);
   assert.match(response.body, /href="\/debug"/);
 });
@@ -948,7 +963,7 @@ test('standalone submit confirm debug route renders mock confirmation data and s
 
   assert.equal(getResponse.statusCode, 200);
   assert.match(getResponse.body, /提交确认|Submission Confirmation/);
-  assert.match(getResponse.body, /Debug Preview Academy/);
+  assert.match(getResponse.body, /调试预览学院|Debug Preview Academy|調試預覽學院/);
   assert.match(getResponse.body, /action="\/debug\/submit-confirm"/);
   assert.match(getResponse.body, /href="\/debug"/);
 
@@ -964,6 +979,43 @@ test('standalone submit confirm debug route renders mock confirmation data and s
   assert.equal(postResponse.statusCode, 200);
   assert.match(postResponse.body, /提交成功|Submission Successful/);
   assert.match(postResponse.body, /调试提交结果|Debug Submission Result|调試提交結果/);
+});
+
+test('correction success and error debug routes render mock result pages when debug mode is enabled', async () => {
+  const app = loadApp({ DEBUG_MOD: 'true' });
+  const successResponse = await requestPath(app, '/debug/correction-submit-success');
+  const errorResponse = await requestPath(app, '/debug/correction-submit-error');
+
+  assert.equal(successResponse.statusCode, 200);
+  assert.match(successResponse.body, /补充 \/ 修正请求已收到|Correction request received|補充 \/ 修正請求已收到/);
+  assert.match(successResponse.body, /调试提交结果|Debug Submission Result|調試提交結果/);
+  assert.match(successResponse.body, /Google Form/);
+  assert.match(successResponse.body, /D1/);
+
+  assert.equal(errorResponse.statusCode, 200);
+  assert.match(errorResponse.body, /补充 \/ 修正提交失败|Correction submission failed|補充 \/ 修正提交失敗/);
+  assert.match(errorResponse.body, /viewform\?usp=pp_url&amp;entry\.270706445=%E8%B0%83%E8%AF%95%E4%BF%AE%E6%AD%A3%E5%AD%A6%E9%99%A2/);
+  assert.match(errorResponse.body, /entry\.302336209=%E7%94%A8%E4%BA%8E%E6%A3%80%E6%9F%A5\+Google\+Form\+%E5%9B%9E%E9%80%80%E9%93%BE%E6%8E%A5/);
+  assert.match(errorResponse.body, /href="\/debug"/);
+});
+
+test('correction success and error debug routes respect explicit language selection', async () => {
+  const app = loadApp({ DEBUG_MOD: 'true' });
+  const englishSuccessResponse = await requestPath(app, '/debug/correction-submit-success?lang=en');
+  const traditionalChineseErrorResponse = await requestPath(app, '/debug/correction-submit-error?lang=zh-TW');
+
+  assert.equal(englishSuccessResponse.statusCode, 200);
+  assert.match(englishSuccessResponse.body, /<html lang="en">/);
+  assert.match(englishSuccessResponse.body, /Correction request received/);
+  assert.match(englishSuccessResponse.body, /Debug Submission Result/);
+  assert.match(String(englishSuccessResponse.headers['set-cookie']), /lang=en/);
+
+  assert.equal(traditionalChineseErrorResponse.statusCode, 200);
+  assert.match(traditionalChineseErrorResponse.body, /<html lang="zh-TW">/);
+  assert.match(traditionalChineseErrorResponse.body, /補充 \/ 修正提交失敗/);
+  assert.match(traditionalChineseErrorResponse.body, /打開 Google Form 繼續提交/);
+  assert.match(traditionalChineseErrorResponse.body, /viewform\?usp=pp_url&amp;entry\.270706445=%E8%AA%BF%E8%A9%A6%E4%BF%AE%E6%AD%A3%E5%AD%B8%E9%99%A2/);
+  assert.match(String(traditionalChineseErrorResponse.headers['set-cookie']), /lang=zh-TW/);
 });
 
 test('standalone submit error preview respects explicit language selection', async () => {

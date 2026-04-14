@@ -20,6 +20,12 @@ const {
 } = require('../services/formConfirmationService');
 const { validateFormProtection } = require('../services/formProtectionService');
 const { logAuditEvent } = require('../services/auditLogService');
+const {
+  buildSubmissionDiagnostics,
+  getSubmitTargets,
+  redactGoogleFormUrl,
+  shouldBuildGoogleFallbackUrl
+} = require('../services/submissionTargetService');
 
 function encodeConfirmationPayload(confirmationState) {
   return Buffer.from(JSON.stringify(confirmationState || {}), 'utf8').toString('base64url');
@@ -45,50 +51,6 @@ function decodeConfirmationPayload(payload) {
   return {
     encodedPayload: decodedPayload,
     submissionValues: null
-  };
-}
-
-function getSubmitTargets(formSubmitTarget) {
-  if (formSubmitTarget === 'both') {
-    return ['google', 'd1'];
-  }
-
-  if (formSubmitTarget === 'd1') {
-    return ['d1'];
-  }
-
-  return ['google'];
-}
-
-function shouldBuildGoogleFallbackUrl({ formSubmitTarget, googleFormUrl, encodedPayload }) {
-  return formSubmitTarget !== 'd1'
-    && Boolean(String(googleFormUrl || '').trim())
-    && Boolean(String(encodedPayload || '').trim());
-}
-
-function buildSubmissionDiagnostics({ req, resultsByTarget, successfulTargets = [] }) {
-  const targetLabels = {
-    d1: req.t('submitStatus.targets.d1'),
-    google: req.t('submitStatus.targets.google')
-  };
-  const attemptedTargetIds = Object.keys(resultsByTarget);
-
-  return {
-    attemptedTargets: attemptedTargetIds.map((target) => ({
-      id: target,
-      label: targetLabels[target] || target
-    })),
-    successfulTargets: successfulTargets.map((target) => ({
-      id: target,
-      label: targetLabels[target] || target
-    })),
-    failedTargets: attemptedTargetIds
-      .filter((target) => !successfulTargets.includes(target))
-      .map((target) => ({
-        id: target,
-        label: targetLabels[target] || target,
-        error: resultsByTarget[target]?.error || ''
-      }))
   };
 }
 
@@ -145,20 +107,6 @@ async function submitToConfiguredTargets({
   };
 }
 
-function redactGoogleFormUrl(googleFormUrl) {
-  const normalizedUrl = String(googleFormUrl || '').trim();
-
-  if (!normalizedUrl) {
-    return '';
-  }
-
-  return normalizedUrl.replace(/\/d\/e\/([^/]+)\//, (_match, formId) => {
-    const visiblePrefix = formId.slice(0, 4);
-    const visibleSuffix = formId.slice(-4);
-    return `/d/e/${visiblePrefix}...${visibleSuffix}/`;
-  });
-}
-
 function renderSubmitFailurePage({
   encodedPayload,
   formSubmitTarget,
@@ -170,7 +118,7 @@ function renderSubmitFailurePage({
   title
 }) {
   return res.status(500).render('submit_error', {
-    fallbackUrl: shouldBuildGoogleFallbackUrl({ formSubmitTarget, googleFormUrl, encodedPayload })
+    fallbackUrl: shouldBuildGoogleFallbackUrl({ submitTarget: formSubmitTarget, googleFormUrl, encodedPayload })
       ? buildGoogleFormPrefillUrl(googleFormUrl, encodedPayload)
       : '',
     pageRobots: sensitiveRobotsPolicy,

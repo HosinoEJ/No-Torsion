@@ -47,6 +47,18 @@ FORM_DRY_RUN="true"
 # d1 = 仅写入 D1
 # both = 两边都投，任一成功即视为成功
 FORM_SUBMIT_TARGET="google"
+# correction 提交目标：
+# google = 仅投递 Google Form
+# d1 = 仅写入 D1（默认）
+# both = 两边都投，任一成功即视为成功
+CORRECTION_SUBMIT_TARGET="d1"
+# 机构补充 / 修正 Google Form：
+# - 可以直接填完整 URL，例如 https://docs.google.com/forms/d/e/.../viewform
+# - 也可以只填 Form ID
+# - 如果留空，应用会回退到默认值并自动拼接为：
+#   https://docs.google.com/forms/d/e/1FAIpQLSfiXdpt8CgOGZQhvsJTc1koQbvXFo6eWfnigQ329r1-3DniNA/viewform
+CORRECTION_FORM_ID="1FAIpQLSfiXdpt8CgOGZQhvsJTc1koQbvXFo6eWfnigQ329r1"
+CORRECTION_GOOGLE_FORM_URL=""
 FORM_PROTECTION_MIN_FILL_MS="3000"
 FORM_PROTECTION_MAX_AGE_MS="86400000"
 

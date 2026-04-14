@@ -39,6 +39,7 @@ const messages = {
       form: '填写表单|{title}',
       institutionCorrection: '机构信息补充 / 修正|{title}',
       institutionCorrectionSuccess: '补充 / 修正已提交|{title}',
+      institutionCorrectionError: '补充 / 修正提交失败|{title}',
       map: '地图|{title}',
       mapRecord: '提交详情|{title}',
       about: '关于我们|{title}',
@@ -201,7 +202,7 @@ const messages = {
     institutionCorrection: {
       title: '机构信息补充 / 修正',
       subtitle: '如果地图中的机构信息需要补充、修正或更新，可以在这里提交。',
-      privacyNotice: '隐私说明：此表单会将补充 / 修正请求保存到站点数据库；当网站部署在 Cloudflare Workers 上时，会写入 D1 数据库。请尽量只填写机构公开信息，不要提交与此无关的个人敏感信息。',
+      privacyNotice: '隐私说明：此表单提交内容会根据站点配置写入 Google Form、D1 数据库，或同时写入两者进行保存和整理。请尽量只填写机构公开信息，不要提交与此无关的个人敏感信息。',
       backToMap: '返回地图',
       sections: {
         institution: '机构信息',
@@ -258,6 +259,15 @@ const messages = {
         title: '补充 / 修正请求已收到',
         message: '感谢你的补充。我们会在核实后处理这条机构信息修正请求。',
         backToMap: '返回地图'
+      },
+      errorPage: {
+        title: '补充 / 修正提交失败',
+        intro: '站内提交没有成功。如果下方提供了已预填内容的 Google Form 链接，你也可以继续在那里提交。',
+        privacyNote: '注意：下面这个链接包含你刚刚填写的补充 / 修正内容，请不要随意分享。',
+        proxyNote: '提示：如果你当前网络无法直接访问 Google 服务，打开 Google Form 页面可能需要网络代理。',
+        openFallback: '打开 Google Form 继续提交',
+        urlLabel: '带预填内容的 Google Form 链接',
+        backToForm: '返回补充 / 修正表单'
       },
       errors: {
         submitFailedPrefix: '提交失败：',
@@ -593,11 +603,13 @@ const messages = {
         debugMode: '调试模式',
         formDryRun: '表单干跑',
         formSubmitTarget: '表单提交目标',
+        correctionSubmitTarget: '补充 / 修正提交目标',
         maintenanceMode: '维护模式',
         maintenanceRetryAfter: '维护重试时间',
         trustProxy: 'Trust Proxy',
         mapNodeTransport: 'Node 地图传输覆写',
         googleForm: 'Google Form 提交地址',
+        correctionGoogleForm: '补充 / 修正 Google Form',
         googleScript: '私有地图上游',
         publicMapDataUrl: '公开地图回退源',
         translationProvider: '翻译服务',
@@ -627,6 +639,25 @@ const messages = {
         milliseconds: '{count} ms',
         seconds: '{count} s'
       },
+      samples: {
+        d1SkippedError: '调试模拟跳过了真实的 D1 写入。',
+        form: {
+          schoolName: '调试预览学院',
+          schoolAddress: '洛江区调试路 12 号',
+          experience: '用于检查布局与多语言展示的调试预览内容。',
+          headmasterName: '调试负责人',
+          contactInformation: 'debug-preview@example.com',
+          scandal: '仅用于调试的丑闻摘要占位内容。',
+          other: '仅用于调试的其他补充内容。'
+        },
+        correction: {
+          schoolName: '调试修正学院',
+          schoolAddress: '洛江区修正调试路 5 号',
+          contactInformation: 'debug-correction@example.com',
+          headmasterName: '调试修正负责人',
+          correctionContent: '用于检查 Google Form 回退链接和结果页布局的调试修正内容。'
+        }
+      },
       submitTargets: {
         both: 'Google Form + D1',
         d1: 'D1 数据库',
@@ -635,7 +666,9 @@ const messages = {
       links: {
         submitErrorPreview: '查看提交失败页预览',
         submitPreview: '查看提交预览页',
-        submitConfirm: '查看提交确认页'
+        submitConfirm: '查看提交确认页',
+        correctionSubmitSuccessPreview: '查看补充 / 修正成功页预览',
+        correctionSubmitErrorPreview: '查看补充 / 修正失败页预览'
       }
     },
     data: {
@@ -666,6 +699,7 @@ const messages = {
       form: '填寫表單|{title}',
       institutionCorrection: '機構資訊補充 / 修正|{title}',
       institutionCorrectionSuccess: '補充 / 修正已提交|{title}',
+      institutionCorrectionError: '補充 / 修正提交失敗|{title}',
       map: '地圖|{title}',
       mapRecord: '提交詳情|{title}',
       about: '關於我們|{title}',
@@ -828,7 +862,7 @@ const messages = {
     institutionCorrection: {
       title: '機構資訊補充 / 修正',
       subtitle: '如果地圖中的機構資訊需要補充、修正或更新，可以在這裡提交。',
-      privacyNotice: '隱私說明：此表單會將補充 / 修正請求保存到站點資料庫；當網站部署在 Cloudflare Workers 上時，會寫入 D1 資料庫。請盡量只填寫機構公開資訊，不要提交與此無關的個人敏感資訊。',
+      privacyNotice: '隱私說明：此表單提交內容會依站點配置寫入 Google Form、D1 資料庫，或同時寫入兩者進行保存和整理。請盡量只填寫機構公開資訊，不要提交與此無關的個人敏感資訊。',
       backToMap: '返回地圖',
       sections: {
         institution: '機構資訊',
@@ -885,6 +919,15 @@ const messages = {
         title: '補充 / 修正請求已收到',
         message: '感謝你的補充。我們會在核實後處理這條機構資訊修正請求。',
         backToMap: '返回地圖'
+      },
+      errorPage: {
+        title: '補充 / 修正提交失敗',
+        intro: '站內提交沒有成功。如果下方提供了已預填內容的 Google Form 連結，你也可以繼續在那裡提交。',
+        privacyNote: '注意：下面這個連結包含你剛剛填寫的補充 / 修正內容，請不要隨意分享。',
+        proxyNote: '提示：如果你目前的網路無法直接存取 Google 服務，打開 Google Form 頁面可能需要網路代理。',
+        openFallback: '打開 Google Form 繼續提交',
+        urlLabel: '帶預填內容的 Google Form 連結',
+        backToForm: '返回補充 / 修正表單'
       },
       errors: {
         submitFailedPrefix: '提交失敗：',
@@ -1220,11 +1263,13 @@ const messages = {
         debugMode: '調試模式',
         formDryRun: '表單 Dry Run',
         formSubmitTarget: '表單提交目標',
+        correctionSubmitTarget: '補充 / 修正提交目標',
         maintenanceMode: '維護模式',
         maintenanceRetryAfter: '維護重試時間',
         trustProxy: 'Trust Proxy',
         mapNodeTransport: 'Node 地圖傳輸覆寫',
         googleForm: 'Google Form 提交位址',
+        correctionGoogleForm: '補充 / 修正 Google Form',
         googleScript: '私有地圖上游',
         publicMapDataUrl: '公開地圖回退源',
         translationProvider: '翻譯服務',
@@ -1254,6 +1299,25 @@ const messages = {
         milliseconds: '{count} ms',
         seconds: '{count} s'
       },
+      samples: {
+        d1SkippedError: '調試模擬略過了真實的 D1 寫入。',
+        form: {
+          schoolName: '調試預覽學院',
+          schoolAddress: '洛江區調試路 12 號',
+          experience: '用於檢查版面與多語言展示的調試預覽內容。',
+          headmasterName: '調試負責人',
+          contactInformation: 'debug-preview@example.com',
+          scandal: '僅用於調試的醜聞摘要佔位內容。',
+          other: '僅用於調試的其他補充內容。'
+        },
+        correction: {
+          schoolName: '調試修正學院',
+          schoolAddress: '洛江區修正調試路 5 號',
+          contactInformation: 'debug-correction@example.com',
+          headmasterName: '調試修正負責人',
+          correctionContent: '用於檢查 Google Form 回退連結和結果頁版面的調試修正內容。'
+        }
+      },
       submitTargets: {
         both: 'Google Form + D1',
         d1: 'D1 資料庫',
@@ -1262,7 +1326,9 @@ const messages = {
       links: {
         submitErrorPreview: '查看提交失敗頁預覽',
         submitPreview: '查看提交預覽頁',
-        submitConfirm: '查看提交確認頁'
+        submitConfirm: '查看提交確認頁',
+        correctionSubmitSuccessPreview: '查看補充 / 修正成功頁預覽',
+        correctionSubmitErrorPreview: '查看補充 / 修正失敗頁預覽'
       }
     },
     data: {
@@ -1293,6 +1359,7 @@ const messages = {
       form: 'Form | {title}',
       institutionCorrection: 'Institution Correction | {title}',
       institutionCorrectionSuccess: 'Correction Submitted | {title}',
+      institutionCorrectionError: 'Correction Submission Failed | {title}',
       map: 'Map | {title}',
       mapRecord: 'Submission Detail | {title}',
       about: 'About | {title}',
@@ -1455,7 +1522,7 @@ const messages = {
     institutionCorrection: {
       title: 'Institution Information Correction',
       subtitle: 'Use this form if an institution shown on the map needs additional details, corrections, or updates.',
-      privacyNotice: 'Privacy notice: this form stores correction requests in the site database. When deployed on Cloudflare Workers, submissions can be written to D1. Please provide institution-facing public information only, and avoid unrelated personal sensitive information.',
+      privacyNotice: 'Privacy notice: submissions from this form may be written to Google Form, the D1 database, or both depending on the site configuration. Please provide institution-facing public information only, and avoid unrelated personal sensitive information.',
       backToMap: 'Back to Map',
       sections: {
         institution: 'Institution Information',
@@ -1512,6 +1579,15 @@ const messages = {
         title: 'Correction request received',
         message: 'Thank you for the update. We will review this institution correction request and process it after verification.',
         backToMap: 'Back to Map'
+      },
+      errorPage: {
+        title: 'Correction submission failed',
+        intro: 'The in-site correction submission did not complete successfully. If a prefilled Google Form fallback link is available below, you can continue there.',
+        privacyNote: 'Note: the link below contains the correction details you just entered, so please do not share it casually.',
+        proxyNote: 'Note: if your current network cannot access Google services directly, opening the Google Form page may require a network proxy.',
+        openFallback: 'Open Google Form to Continue',
+        urlLabel: 'Prefilled Google Form Link',
+        backToForm: 'Back to Correction Form'
       },
       errors: {
         submitFailedPrefix: 'Submission failed: ',
@@ -1847,11 +1923,13 @@ const messages = {
         debugMode: 'Debug Mode',
         formDryRun: 'Form Dry Run',
         formSubmitTarget: 'Form Submission Target',
+        correctionSubmitTarget: 'Correction Submission Target',
         maintenanceMode: 'Maintenance Mode',
         maintenanceRetryAfter: 'Maintenance Retry-After',
         trustProxy: 'Trust Proxy',
         mapNodeTransport: 'Node Map Transport Override',
         googleForm: 'Google Form Submit URL',
+        correctionGoogleForm: 'Correction Google Form',
         googleScript: 'Private Map Upstream',
         publicMapDataUrl: 'Public Map Fallback URL',
         translationProvider: 'Translation Provider',
@@ -1881,6 +1959,25 @@ const messages = {
         milliseconds: '{count} ms',
         seconds: '{count} s'
       },
+      samples: {
+        d1SkippedError: 'Debug simulation skipped the real D1 write.',
+        form: {
+          schoolName: 'Debug Preview Academy',
+          schoolAddress: 'Debug Road 12, Luojiang District',
+          experience: 'Debug preview sample content for layout and localization checks.',
+          headmasterName: 'Debug Principal',
+          contactInformation: 'debug-preview@example.com',
+          scandal: 'Debug-only scandal summary placeholder.',
+          other: 'Debug-only additional notes placeholder.'
+        },
+        correction: {
+          schoolName: 'Debug Correction Academy',
+          schoolAddress: 'Debug Correction Road 5, Luojiang District',
+          contactInformation: 'debug-correction@example.com',
+          headmasterName: 'Debug Correction Principal',
+          correctionContent: 'Debug correction preview content for Google Form fallback and result-page checks.'
+        }
+      },
       submitTargets: {
         both: 'Google Form + D1',
         d1: 'D1 Database',
@@ -1889,7 +1986,9 @@ const messages = {
       links: {
         submitErrorPreview: 'Open submission error preview',
         submitPreview: 'Open submission preview',
-        submitConfirm: 'Open submission confirmation'
+        submitConfirm: 'Open submission confirmation',
+        correctionSubmitSuccessPreview: 'Open correction success preview',
+        correctionSubmitErrorPreview: 'Open correction error preview'
       }
     },
     data: {

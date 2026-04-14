@@ -2,6 +2,8 @@ const app = require('./app');
 const {
   appPort,
   apiUrl,
+  correctionGoogleFormUrl,
+  correctionSubmitTarget,
   debugMod,
   formDryRun,
   formId,
@@ -31,6 +33,9 @@ if (require.main === module) {
     }
     if ((formSubmitTarget === 'google' || formSubmitTarget === 'both') && !formId) {
       console.warn('警告！未設置 FORM_ID 或 FORM_ID_ENCRYPTED，表單最終提交將無法發送到 Google Form。');
+    }
+    if ((correctionSubmitTarget === 'google' || correctionSubmitTarget === 'both') && !correctionGoogleFormUrl) {
+      console.warn('警告！未設置 CORRECTION_FORM_ID / CORRECTION_GOOGLE_FORM_URL，機構補充 / 修正表單將無法發送到 Google Form。');
     }
     if (!formProtectionSecretConfigured) {
       console.warn('警告！未設置 FORM_PROTECTION_SECRET，表單防刷 token 正使用自動生成的派生密鑰；如需解密 FORM_ID_ENCRYPTED / GOOGLE_SCRIPT_URL_ENCRYPTED，仍需顯式設置高強度隨機值。');

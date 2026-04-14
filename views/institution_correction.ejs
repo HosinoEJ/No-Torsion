@@ -6,7 +6,7 @@
     <h1><%= t('institutionCorrection.title') %></h1>
     <p class="form-subtitle"><%= t('institutionCorrection.subtitle') %></p>
 
-    <form action="/map/correction/submit" method="POST" id="institutionCorrectionForm">
+    <form action="<%= typeof correctionFormAction !== 'undefined' && correctionFormAction ? correctionFormAction : '/map/correction/submit' %>" method="POST" id="institutionCorrectionForm">
         <div class="form-honeypot" aria-hidden="true">
             <label for="website">Website</label>
             <input type="text" name="website" id="website" tabindex="-1" autocomplete="off" spellcheck="false">
