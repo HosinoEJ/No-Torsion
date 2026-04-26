@@ -26,7 +26,7 @@
 - 渲染 `/`、`/map`、`/blog`、`/port/:id`、`/privacy`、`/form` 等靜態前端路由
 - 在建置階段產生 `site-bootstrap.json`、`area-selector.json` 與部落格文章快照
 - 重用倉庫內的 `public/content/map-data.json` 靜態快照，並在執行期按需讀取公開地圖資料
-- 在設定 `VITE_NCT_SUB_FORM_URL` 時，把 `/form` 入口導向 `NCT_backend` 的獨立表單頁
+- 在設定 `VITE_NCT_SUB_FORM_URL` 時，在前端 `/form` 頁面內嵌 `NCT_backend` 的獨立表單頁
 - 在設定 `VITE_NCT_SUB_FORM_URL` 時，重用同一個後端的 `/api/no-torsion/translate-text` 處理英文部落格正文，以及非 `zh-CN` 語言下記錄詳情的執行期翻譯
 
 目前根目錄 **不再** 提供下列能力：
@@ -51,14 +51,14 @@
 | 地圖瀏覽 | 讀取 `VITE_NCT_API_SQL_PUBLIC_DATA_URL` 指向的公開 JSON；預設回退到 `public/content/map-data.json` |
 | 部落格內容 | 建置時把 Markdown 轉成包含預先渲染 HTML 的靜態 JSON |
 | 多語言 | 透過 `site-bootstrap.json` 下發詞條、語言選項與預設語言 |
-| 表單入口 | `/form` 一直都是前端入口頁；設定 `VITE_NCT_SUB_FORM_URL` 後會自動導向 `NCT_backend` 的獨立表單頁，否則顯示 `api-only` 說明 |
+| 表單入口 | `/form` 一直都是前端入口頁；設定 `VITE_NCT_SUB_FORM_URL` 後會在該頁內嵌 `NCT_backend` 的獨立表單頁，否則顯示 `api-only` 說明 |
 | 執行期翻譯 | 需設定 `VITE_NCT_SUB_FORM_URL`；英文部落格啟用文章翻譯，非 `zh-CN` 記錄詳情啟用欄位翻譯 |
 
 ## 相容性說明
 
 倉庫裡仍保留了部分遷移期前端邏輯，方便與舊鏈路相容，但要注意：
 
-- `/form` 在目前專案裡不是本地提交流程，而是一個導向 / 說明頁
+- `/form` 在目前專案裡不是本地提交流程，而是一個前端承載 / 說明頁；設定後會透過 iframe 載入後端獨立表單
 - 倉庫仍保留了機構修正、提交預覽 / 確認 / 結果頁等相容元件
 - 這些相容頁面通常依賴後端以非 `frontend-router` 的 `pageType` / `pageProps` 注入方式重用；純靜態部署不會自行解析 `/map/correction` 之類路徑
 - 相關提交仍依賴同源的 `/api/frontend-runtime`、`/map/correction/submit` 或 `/correction/submit`
@@ -66,8 +66,8 @@
 
 也就是說，直接把 `NCT_frontend` 當作「純靜態站點」部署時：
 
-- 地圖、部落格、隱私頁、文章詳情頁，以及 `/form` 的說明 / 導向頁都可以正常工作
-- `/form` 只有在設定 `VITE_NCT_SUB_FORM_URL` 後才會自動導向，並出現在主導覽中
+- 地圖、部落格、隱私頁、文章詳情頁，以及 `/form` 的說明 / 內嵌頁都可以正常工作
+- `/form` 只有在設定 `VITE_NCT_SUB_FORM_URL` 後才會載入後端表單，並出現在主導覽中
 - 機構修正與舊提交流程仍需要額外提供相容後端，或繼續使用 `NCT_old`
 
 ## 技術棧
@@ -111,7 +111,7 @@ cp .env.example .env
 按功能視為必填：
 
 - `VITE_NCT_API_SQL_PUBLIC_DATA_URL`：當你希望前端直接讀取 `NCT_database` 的即時公開資料，而不是倉庫內快照時
-- `VITE_NCT_SUB_FORM_URL`：當你希望啟用 `/form` 跳轉與執行期翻譯時
+- `VITE_NCT_SUB_FORM_URL`：當你希望啟用 `/form` 表單入口與執行期翻譯時
 
 關鍵變數如下：
 

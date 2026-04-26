@@ -36,8 +36,8 @@ const BLOG_TRANSLATION_REQUEST_BATCH_SIZE = 6;
 const EASTER_EGG_CLICK_TARGET = 6;
 const EASTER_EGG_CLICK_WINDOW_MS = 2400;
 const EASTER_EGG_TRIGGER_EVENT = 'nct:easter-egg-activate';
-const EASTER_EGG_IMAGE_SRC = '/media/easter-eggs/futarinomahou.png';
-const EASTER_EGG_MIDI_SRC = '/media/easter-eggs/futarinomahou.mid';
+const EASTER_EGG_IMAGE_SRC = 'https://avatars.githubusercontent.com/u/177436503?v=4';
+const EASTER_EGG_MIDI_SRC = '/media/easter-eggs/EasterEgg.mid';
 const SCHOOL_MARKER_SCALE = 0.75;
 const SCHOOL_MARKER_DEFAULT_OPACITY = 0.75;
 const SCHOOL_MARKER_MAX_OPACITY = 1.0;
@@ -1068,7 +1068,7 @@ function resolveFrontendRoute(currentPath) {
     return {
       pathname,
       query,
-      routeType: 'form-redirect'
+      routeType: 'form-entry'
     };
   }
 
@@ -1888,7 +1888,7 @@ function SiteHeader({ bootstrap, easterEggActive }) {
     },
     backendConfig.formEnabled
       ? {
-          active: false,
+          active: currentPath.startsWith('/form'),
           href: backendConfig.formHref,
           label: readPath(i18n, ['index', 'fillForm'], 'Form'),
           navigationProps: getLinkNavigationProps(backendConfig.formHref)
@@ -1912,7 +1912,7 @@ function SiteHeader({ bootstrap, easterEggActive }) {
         <a className="brand-lockup" href={appendLangToUrl('/', lang)}>
           <span className={`brand-lockup__mark${easterEggActive ? ' is-easter-egg' : ''}`}>
             {easterEggActive
-              ? <img alt="Futari no Mahou" src={EASTER_EGG_IMAGE_SRC} />
+              ? <img alt="Easter egg avatar" src={EASTER_EGG_IMAGE_SRC} />
               : 'NCT'}
           </span>
           <span className="brand-lockup__text">
@@ -2008,23 +2008,23 @@ function getFormAccessModeCopy(lang, formEnabled) {
   if (formEnabled) {
     if (lang === 'en') {
       return {
-        body: 'Form submission is now handled by the Hono backend in nct-api-sql-sub. The button below opens the standalone submission page hosted there.',
-        ctaLabel: 'Open standalone form',
+        body: 'Form submission is handled by the Hono backend and displayed on this page.',
+        ctaLabel: 'Go to form',
         secondary: 'Validation, confirmation, and the final delivery step all happen on the backend page.'
       };
     }
 
     if (lang === 'zh-TW') {
       return {
-        body: '表單提交流程已移交給 nct-api-sql-sub 的 Hono 後端。下方按鈕會打開由後端託管的獨立填寫頁。',
-        ctaLabel: '前往獨立填寫頁',
+        body: '表單提交流程由 Hono 後端處理，並已嵌入目前頁面。',
+        ctaLabel: '前往表單',
         secondary: '校驗、確認與最終投遞都會在後端頁面完成。'
       };
     }
 
     return {
-      body: '表单提交流程已移交给 nct-api-sql-sub 的 Hono 后端。下方按钮会打开由后端托管的独立填写页。',
-      ctaLabel: '前往独立填写页',
+      body: '表单提交流程由 Hono 后端处理，并已嵌入当前页面。',
+      ctaLabel: '前往表单',
       secondary: '校验、确认与最终投递都会在后端页面完成。'
     };
   }
@@ -4678,18 +4678,10 @@ function CorrectionErrorPage({ bootstrap }) {
   );
 }
 
-function FormRedirectPage({ bootstrap }) {
+function FormEntryPage({ bootstrap }) {
   const { i18n, lang } = bootstrap;
   const backendConfig = getNoTorsionBackendConfig(bootstrap);
   const accessCopy = getFormAccessModeCopy(lang, backendConfig.formEnabled);
-
-  useEffect(() => {
-    if (!backendConfig.formEnabled || !backendConfig.formHref) {
-      return;
-    }
-
-    window.location.replace(backendConfig.formHref);
-  }, [backendConfig.formEnabled, backendConfig.formHref]);
 
   return (
     <PageChrome bootstrap={bootstrap}>
@@ -4699,11 +4691,13 @@ function FormRedirectPage({ bootstrap }) {
         title={readPath(i18n, ['index', 'fillForm'], 'Form')}
       >
         <div className="panel-actions">
+          <a className="glass-button" href={appendLangToUrl('/', lang)}>
+            {readPath(i18n, ['navigation', 'home'], 'Home')}
+          </a>
           {backendConfig.formEnabled ? (
             <a
               className="glass-button glass-button--primary"
-              href={backendConfig.formHref}
-              {...getLinkNavigationProps(backendConfig.formHref)}
+              href="#form-embed"
             >
               {accessCopy.ctaLabel || readPath(i18n, ['index', 'fillForm'], 'Form')}
             </a>
@@ -4716,6 +4710,19 @@ function FormRedirectPage({ bootstrap }) {
           </a>
         </div>
       </HeroBlock>
+
+      {backendConfig.formEnabled && backendConfig.backendFormHref ? (
+        <section className="form-embed-shell" id="form-embed" aria-label={readPath(i18n, ['index', 'fillForm'], 'Form')}>
+          <iframe
+            allow="geolocation"
+            className="form-embed-frame"
+            src={backendConfig.backendFormHref}
+            title={readPath(i18n, ['index', 'fillForm'], 'Form')}
+          />
+        </section>
+      ) : (
+        <FormAccessSection bootstrap={bootstrap} />
+      )}
     </PageChrome>
   );
 }
@@ -5233,7 +5240,7 @@ function resolveFrontendDocumentTitle(route, i18n, siteName) {
         articleTitle: route.articleId || readPath(i18n, ['blog', 'title'], 'Article'),
         title: resolvedSiteName
       });
-    case 'form-redirect':
+    case 'form-entry':
       return formatMessage(pageTitles.form || '{title}', {
         title: resolvedSiteName
       });
@@ -5330,7 +5337,7 @@ export function App({ bootstrap }) {
   if (normalizedBootstrap.pageType === 'frontend-router') {
     const pageByRoute = {
       article: <ArticlePage bootstrap={normalizedBootstrap} />,
-      'form-redirect': <FormRedirectPage bootstrap={normalizedBootstrap} />,
+      'form-entry': <FormEntryPage bootstrap={normalizedBootstrap} />,
       home: <HomePage bootstrap={normalizedBootstrap} />,
       'not-found': <NotFoundPage bootstrap={normalizedBootstrap} />,
       portal: <PortalPage bootstrap={normalizedBootstrap} />,

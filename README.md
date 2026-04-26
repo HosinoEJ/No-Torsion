@@ -26,7 +26,7 @@
 - 渲染 `/`、`/map`、`/blog`、`/port/:id`、`/privacy`、`/form` 等静态前端路由
 - 在构建阶段生成 `site-bootstrap.json`、`area-selector.json` 和博客文章快照
 - 复用仓库内的 `public/content/map-data.json` 静态快照，并在运行时按需读取公开地图数据
-- 在配置 `VITE_NCT_SUB_FORM_URL` 时，把 `/form` 入口跳转到 `NCT_backend` 的独立表单页
+- 在配置 `VITE_NCT_SUB_FORM_URL` 时，在前端 `/form` 页面内嵌 `NCT_backend` 的独立表单页
 - 在配置 `VITE_NCT_SUB_FORM_URL` 时，复用同一后端的 `/api/no-torsion/translate-text` 处理英文博客正文，以及非 `zh-CN` 语言下记录详情的运行时翻译
 
 当前根目录 **不再** 提供下列能力：
@@ -51,14 +51,14 @@
 | 地图浏览 | 读取 `VITE_NCT_API_SQL_PUBLIC_DATA_URL` 指向的公开 JSON；默认回退到仓库内 `public/content/map-data.json` |
 | 博客内容 | 构建时把 Markdown 转成包含预渲染 HTML 的静态 JSON，前端按需加载 |
 | 多语言 | 通过 `site-bootstrap.json` 下发词条、语言选项和默认语言 |
-| 表单入口 | `/form` 始终是前端入口页；配置 `VITE_NCT_SUB_FORM_URL` 后会自动跳转到 `NCT_backend` 的独立表单页，否则显示 `api-only` 说明 |
+| 表单入口 | `/form` 始终是前端入口页；配置 `VITE_NCT_SUB_FORM_URL` 后会在该页内嵌 `NCT_backend` 的独立表单页，否则显示 `api-only` 说明 |
 | 运行时翻译 | 需配置 `VITE_NCT_SUB_FORM_URL`；英文博客启用文章翻译，非 `zh-CN` 记录详情启用字段翻译 |
 
 ## 兼容说明
 
 仓库里仍保留了部分迁移期前端逻辑，方便与旧链路兼容，但要注意：
 
-- `/form` 在当前项目里不是本地提交流程，而是一个跳转 / 说明页
+- `/form` 在当前项目里不是本地提交流程，而是一个前端承载 / 说明页；配置后会通过 iframe 加载后端独立表单
 - 仓库仍保留了机构修正、提交预览 / 确认 / 结果页等兼容组件
 - 这些兼容页面通常依赖后端以非 `frontend-router` 的 `pageType` / `pageProps` 注入方式复用；纯静态部署不会自行解析 `/map/correction` 之类路径
 - 相关提交仍依赖同源的 `/api/frontend-runtime`、`/map/correction/submit` 或 `/correction/submit`
@@ -66,8 +66,8 @@
 
 也就是说，直接把 `NCT_frontend` 当作“纯静态站点”部署时：
 
-- 地图、博客、隐私页、文章详情页，以及 `/form` 的说明 / 跳转页可以正常工作
-- `/form` 只有在配置 `VITE_NCT_SUB_FORM_URL` 后才会自动跳转，并出现在主导航中
+- 地图、博客、隐私页、文章详情页，以及 `/form` 的说明 / 内嵌页可以正常工作
+- `/form` 只有在配置 `VITE_NCT_SUB_FORM_URL` 后才会加载后端表单，并出现在主导航中
 - 机构修正与旧提交流程需要额外提供兼容后端，或者继续使用 `NCT_old`
 
 ## 技术栈
@@ -111,7 +111,7 @@ cp .env.example .env
 按功能视为必填：
 
 - `VITE_NCT_API_SQL_PUBLIC_DATA_URL`：当你希望前端直接读取 `NCT_database` 的实时公开数据，而不是仓库内快照时
-- `VITE_NCT_SUB_FORM_URL`：当你希望启用 `/form` 跳转和运行时翻译时
+- `VITE_NCT_SUB_FORM_URL`：当你希望启用 `/form` 表单入口和运行时翻译时
 
 关键变量如下：
 
@@ -216,7 +216,7 @@ https://www.example.com/blog
 https://www.example.com/form
 ```
 
-`/form` 应跳转到 `https://sub.example.com/form`。地图页应从 `https://api.example.com/` 读取公开 JSON；如果读不到，会回退到构建产物中的静态快照。
+`/form` 应保持在前端域名下，并在页面内加载 `https://sub.example.com/form`。地图页应从 `https://api.example.com/` 读取公开 JSON；如果读不到，会回退到构建产物中的静态快照。
 
 ## README 核对结果
 

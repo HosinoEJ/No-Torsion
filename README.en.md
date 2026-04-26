@@ -26,7 +26,7 @@
 - rendering static frontend routes such as `/`, `/map`, `/blog`, `/port/:id`, `/privacy`, and `/form`
 - generating `site-bootstrap.json`, `area-selector.json`, and blog article snapshots at build time
 - reusing the checked-in `public/content/map-data.json` snapshot while reading public map data at runtime
-- redirecting `/form` to the standalone `NCT_backend` form page when `VITE_NCT_SUB_FORM_URL` is configured
+- embedding the standalone `NCT_backend` form page inside the frontend `/form` route when `VITE_NCT_SUB_FORM_URL` is configured
 - reusing the same backend origin for runtime translation of English blog articles and record details in non-`zh-CN` languages
 
 The root project no longer ships:
@@ -51,14 +51,14 @@ Related sibling projects:
 | Map browsing | Reads the public dataset from `VITE_NCT_API_SQL_PUBLIC_DATA_URL`, falling back to `public/content/map-data.json` |
 | Blog content | Converts Markdown into static JSON payloads with pre-rendered HTML during the build |
 | Multilingual UI | Uses `site-bootstrap.json` for messages, supported languages, and defaults |
-| Form entry | `/form` is always a frontend gateway page; when `VITE_NCT_SUB_FORM_URL` is set it redirects to `NCT_backend`, otherwise it shows `api-only` guidance |
+| Form entry | `/form` is always a frontend gateway page; when `VITE_NCT_SUB_FORM_URL` is set it embeds the standalone `NCT_backend` form page, otherwise it shows `api-only` guidance |
 | Runtime translation | Requires `VITE_NCT_SUB_FORM_URL`; English blog articles get article translation, and non-`zh-CN` record details get field translation |
 
 ## Compatibility Notes
 
 The repo still contains some migration-phase frontend code for compatibility, but there is an important boundary:
 
-- `/form` is no longer a local submission flow; it is now a redirect / explanation page
+- `/form` is no longer a local submission flow; it is now a frontend host / explanation page that embeds the backend form when configured
 - the repo still contains compatibility components for institution correction and the old submission preview / confirm / result flows
 - those compatibility pages are normally reused through backend-provided non-`frontend-router` bootstrap payloads (`pageType` / `pageProps`); a pure static deployment does not resolve routes such as `/map/correction` by itself
 - those flows still expect same-origin endpoints such as `/api/frontend-runtime`, `/map/correction/submit`, or `/correction/submit`
@@ -66,8 +66,8 @@ The repo still contains some migration-phase frontend code for compatibility, bu
 
 So for a direct static deployment of `NCT_frontend`:
 
-- map pages, blog pages, privacy pages, article detail pages, and the `/form` gateway page work on their own
-- `/form` only auto-redirects and appears in primary navigation when `VITE_NCT_SUB_FORM_URL` is configured
+- map pages, blog pages, privacy pages, article detail pages, and the `/form` host page work on their own
+- `/form` only loads the backend form and appears in primary navigation when `VITE_NCT_SUB_FORM_URL` is configured
 - institution correction and other legacy submission flows still require a compatible backend or proxy, or the legacy `NCT_old` stack
 
 ## Tech Stack

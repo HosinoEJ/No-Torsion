@@ -16,6 +16,7 @@ test('disables form access and runtime translation when no backend is configured
     }),
     {
       articleTranslationEnabled: false,
+      backendFormHref: '',
       formEnabled: false,
       formHref: '',
       recordTranslationEnabled: false,
@@ -39,8 +40,9 @@ test('builds the backend form and translation endpoints from the configured nct-
   assert.equal(hasConfiguredNoTorsionBackend({ formPageUrl: 'https://sub.example.com/form' }), true);
   assert.deepEqual(config, {
     articleTranslationEnabled: true,
+    backendFormHref: 'https://sub.example.com/form?lang=en',
     formEnabled: true,
-    formHref: 'https://sub.example.com/form?lang=en',
+    formHref: '/form?lang=en',
     recordTranslationEnabled: true,
     translateApiUrl: 'https://sub.example.com/api/no-torsion/translate-text'
   });
@@ -57,8 +59,9 @@ test('keeps the form enabled for zh-CN while leaving runtime translation disable
     }),
     {
       articleTranslationEnabled: false,
+      backendFormHref: 'https://no-torsion.example.com/form?lang=zh-CN',
       formEnabled: true,
-      formHref: 'https://no-torsion.example.com/form?lang=zh-CN',
+      formHref: '/form?lang=zh-CN',
       recordTranslationEnabled: false,
       translateApiUrl: 'https://no-torsion.example.com/api/no-torsion/translate-text'
     }

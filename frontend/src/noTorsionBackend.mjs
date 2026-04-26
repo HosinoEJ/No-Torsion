@@ -18,6 +18,7 @@ export function buildNoTorsionBackendConfig({
   if (!normalizedFormPageUrl) {
     return {
       articleTranslationEnabled: false,
+      backendFormHref: '',
       formEnabled: false,
       formHref: '',
       recordTranslationEnabled: false,
@@ -27,11 +28,14 @@ export function buildNoTorsionBackendConfig({
 
   const resolvedFormUrl = new URL(normalizedFormPageUrl, currentOrigin);
   resolvedFormUrl.searchParams.set('lang', normalizedLanguage);
+  const frontendFormUrl = new URL('/form', currentOrigin);
+  frontendFormUrl.searchParams.set('lang', normalizedLanguage);
 
   return {
     articleTranslationEnabled: normalizedLanguage === 'en',
+    backendFormHref: resolvedFormUrl.toString(),
     formEnabled: true,
-    formHref: resolvedFormUrl.toString(),
+    formHref: `${frontendFormUrl.pathname}${frontendFormUrl.search}${frontendFormUrl.hash}`,
     recordTranslationEnabled: normalizedLanguage !== 'zh-CN',
     // Translation requests follow the standalone form backend origin so one env var wires both capabilities together.
     translateApiUrl: new URL('/api/no-torsion/translate-text', resolvedFormUrl.origin).toString(),
