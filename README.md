@@ -245,6 +245,34 @@ https://www.example.com/form
 
 `/form` 应跳转到 `https://sub.example.com/form`。地图页应从 `https://api.example.com/` 读取公开 JSON；如果读不到，会回退到构建产物中的静态快照。
 
+### Cloudflare Dashboard 网页端部署
+
+如果希望主要在 Cloudflare 网页上完成部署，可以使用 Workers Builds 连接 Git 仓库。当前项目根目录没有提交 `wrangler.toml`，如果要走 Workers Static Assets，先按上一节示例新建并提交一个 `wrangler.toml`，确保包含：
+
+- `name = "nct-frontend"`
+- `[assets].directory = "./dist"`
+- `[assets].not_found_handling = "single-page-application"`
+- 可选的 `[[routes]]` 自定义域名配置
+
+推荐步骤：
+
+1. 在 Cloudflare Dashboard 进入 `Workers & Pages`，创建或选择名为 `nct-frontend` 的 Worker。
+2. 打开该 Worker 的 `Settings` -> `Builds`，选择 `Connect`，连接 GitHub / GitLab 仓库。
+3. 构建设置按项目位置填写：
+   - Repository root 如果是整个 `nct` 仓库，Root directory 填 `NCT_frontend`；如果本项目是独立仓库，留空或填 `/`。
+   - Production branch 填实际生产分支，例如 `main`。
+   - Build command 填 `npm run frontend:build`。
+   - Deploy command 填 `npx wrangler deploy`。
+4. 在 Worker 的 `Settings` -> `Variables and Secrets` 添加构建期变量：
+   - `VITE_NCT_API_SQL_PUBLIC_DATA_URL="https://api.example.com/"`
+   - `VITE_NCT_SUB_FORM_URL="https://sub.example.com/form"`
+5. 在 `Settings` -> `Domains & Routes` -> `Add` -> `Custom Domain` 绑定 `www.example.com`。
+6. 推送一个提交触发 Workers Builds。部署成功后检查 `https://www.example.com/`、`https://www.example.com/map`、`https://www.example.com/blog` 和 `https://www.example.com/form`。
+
+注意：`VITE_*` 是构建期变量，在 Dashboard 修改后需要重新部署才会写入前端产物。这个项目是纯静态前端，不需要 D1、R2、Cron 或 Worker Secret 绑定；表单和数据写入能力来自同级部署的 `NCT_backend` 与 `NCT_database`。
+
+Cloudflare 官方参考：[`Workers Builds`](https://developers.cloudflare.com/workers/ci-cd/builds/)、[`Workers Static Assets`](https://developers.cloudflare.com/workers/static-assets/)、[`Variables and Secrets`](https://developers.cloudflare.com/workers/configuration/secrets/)、[`Custom Domains`](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/)。
+
 ### 其他静态平台
 
 构建命令：
