@@ -159,7 +159,7 @@ npm run dev
 
 说明：
 
-- `npm run dev:workers` 和 `npm run deploy:workers` 现在只输出迁移提示，不会真正启动或部署后端
+- `npm run dev:workers` 和 `npm run deploy:workers` 只用于 Workers Static Assets 静态前端，不会启动或部署后端 API
 
 ## 构建期静态内容
 
@@ -177,62 +177,34 @@ npm run dev
 - 多语言词条
 - 博客列表与文章正文
 
-## 部署
+## Cloudflare Workers 部署
 
-当前项目是纯静态 Vite SPA，可以部署到 Cloudflare Workers Static Assets、Cloudflare Pages、Netlify、Vercel 静态输出或 Nginx 静态目录。下面以 Cloudflare Workers 为主。
+仅推荐使用 Cloudflare Dashboard 的 Workers Builds 网页部署。本项目是 Workers Static Assets 静态前端，项目名使用目录名的 Workers 兼容形式：`nct-frontend`。
 
-### Cloudflare Workers Static Assets
+网页部署会读取 [`wrangler.toml`](./wrangler.toml)。本项目不需要 D1、R2、Cron 或 Worker Secret；`[assets].directory = "./dist"` 会发布 Vite 构建产物，`not_found_handling = "single-page-application"` 会让 `/map`、`/blog`、`/form` 等前端路由回退到 `index.html`。
 
-示例生产域名：
+### Workers Builds 填写
 
-- 前端：`https://www.example.com`
-- 母库：`https://api.example.com`
-- 子库表单：`https://sub.example.com/form`
+| Cloudflare 页面字段 | 填写值 |
+| --- | --- |
+| Project name | `nct-frontend` |
+| Production branch | 你的生产分支，例如 `main` |
+| Path / Root directory | 在本仓库部署填 `NCT_frontend`；如果本项目单独成库填 `/` |
+| Build command | `npm run test:unit` |
+| Deploy command | `npm run deploy:workers` |
+| Non-production branch deploy command | `npm run deploy:workers:preview` |
 
-登录 Cloudflare：
+### 网页端步骤
 
-```bash
-npx wrangler login
-npx wrangler whoami
-```
+1. 进入 Cloudflare Dashboard -> `Workers & Pages` -> `Create` -> `Import a repository`。
+2. 选择 Git 仓库后，按上表填写 `Project name`、`Path`、`Build command`、`Deploy command` 和 `Non-production branch deploy command`。
+3. 在 `Settings` -> `Variables and Secrets` 添加构建期变量：
+   - `VITE_NCT_API_SQL_PUBLIC_DATA_URL=https://api.example.com/`
+   - `VITE_NCT_SUB_FORM_URL=https://sub.example.com/form`
+4. 在 `Settings` -> `Domains & Routes` -> `Add` -> `Custom Domain` 绑定 `www.example.com`。
+5. 推送生产分支触发部署。`Deploy command` 会生成静态内容快照、执行 Vite build，并发布 Workers Static Assets。
 
-第一次部署前，在本目录创建或确认 `wrangler.toml`：
-
-```toml
-name = "nct-frontend"
-compatibility_date = "2026-04-20"
-workers_dev = true
-
-[assets]
-directory = "./dist"
-not_found_handling = "single-page-application"
-
-[[routes]]
-pattern = "www.example.com"
-custom_domain = true
-```
-
-说明：
-
-- `directory = "./dist"` 指向 Vite 构建产物。
-- `not_found_handling = "single-page-application"` 用于让 `/map`、`/blog`、`/form` 这类前端路由回退到 `index.html`。
-- 正式环境如果只想暴露自定义域名，可以把 `workers_dev = false`。
-- 也可以不写 `[[routes]]`，改在 Cloudflare Dashboard 的 Worker 设置页添加 Custom Domain。
-
-构建前写入生产环境变量。可以复制 `.env.example` 到 `.env.production`，也可以在 CI/CD 中设置同名变量：
-
-```dotenv
-VITE_NCT_API_SQL_PUBLIC_DATA_URL="https://api.example.com/"
-VITE_NCT_SUB_FORM_URL="https://sub.example.com/form"
-```
-
-安装依赖、构建并部署：
-
-```bash
-npm install
-npm run frontend:build
-npx wrangler deploy
-```
+注意：`VITE_*` 是构建期变量，在 Dashboard 修改后需要重新部署才会写入前端产物。表单和数据写入能力来自同级部署的 `NCT_backend` 与 `NCT_database`。
 
 部署后检查：
 
@@ -244,53 +216,6 @@ https://www.example.com/form
 ```
 
 `/form` 应跳转到 `https://sub.example.com/form`。地图页应从 `https://api.example.com/` 读取公开 JSON；如果读不到，会回退到构建产物中的静态快照。
-
-### Cloudflare Dashboard 网页端部署
-
-如果希望主要在 Cloudflare 网页上完成部署，可以使用 Workers Builds 连接 Git 仓库。当前项目根目录没有提交 `wrangler.toml`，如果要走 Workers Static Assets，先按上一节示例新建并提交一个 `wrangler.toml`，确保包含：
-
-- `name = "nct-frontend"`
-- `[assets].directory = "./dist"`
-- `[assets].not_found_handling = "single-page-application"`
-- 可选的 `[[routes]]` 自定义域名配置
-
-推荐步骤：
-
-1. 在 Cloudflare Dashboard 进入 `Workers & Pages`，创建或选择名为 `nct-frontend` 的 Worker。
-2. 打开该 Worker 的 `Settings` -> `Builds`，选择 `Connect`，连接 GitHub / GitLab 仓库。
-3. 构建设置按项目位置填写：
-   - Repository root 如果是整个 `nct` 仓库，Root directory 填 `NCT_frontend`；如果本项目是独立仓库，留空或填 `/`。
-   - Production branch 填实际生产分支，例如 `main`。
-   - Build command 填 `npm run frontend:build`。
-   - Deploy command 填 `npx wrangler deploy`。
-4. 在 Worker 的 `Settings` -> `Variables and Secrets` 添加构建期变量：
-   - `VITE_NCT_API_SQL_PUBLIC_DATA_URL="https://api.example.com/"`
-   - `VITE_NCT_SUB_FORM_URL="https://sub.example.com/form"`
-5. 在 `Settings` -> `Domains & Routes` -> `Add` -> `Custom Domain` 绑定 `www.example.com`。
-6. 推送一个提交触发 Workers Builds。部署成功后检查 `https://www.example.com/`、`https://www.example.com/map`、`https://www.example.com/blog` 和 `https://www.example.com/form`。
-
-注意：`VITE_*` 是构建期变量，在 Dashboard 修改后需要重新部署才会写入前端产物。这个项目是纯静态前端，不需要 D1、R2、Cron 或 Worker Secret 绑定；表单和数据写入能力来自同级部署的 `NCT_backend` 与 `NCT_database`。
-
-Cloudflare 官方参考：[`Workers Builds`](https://developers.cloudflare.com/workers/ci-cd/builds/)、[`Workers Static Assets`](https://developers.cloudflare.com/workers/static-assets/)、[`Variables and Secrets`](https://developers.cloudflare.com/workers/configuration/secrets/)、[`Custom Domains`](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/)。
-
-### 其他静态平台
-
-构建命令：
-
-```bash
-npm run frontend:build
-```
-
-发布目录：
-
-```text
-dist/
-```
-
-仓库已包含：
-
-- [`public/_redirects`](./public/_redirects)：给支持 `_redirects` 的静态平台提供前端路由回退
-- [`404.html`](./404.html)：给静态托管提供兜底页面
 
 ## README 核对结果
 

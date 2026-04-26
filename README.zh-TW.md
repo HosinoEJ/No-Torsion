@@ -177,26 +177,27 @@ npm run dev
 - 多語言詞條
 - 部落格列表與文章正文
 
-## 部署
+## Cloudflare Workers 部署
 
-目前專案適合部署到任意靜態託管平台，例如 Cloudflare Pages、Netlify、Vercel 靜態輸出或 Nginx 靜態目錄。
+僅建議使用 Cloudflare Dashboard 的 Workers Builds 網頁部署。專案名稱使用目錄名的 Workers 相容形式：`nct-frontend`。
 
-建置命令：
+網頁部署會讀取 [`wrangler.toml`](./wrangler.toml)。本專案不需要 D1、R2、Cron 或 Worker Secret；`[assets].directory = "./dist"` 會發布 Vite 建置產物，`not_found_handling = "single-page-application"` 會讓 `/map`、`/blog`、`/form` 等前端路由回退到 `index.html`。
 
-```bash
-npm run frontend:build
-```
+| Cloudflare 頁面欄位 | 填寫值 |
+| --- | --- |
+| Project name | `nct-frontend` |
+| Production branch | 你的生產分支，例如 `main` |
+| Path / Root directory | 在本倉庫部署填 `NCT_frontend`；如果本專案單獨成庫填 `/` |
+| Build command | `npm run test:unit` |
+| Deploy command | `npm run deploy:workers` |
+| Non-production branch deploy command | `npm run deploy:workers:preview` |
 
-發布目錄：
+在 `Settings` -> `Variables and Secrets` 添加建置期變數：
 
-```text
-dist/
-```
+- `VITE_NCT_API_SQL_PUBLIC_DATA_URL=https://api.example.com/`
+- `VITE_NCT_SUB_FORM_URL=https://sub.example.com/form`
 
-倉庫已內建：
-
-- [`public/_redirects`](./public/_redirects)：把前端路由回退到 `index.html`
-- [`404.html`](./404.html)：靜態託管下的兜底頁
+部署完成後，在 `Settings` -> `Domains & Routes` 綁定自訂網域。
 
 ## README 核對結果
 
