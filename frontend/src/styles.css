@@ -9,9 +9,42 @@
   --text: #f2f7ff;
   --text-muted: rgba(226, 235, 249, 0.74);
   --text-faint: rgba(226, 235, 249, 0.52);
-  --accent: #a7ddff;
-  --accent-strong: #73bdff;
-  --accent-secondary: #ff9fd2;
+
+  /* Shared anti-conversion-therapy palette — kept in sync with NCT_backend
+     `no-torsion-form-page.tsx`. Use the pride spectrum for accents/strokes;
+     keep `--accent` as the single anchor for primary buttons & links so the
+     UI stays calm for survivors and trauma-aware. */
+  --pride-1: #e63a3a;
+  --pride-2: #f29438;
+  --pride-3: #f7c94e;
+  --pride-4: #2da26b;
+  --pride-5: #2f6fea;
+  --pride-6: #8a4fcc;
+  --trans-blue: #5fc3f0;
+  --trans-pink: #ffb1cc;
+  --accent-gradient: linear-gradient(
+    90deg,
+    var(--pride-1) 0%,
+    var(--pride-2) 20%,
+    var(--pride-3) 40%,
+    var(--pride-4) 60%,
+    var(--pride-5) 80%,
+    var(--pride-6) 100%
+  );
+  --accent-gradient-soft: linear-gradient(
+    135deg,
+    rgba(95, 195, 240, 0.95),
+    rgba(255, 177, 204, 0.82)
+  );
+
+  --accent: #6da6ff;
+  --accent-strong: #2f6fea;
+  --accent-secondary: var(--trans-pink);
+  --danger: #ff7aa6;
+  --danger-strong: #c93b73;
+  --success: #34d8a6;
+  --success-strong: #15a37b;
+
   --shadow: 0 28px 90px rgba(0, 0, 0, 0.46);
   --shadow-soft: 0 18px 52px rgba(0, 0, 0, 0.34);
   --radius-xl: 32px;
@@ -21,6 +54,7 @@
   --content-width: min(1180px, calc(100% - 32px));
   --portal-anchor-offset: 96px;
 }
+
 
 * {
   box-sizing: border-box;
@@ -414,7 +448,7 @@ pre {
 }
 
 .glass-button--primary {
-  background: linear-gradient(135deg, rgba(118, 195, 255, 0.96), rgba(255, 149, 210, 0.82));
+  background: var(--accent-gradient-soft);
   color: #041324;
   border-color: var(--border-strong);
 }
@@ -903,9 +937,11 @@ pre {
 .form-embed-frame {
   display: block;
   width: 100%;
-  min-height: 86vh;
+  min-height: 720px;
   border: 0;
   background: transparent;
+  overflow: hidden;
+  transition: height 220ms ease;
 }
 
 .form-privacy-note {
@@ -1426,6 +1462,8 @@ pre {
 }
 
 @media (prefers-color-scheme: light) {
+  /* Mirrors NCT_backend `@media (prefers-color-scheme: light)` so the host
+     site and the embedded JSX form follow the OS theme together. */
   :root {
     --bg: #f8fbff;
     --bg-soft: #f0f5ff;
@@ -1439,6 +1477,10 @@ pre {
     --accent: #256de8;
     --accent-strong: #174fb8;
     --accent-secondary: #cf4b8f;
+    --danger: #c93b73;
+    --danger-strong: #9f2d57;
+    --success: #15a37b;
+    --success-strong: #0c7a62;
     --shadow: 0 28px 70px rgba(102, 117, 176, 0.19);
     --shadow-soft: 0 18px 42px rgba(102, 117, 176, 0.14);
   }

@@ -1036,6 +1036,10 @@ function resolveInitialPortalSection(pathname) {
     return 'blog';
   }
 
+  if (pathname === '/form') {
+    return 'form';
+  }
+
   return 'map';
 }
 
@@ -1056,19 +1060,16 @@ function resolveFrontendRoute(currentPath) {
     tag: getSearchParamValue(url.searchParams, 'tag')
   };
 
-  if (pathname === '/' || pathname === '/map' || pathname === '/blog') {
+  if (
+    pathname === '/'
+    || pathname === '/map'
+    || pathname === '/blog'
+    || pathname === '/form'
+  ) {
     return {
       pathname,
       query,
       routeType: pathname === '/' ? 'home' : 'portal'
-    };
-  }
-
-  if (pathname === '/form') {
-    return {
-      pathname,
-      query,
-      routeType: 'form-entry'
     };
   }
 
@@ -2182,15 +2183,20 @@ function HomePage({ bootstrap }) {
   );
 }
 
-function PortalTabs({ activeSection, i18n, lang, onNavigate }) {
+function PortalTabs({ activeSection, i18n, lang, onNavigate, formEnabled }) {
   const compactLabels = {
     blog: lang === 'zh-TW' ? '文庫' : lang === 'zh-CN' ? '文库' : 'Blog',
+    form: lang === 'zh-TW' ? '表單' : lang === 'zh-CN' ? '表单' : 'Form',
     map: lang === 'zh-TW' ? '地圖' : lang === 'zh-CN' ? '地图' : 'Map'
   };
   const tabs = [
     { id: 'map', href: '/map', label: compactLabels.map },
     { id: 'blog', href: '/blog', label: compactLabels.blog }
   ];
+
+  if (formEnabled) {
+    tabs.push({ id: 'form', href: '/form', label: compactLabels.form });
+  }
 
   return (
     <nav className="portal-tabs" aria-label="Portal sections">
@@ -3837,9 +3843,11 @@ function PortalPage({ bootstrap }) {
   const [activeTag, setActiveTag] = useState(route.query.tag || '');
   const mapSectionRef = useRef(null);
   const blogSectionRef = useRef(null);
+  const formSectionRef = useRef(null);
 
   const sectionRefs = {
     blog: blogSectionRef,
+    form: formSectionRef,
     map: mapSectionRef
   };
 
@@ -3956,7 +3964,13 @@ function PortalPage({ bootstrap }) {
         ) : null}
       </HeroBlock>
 
-      <PortalTabs activeSection={activeSection} i18n={i18n} lang={lang} onNavigate={navigateToSection} />
+      <PortalTabs
+        activeSection={activeSection}
+        formEnabled={backendConfig.formEnabled && Boolean(backendConfig.backendFormHref)}
+        i18n={i18n}
+        lang={lang}
+        onNavigate={navigateToSection}
+      />
 
       <section className="portal-section" data-section-id="map" ref={mapSectionRef}>
         <MapSection
@@ -3981,6 +3995,22 @@ function PortalPage({ bootstrap }) {
           onTagChange={navigateToBlogTag}
         />
       </section>
+
+      {backendConfig.formEnabled && backendConfig.backendFormHref ? (
+        <section
+          className="portal-section"
+          data-section-id="form"
+          id="form-embed"
+          ref={formSectionRef}
+        >
+          <div className="form-embed-shell" aria-label={readPath(i18n, ['index', 'fillForm'], 'Form')}>
+            <AutoSizingFormFrame
+              src={backendConfig.backendFormHref}
+              title={readPath(i18n, ['index', 'fillForm'], 'Form')}
+            />
+          </div>
+        </section>
+      ) : null}
     </PageChrome>
   );
 }
@@ -4713,9 +4743,7 @@ function FormEntryPage({ bootstrap }) {
 
       {backendConfig.formEnabled && backendConfig.backendFormHref ? (
         <section className="form-embed-shell" id="form-embed" aria-label={readPath(i18n, ['index', 'fillForm'], 'Form')}>
-          <iframe
-            allow="geolocation"
-            className="form-embed-frame"
+          <AutoSizingFormFrame
             src={backendConfig.backendFormHref}
             title={readPath(i18n, ['index', 'fillForm'], 'Form')}
           />
@@ -4724,6 +4752,45 @@ function FormEntryPage({ bootstrap }) {
         <FormAccessSection bootstrap={bootstrap} />
       )}
     </PageChrome>
+  );
+}
+
+function AutoSizingFormFrame({ src, title }) {
+  const frameRef = useRef(null);
+  const [height, setHeight] = useState(null);
+
+  useEffect(() => {
+    let expectedOrigin = null;
+    try {
+      expectedOrigin = new URL(src, window.location.href).origin;
+    } catch (_error) {
+      expectedOrigin = null;
+    }
+
+    function handleMessage(event) {
+      if (expectedOrigin && event.origin !== expectedOrigin) return;
+      const data = event.data;
+      if (!data || typeof data !== 'object') return;
+      if (data.type !== 'nct:embed-resize') return;
+      const next = Number(data.height);
+      if (!Number.isFinite(next) || next <= 0) return;
+      setHeight(Math.ceil(next));
+    }
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [src]);
+
+  return (
+    <iframe
+      allow="geolocation"
+      className="form-embed-frame"
+      ref={frameRef}
+      scrolling="no"
+      src={src}
+      style={height ? { height: height + 'px' } : undefined}
+      title={title}
+    />
   );
 }
 
