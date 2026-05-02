@@ -139,7 +139,7 @@ npm run dev
 
 默认开发地址：
 
-- Vite 开发服务器：`http://127.0.0.1:5173`
+- Vite 开发服务器：儅輸入```npm run dev```時控制臺輸出的```➜  Local:   http://localhost:(port)/```是開發伺服器地址。
 
 如果希望接入完整链路，通常还需要同时启动：
 
@@ -156,6 +156,7 @@ npm run dev
 | `npm run frontend:preview` | 本地预览构建产物 |
 | `npm run test:unit` | 运行 Node 单元测试 |
 | `npm test` | 运行测试并执行一次构建检查 |
+| `npm install` | 安裝依賴 |
 
 说明：
 
